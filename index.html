@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goodbye Fitness</title>
+  <style>
+    :root {
+      --bg: #0a0a0a; --surface: #141414; --card: #1a1a1a;
+      --border: #2a2a2a; --text: #e4e4e4; --muted: #777;
+      --accent: #3b82f6; --accent-hover: #2563eb;
+      --green: #22c55e; --yellow: #eab308; --red: #ef4444; --orange: #f97316;
+      --cyan: #06b6d4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Nav */
+    .nav { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+    .nav-btn { flex: 1; padding: 0.9rem; text-align: center; font-size: 0.8rem; font-weight: 600; color: var(--muted); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
+    .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .nav-btn:hover { color: var(--text); }
+
+    /* Pages */
+    .page { display: none; max-width: 600px; margin: 0 auto; padding: 1.5rem 1rem; }
+    .page.active { display: block; }
+
+    h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; }
+
+    /* Benchmark cards */
+    .benchmark-card { cursor: pointer; transition: border-color 0.2s; }
+    .benchmark-card:hover { border-color: #444; }
+    .benchmark-card.selected { border-color: var(--accent); background: rgba(59,130,246,0.05); }
+    .bm-header { display: flex; justify-content: space-between; align-items: center; }
+    .bm-name { font-size: 1rem; font-weight: 600; }
+    .bm-tag { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(59,130,246,0.15); color: var(--accent); }
+    .bm-desc { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; line-height: 1.5; }
+    .bm-movements { margin-top: 0.75rem; }
+    .bm-move { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; font-size: 0.85rem; }
+    .bm-move-num { width: 20px; height: 20px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--muted); flex-shrink: 0; }
+
+    /* Forms */
+    .field { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+    input[type="number"], input[type="text"], input[type="date"], select {
+      width: 100%; padding: 0.7rem 0.9rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.95rem; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    .help { font-size: 0.75rem; color: #555; margin-top: 0.2rem; }
+
+    .radio-row { display: flex; gap: 0.5rem; }
+    .radio-row label { flex: 1; text-transform: none; letter-spacing: 0; font-size: 0.85rem; color: var(--text); cursor: pointer; }
+    .radio-pill { display: block; padding: 0.6rem 0.4rem; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s; }
+    .radio-pill:hover { border-color: #444; }
+    input[type="radio"] { display: none; }
+    input[type="radio"]:checked + .radio-pill { border-color: var(--accent); background: rgba(59,130,246,0.1); }
+
+    /* Buttons */
+    .btn { display: block; width: 100%; padding: 0.8rem; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-secondary { background: var(--surface); color: var(--muted); border: 1px solid var(--border); margin-top: 0.5rem; }
+    .btn-danger { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); margin-top: 0.5rem; }
+    .btn-row { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    .btn-row .btn { flex: 1; }
+
+    /* Timer */
+    .timer-display { text-align: center; padding: 2rem 0; }
+    .timer-time { font-size: 4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .timer-label { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+    .timer-protocol { margin: 1.5rem 0; }
+    .timer-move { display: flex; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.9rem; }
+    .timer-move.current { background: rgba(59,130,246,0.1); color: var(--accent); font-weight: 600; }
+
+    /* Results */
+    .result-hero { text-align: center; padding: 1.5rem 0; }
+    .result-big { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+    .result-unit { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+    .result-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.8rem; font-weight: 600; margin-top: 0.75rem; }
+    .badge-elite { background: rgba(6,182,212,0.15); color: var(--cyan); }
+    .badge-excellent { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-good { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .badge-average { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .badge-below { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .badge-poor { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
+    .stat-box { text-align: center; padding: 0.75rem; background: var(--surface); border-radius: 8px; }
+    .stat-val { font-size: 1.3rem; font-weight: 700; }
+    .stat-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* History */
+    .history-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .history-item:last-child { border-bottom: none; }
+    .hi-score { font-size: 1.5rem; font-weight: 700; width: 50px; text-align: center; }
+    .hi-detail { flex: 1; }
+    .hi-type { font-size: 0.85rem; font-weight: 600; }
+    .hi-date { font-size: 0.75rem; color: var(--muted); }
+    .hi-change { font-size: 0.85rem; font-weight: 600; }
+    .hi-up { color: var(--green); }
+    .hi-down { color: var(--red); }
+    .hi-same { color: var(--muted); }
+
+    /* Training log */
+    .training-week { margin-bottom: 1.25rem; }
+    .tw-header { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .tw-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #1e1e1e; }
+    .tw-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .tw-icon.run { background: rgba(34,197,94,0.15); }
+    .tw-icon.ride { background: rgba(249,115,22,0.15); }
+    .tw-icon.workout { background: rgba(59,130,246,0.15); }
+    .tw-name { font-size: 0.85rem; font-weight: 500; }
+    .tw-meta { font-size: 0.75rem; color: var(--muted); }
+    .tw-stats { margin-left: auto; text-align: right; }
+    .tw-stat-main { font-size: 0.85rem; font-weight: 600; }
+    .tw-stat-sub { font-size: 0.7rem; color: var(--muted); }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-state p { font-size: 0.9rem; margin-bottom: 0.25rem; }
+
+    /* Chart placeholder */
+    .chart-area { height: 200px; background: var(--surface); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-top: 0.75rem; position: relative; overflow: hidden; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding: 0 1rem; width: 100%; }
+    .chart-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 4px; transition: height 0.5s; position: relative; }
+    .chart-bar .chart-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: var(--muted); white-space: nowrap; }
+
+    .connect-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; }
+    .connect-icon { font-size: 1.5rem; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .connect-info { flex: 1; }
+    .connect-name { font-size: 0.9rem; font-weight: 600; }
+    .connect-status { font-size: 0.75rem; color: var(--muted); }
+    .connect-btn { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.8rem; cursor: pointer; }
+    .connect-btn.connected { border-color: var(--green); color: var(--green); }
+
+    /* Route recommendations */
+    .spot-card { display: flex; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #1e1e1e; cursor: pointer; }
+    .spot-card:last-child { border-bottom: none; }
+    .spot-card:hover { opacity: 0.85; }
+    .spot-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .spot-icon.park { background: rgba(34,197,94,0.15); }
+    .spot-icon.trail { background: rgba(249,115,22,0.15); }
+    .spot-icon.track { background: rgba(59,130,246,0.15); }
+    .spot-icon.path { background: rgba(6,182,212,0.15); }
+    .spot-info { flex: 1; min-width: 0; }
+    .spot-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .spot-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+    .spot-tags { display: flex; gap: 0.35rem; margin-top: 0.35rem; flex-wrap: wrap; }
+    .spot-tag { font-size: 0.65rem; padding: 0.15rem 0.45rem; border-radius: 4px; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+    .spot-dist { font-size: 0.8rem; color: var(--muted); flex-shrink: 0; align-self: center; }
+    .spot-loading { text-align: center; padding: 1.5rem; color: var(--muted); font-size: 0.85rem; }
+    .spot-section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0.75rem 0 0.25rem; }
+    .spot-section-title:first-child { margin-top: 0; }
+
+    /* Trail source links */
+    .trail-sources { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .trail-source-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: var(--text); text-decoration: none; transition: border-color 0.2s; }
+    .trail-source-btn:hover { border-color: #555; }
+    .trail-source-btn img { width: 18px; height: 18px; border-radius: 3px; }
+    .trail-source-btn.tf { border-color: rgba(34,197,94,0.3); }
+    .trail-source-btn.tf:hover { border-color: var(--green); }
+    .trail-source-btn.mtbp { border-color: rgba(59,130,246,0.3); }
+    .trail-source-btn.mtbp:hover { border-color: var(--accent); }
+    .trailforks-embed { width: 100%; height: 280px; border: none; border-radius: 8px; margin-top: 0.75rem; }
+
+    /* Journal */
+    .j-entry { padding: 0.75rem 0; border-bottom: 1px solid #1e1e1e; }
+    .j-entry:last-child { border-bottom: none; }
+    .j-entry-header { display: flex; align-items: center; gap: 0.6rem; }
+    .j-entry-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .j-entry-icon.test { background: rgba(6,182,212,0.15); }
+    .j-entry-icon.workout { background: rgba(59,130,246,0.15); }
+    .j-entry-icon.run { background: rgba(34,197,94,0.15); }
+    .j-entry-icon.ride { background: rgba(249,115,22,0.15); }
+    .j-entry-title { font-size: 0.85rem; font-weight: 600; }
+    .j-entry-meta { font-size: 0.75rem; color: var(--muted); }
+    .j-entry-body { margin-top: 0.4rem; padding-left: 2.6rem; }
+    .j-entry-note { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 0.25rem; }
+    .j-entry-stats { display: flex; gap: 0.75rem; font-size: 0.8rem; }
+    .j-entry-stat { color: var(--text); }
+    .j-entry-stat span { color: var(--muted); }
+    .j-feel { display: inline-block; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.5rem; }
+    .j-feel.hard { background: rgba(239,68,68,0.15); color: var(--red); }
+    .j-feel.moderate { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .j-feel.easy { background: rgba(34,197,94,0.15); color: var(--green); }
+    .j-date-group { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 0.75rem 0 0.25rem; }
+
+    /* SMS preview bubble */
+    .sms-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 12px 12px 12px 2px; padding: 0.75rem 1rem; font-size: 0.85rem; line-height: 1.6; position: relative; max-width: 90%; }
+    .sms-bubble::before { content: 'Goodbye Fitness'; display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.35rem; font-weight: 600; }
+    .sms-time { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('log')">Log</button>
+    <button class="nav-btn" onclick="showPage('test')">Benchmark</button>
+    <button class="nav-btn" onclick="showPage('results')">Results</button>
+    <button class="nav-btn" onclick="showPage('training')">Training</button>
+    <button class="nav-btn" onclick="showPage('profile')">Profile</button>
+  </nav>
+
+  <!-- ===== LOG PAGE (quick activity logging) ===== -->
+  <div class="page active" id="page-log">
+    <h2 id="logGreeting">Log Activity</h2>
+    <p class="page-sub">No benchmark needed. Just move.</p>
+
+    <div id="log-select">
+      <div class="card benchmark-card selected" onclick="selectActivity('walk')">
+        <div class="bm-header">
+          <span class="bm-name">Walk</span>
+          <span class="bm-tag">Any pace</span>
+        </div>
+        <p class="bm-desc">Get outside. Track your time and distance.</p>
+      </div>
+
+      <div class="card benchmark-card" onclick="selectActivity('dog_walk')" id="dogWalkCard">
+        <div class="bm-header">
+          <span class="bm-name" id="dogWalkLabel">Dog Walk</span>
+          <span class="bm-tag" id="dogWalkTag">Good boy</span>
+        </div>
+        <p class="bm-desc" id="dogWalkDesc">You and the pup. Every walk counts.</p>
+      </div>
+
+      <div class="card benchmark-card" onclick="selectActivity('run')">
+        <div class="bm-header">
+          <span class="bm-name">Run</span>
+          <span class="bm-tag">Any distance</span>
+        </div>
+        <p class="bm-desc">Easy jog or tempo run. Just log it.</p>
+      </div>
+
+      <div class="card benchmark-card" onclick="selectActivity('ride')">
+        <div class="bm-header">
+          <span class="bm-name">Ride</span>
+          <span class="bm-tag">Road or MTB</span>
+        </div>
+        <p class="bm-desc">Pedal for any distance, any terrain.</p>
+      </div>
+
+      <div class="card benchmark-card" onclick="selectActivity('workout')">
+        <div class="bm-header">
+          <span class="bm-name">Workout</span>
+          <span class="bm-tag">Anything</span>
+        </div>
+        <p class="bm-desc">Bodyweight, gym, yoga, whatever you did.</p>
+      </div>
+
+      <button class="btn btn-primary" onclick="startActivity()">Log It</button>
+    </div>
+
+    <!-- Activity input form -->
+    <div id="log-form" style="display:none">
+      <div class="card">
+        <div class="card-title" id="logFormTitle">Walk</div>
+        <div class="field" id="logNameField">
+          <label>Name (optional)</label>
+          <input type="text" id="logName" placeholder="e.g. Morning loop, Bark Park">
+        </div>
+        <div class="field" id="logDistField">
+          <label>Distance</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="logDist" placeholder="e.g. 1.5" step="0.1" style="flex:1">
+            <select id="logDistUnit" style="width:80px">
+              <option value="mi">mi</option>
+              <option value="km">km</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Duration (minutes)</label>
+          <input type="number" id="logDuration" placeholder="e.g. 30" min="1">
+        </div>
+        <div class="field" id="logNotesField">
+          <label>Notes (optional)</label>
+          <input type="text" id="logNotes" placeholder="e.g. felt good, knee was tight">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="submitActivity()">Save</button>
+      <button class="btn btn-secondary" onclick="backToLogSelect()">Cancel</button>
+    </div>
+
+    <!-- ===== DOG TRAINING SECTION ===== -->
+    <div id="dog-training" style="display:none">
+
+      <!-- Step 1: Dog Profile -->
+      <div id="dog-step-profile">
+        <h2 style="margin-bottom:0.25rem">Dog Profile</h2>
+        <p class="page-sub">Tell us about your pup so we can build the right walk program.</p>
+
+        <div class="card">
+          <!-- Photo upload -->
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+            <div id="dogPhotoPreview" style="width:80px;height:80px;border-radius:50%;background:var(--surface);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="document.getElementById('dogPhotoInput').click()">
+              <span id="dogPhotoPlaceholder" style="font-size:2rem">🐕</span>
+              <img id="dogPhotoImg" style="width:100%;height:100%;object-fit:cover;display:none">
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:0.9rem">Upload a photo</div>
+              <div style="font-size:0.75rem;color:var(--muted)">Optional. Tap the circle to add one.</div>
+              <input type="file" id="dogPhotoInput" accept="image/*" style="display:none" onchange="handleDogPhoto(this)">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Dog's Name</label>
+            <input type="text" id="dtDogName" placeholder="e.g. Max">
+          </div>
+          <div class="field">
+            <label>Breed</label>
+            <input type="text" id="dtDogBreed" placeholder="e.g. Golden Retriever" list="breedList">
+          </div>
+          <div style="display:flex;gap:0.75rem">
+            <div class="field" style="flex:1">
+              <label>Weight (lbs)</label>
+              <input type="number" id="dtDogWeight" placeholder="e.g. 65" min="1" max="300">
+            </div>
+            <div class="field" style="flex:1">
+              <label>Age (years)</label>
+              <input type="number" id="dtDogAge" placeholder="e.g. 3" min="0" max="25" step="0.5">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveDogAndNext()">Next: Fitness Assessment</button>
+        <button class="btn btn-secondary" onclick="backToLogSelect()">Cancel</button>
+      </div>
+
+      <!-- Step 2: Fitness Questionnaire -->
+      <div id="dog-step-fitness" style="display:none">
+        <h2 style="margin-bottom:0.25rem">Fitness Assessment</h2>
+        <p class="page-sub" id="dogFitnessSubhead">Let's figure out where your dog is at.</p>
+
+        <div class="card">
+          <div class="card-title">Activity Level</div>
+          <div class="field">
+            <label>How active is your dog right now?</label>
+            <div class="radio-row" style="flex-wrap:wrap">
+              <label><input type="radio" name="dqActivity" value="sedentary"><span class="radio-pill">Couch potato</span></label>
+              <label><input type="radio" name="dqActivity" value="light" checked><span class="radio-pill">Light walks</span></label>
+              <label><input type="radio" name="dqActivity" value="moderate"><span class="radio-pill">Regular walks</span></label>
+              <label><input type="radio" name="dqActivity" value="active"><span class="radio-pill">Very active</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Health Check</div>
+          <div class="field">
+            <label>Can your dog walk 20 minutes without stopping?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="dqEndurance" value="no"><span class="radio-pill">No</span></label>
+              <label><input type="radio" name="dqEndurance" value="barely"><span class="radio-pill">Barely</span></label>
+              <label><input type="radio" name="dqEndurance" value="yes" checked><span class="radio-pill">Yes</span></label>
+              <label><input type="radio" name="dqEndurance" value="easily"><span class="radio-pill">Easily 30+</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Any joint or mobility issues?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="dqJoints" value="none" checked><span class="radio-pill">None</span></label>
+              <label><input type="radio" name="dqJoints" value="mild"><span class="radio-pill">Mild stiffness</span></label>
+              <label><input type="radio" name="dqJoints" value="moderate"><span class="radio-pill">Noticeable</span></label>
+              <label><input type="radio" name="dqJoints" value="severe"><span class="radio-pill">Vet-managed</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Weight condition?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="dqWeightCond" value="under"><span class="radio-pill">Underweight</span></label>
+              <label><input type="radio" name="dqWeightCond" value="healthy" checked><span class="radio-pill">Healthy</span></label>
+              <label><input type="radio" name="dqWeightCond" value="over"><span class="radio-pill">Overweight</span></label>
+              <label><input type="radio" name="dqWeightCond" value="obese"><span class="radio-pill">Obese</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Behavior on Walks</div>
+          <div class="field">
+            <label>Leash behavior?</label>
+            <div class="radio-row" style="flex-wrap:wrap">
+              <label><input type="radio" name="dqLeash" value="pulls"><span class="radio-pill">Pulls hard</span></label>
+              <label><input type="radio" name="dqLeash" value="some_pulling" checked><span class="radio-pill">Some pulling</span></label>
+              <label><input type="radio" name="dqLeash" value="good"><span class="radio-pill">Walks well</span></label>
+              <label><input type="radio" name="dqLeash" value="off_leash"><span class="radio-pill">Off-leash ready</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label>How does your dog handle other dogs?</label>
+            <div class="radio-row" style="flex-wrap:wrap">
+              <label><input type="radio" name="dqReactivity" value="reactive"><span class="radio-pill">Reactive</span></label>
+              <label><input type="radio" name="dqReactivity" value="nervous"><span class="radio-pill">Nervous</span></label>
+              <label><input type="radio" name="dqReactivity" value="neutral" checked><span class="radio-pill">Neutral</span></label>
+              <label><input type="radio" name="dqReactivity" value="friendly"><span class="radio-pill">Friendly</span></label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="generateDogProgram()">Build Walk Program</button>
+        <button class="btn btn-secondary" onclick="showDogStep('profile')">Back</button>
+      </div>
+
+      <!-- Step 3: Generated Program + Reminders -->
+      <div id="dog-step-program" style="display:none">
+        <h2 style="margin-bottom:0.25rem" id="dogProgramTitle">Walk Program</h2>
+        <p class="page-sub" id="dogProgramSub">Built for your dog.</p>
+
+        <!-- Dog summary card -->
+        <div class="card" id="dogSummaryCard">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+            <div id="progDogPhoto" style="width:56px;height:56px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+              <span style="font-size:1.5rem" id="progDogEmoji">🐕</span>
+              <img id="progDogImg" style="width:100%;height:100%;object-fit:cover;display:none">
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:1.1rem" id="progDogName">--</div>
+              <div style="font-size:0.8rem;color:var(--muted)" id="progDogMeta">--</div>
+            </div>
+            <div style="margin-left:auto;text-align:center;padding:0.5rem 0.75rem;background:var(--surface);border-radius:8px">
+              <div style="font-size:1.2rem;font-weight:700" id="progFitnessScore">--</div>
+              <div style="font-size:0.65rem;color:var(--muted)">FITNESS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly program -->
+        <div class="card" id="dogProgramCard">
+          <div class="card-title">Weekly Walk Plan</div>
+          <div id="dogProgramContent"></div>
+        </div>
+
+        <!-- Walk Reminders -->
+        <div class="card">
+          <div class="card-title">Walk Reminders</div>
+          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem">Get reminded when it's time to walk. We'll send notifications based on your dog's program.</p>
+
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:0.5rem;text-transform:none;font-size:0.9rem;color:var(--text);cursor:pointer">
+              <input type="checkbox" id="dogReminderOptIn" style="display:inline;width:auto;accent-color:var(--accent)" onchange="toggleDogReminders()">
+              Yes, remind me about walks
+            </label>
+          </div>
+
+          <div id="dogReminderSettings" style="display:none">
+            <div class="field">
+              <label style="display:flex;align-items:center;gap:0.5rem;text-transform:none;font-size:0.85rem;color:var(--text);cursor:pointer">
+                <input type="checkbox" id="dogNotifPermission" style="display:inline;width:auto;accent-color:var(--accent)" onchange="requestNotifPermission()">
+                Allow browser notifications
+              </label>
+              <div class="help" id="dogNotifStatus">Required to receive reminders</div>
+            </div>
+
+            <div class="field">
+              <label>Morning walk time</label>
+              <div class="radio-row">
+                <label><input type="radio" name="dogWalkAM" value="6:00"><span class="radio-pill">6 AM</span></label>
+                <label><input type="radio" name="dogWalkAM" value="7:00" checked><span class="radio-pill">7 AM</span></label>
+                <label><input type="radio" name="dogWalkAM" value="8:00"><span class="radio-pill">8 AM</span></label>
+                <label><input type="radio" name="dogWalkAM" value="none"><span class="radio-pill">Skip</span></label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Evening walk time</label>
+              <div class="radio-row">
+                <label><input type="radio" name="dogWalkPM" value="17:00"><span class="radio-pill">5 PM</span></label>
+                <label><input type="radio" name="dogWalkPM" value="18:00" checked><span class="radio-pill">6 PM</span></label>
+                <label><input type="radio" name="dogWalkPM" value="19:00"><span class="radio-pill">7 PM</span></label>
+                <label><input type="radio" name="dogWalkPM" value="none"><span class="radio-pill">Skip</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar Reminder -->
+        <div class="card">
+          <div class="card-title">Calendar Reminder</div>
+          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem">Add recurring walk events to your calendar.</p>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="addDogWalkToCalendar('google')">Google Calendar</button>
+            <button class="btn btn-secondary" onclick="addDogWalkToCalendar('ics')">Apple / iCal</button>
+          </div>
+          <div id="calendarConfirm" style="display:none;font-size:0.8rem;color:var(--green);margin-top:0.5rem;text-align:center"></div>
+        </div>
+
+        <button class="btn btn-primary" onclick="startDogWalkLog()">Log a Dog Walk Now</button>
+        <button class="btn btn-secondary" onclick="backToLogSelect()">Back to Activities</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BENCHMARK PAGE (optional fitness tests) ===== -->
+  <div class="page" id="page-test">
+    <h2 id="testGreeting">Benchmark</h2>
+    <p class="page-sub">Optional. Test yourself when you're ready.</p>
+
+    <div id="test-select">
+      <div class="card benchmark-card selected" onclick="selectBenchmark('garage')">
+        <div class="bm-header">
+          <span class="bm-name">The Garage Test</span>
+          <span class="bm-tag">12 min AMRAP</span>
+        </div>
+        <p class="bm-desc">As many rounds as possible. No equipment needed.</p>
+        <div class="bm-movements">
+          <div class="bm-move"><span class="bm-move-num">1</span> 10 Burpees</div>
+          <div class="bm-move"><span class="bm-move-num">2</span> 20 Air Squats</div>
+          <div class="bm-move"><span class="bm-move-num">3</span> 10 Pushups</div>
+          <div class="bm-move"><span class="bm-move-num">4</span> 20 Lunges (10 each)</div>
+          <div class="bm-move"><span class="bm-move-num">5</span> 10 Mountain Climbers</div>
+        </div>
+      </div>
+
+      <div class="card benchmark-card" onclick="selectBenchmark('cooper')">
+        <div class="bm-header">
+          <span class="bm-name">Cooper Test</span>
+          <span class="bm-tag">12 min run</span>
+        </div>
+        <p class="bm-desc">Run as far as possible in 12 minutes. Estimates VO2max.</p>
+      </div>
+
+      <div class="card benchmark-card" onclick="selectBenchmark('cycling')">
+        <div class="bm-header">
+          <span class="bm-name">Cycling Benchmark</span>
+          <span class="bm-tag">Timed route</span>
+        </div>
+        <p class="bm-desc">Road or MTB. Pick your route, record your time. Compare each attempt.</p>
+      </div>
+
+      <div id="nearby-spots" class="card" style="display:none">
+        <div class="card-title">Nearby Spots</div>
+        <div id="spots-content"><div class="spot-loading">Enter your zip code in Profile to see recommendations</div></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="startBenchmark()">Start Test</button>
+    </div>
+
+    <!-- Garage Test Timer -->
+    <div id="test-garage" style="display:none">
+      <div class="timer-display">
+        <div class="timer-time" id="timerDisplay">12:00</div>
+        <div class="timer-label">Round <span id="currentRound">1</span></div>
+      </div>
+      <div class="timer-protocol" id="timerProtocol">
+        <div class="timer-move current" data-move="0">10 Burpees</div>
+        <div class="timer-move" data-move="1">20 Air Squats</div>
+        <div class="timer-move" data-move="2">10 Pushups</div>
+        <div class="timer-move" data-move="3">20 Lunges</div>
+        <div class="timer-move" data-move="4">10 Mountain Climbers</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="timerStartBtn" onclick="toggleTimer()">Start</button>
+        <button class="btn btn-primary" onclick="showGarageInput()">Log Result</button>
+      </div>
+    </div>
+
+    <!-- Garage Input -->
+    <div id="test-garage-input" style="display:none">
+      <div class="card">
+        <div class="card-title">Record Your Score</div>
+        <div class="field">
+          <label>Full Rounds Completed</label>
+          <input type="number" id="garageRounds" placeholder="e.g. 4" min="0">
+        </div>
+        <div class="field">
+          <label>Extra Reps (beyond last full round)</label>
+          <input type="number" id="garageExtra" placeholder="e.g. 25" min="0" max="69">
+          <div class="help">0-69 (70 reps = 1 full round)</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="submitGarage()">Save Score</button>
+      <button class="btn btn-secondary" onclick="backToSelect()">Cancel</button>
+    </div>
+
+    <!-- Cooper Input -->
+    <div id="test-cooper" style="display:none">
+      <div class="card">
+        <div class="card-title">Cooper Test — 12 Minute Run</div>
+        <p class="bm-desc" style="margin-bottom:1rem">Run as far as you can in 12 minutes. Record the total distance.</p>
+        <div class="field">
+          <label>Distance</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="cooperDist" placeholder="e.g. 1.5" step="0.01" style="flex:1">
+            <select id="cooperUnit" style="width:80px">
+              <option value="miles">mi</option>
+              <option value="meters">m</option>
+              <option value="km">km</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="submitCooper()">Save Score</button>
+      <button class="btn btn-secondary" onclick="backToSelect()">Cancel</button>
+    </div>
+
+    <!-- Cycling Input -->
+    <div id="test-cycling" style="display:none">
+      <div class="card">
+        <div class="card-title">Cycling Benchmark</div>
+        <div class="field">
+          <label>Route Name</label>
+          <input type="text" id="cycleRoute" placeholder="e.g. Lake Loop, Slaughter Pen">
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <div class="radio-row">
+            <label><input type="radio" name="cycleType" value="road" checked><span class="radio-pill">Road</span></label>
+            <label><input type="radio" name="cycleType" value="mtb"><span class="radio-pill">MTB</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Time (mm:ss)</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="cycleMin" placeholder="min" min="0" style="flex:1">
+            <input type="number" id="cycleSec" placeholder="sec" min="0" max="59" style="flex:1">
+          </div>
+        </div>
+        <div class="field">
+          <label>Distance</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="cycleDist" placeholder="e.g. 12.5" step="0.1" style="flex:1">
+            <select id="cycleDistUnit" style="width:80px">
+              <option value="miles">mi</option>
+              <option value="km">km</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Strava Activity Link (optional)</label>
+          <input type="text" id="cycleStrava" placeholder="https://strava.com/activities/...">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="submitCycling()">Save Score</button>
+      <button class="btn btn-secondary" onclick="backToSelect()">Cancel</button>
+    </div>
+
+    <!-- ===== FITNESS JOURNAL (always visible below test select) ===== -->
+    <div id="fitness-journal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;margin-bottom:0.75rem">
+        <h2 style="font-size:1.1rem">Fitness Journal</h2>
+        <button class="btn btn-primary" style="width:auto;padding:0.5rem 1rem;font-size:0.8rem" onclick="showJournalForm()">+ Log Workout</button>
+      </div>
+
+      <!-- Journal quick stats -->
+      <div id="journal-stats" class="card" style="display:none">
+        <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="stat-box">
+            <div class="stat-val" id="jStatTests">0</div>
+            <div class="stat-lbl">Tests</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="jStatWorkouts">0</div>
+            <div class="stat-lbl">Workouts</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="jStatStreak">0</div>
+            <div class="stat-lbl">Day Streak</div>
+          </div>
+        </div>
+        <div id="jStatNextTest" style="font-size:0.8rem;color:var(--muted);text-align:center;margin-top:0.5rem"></div>
+      </div>
+
+      <!-- Journal entry form (hidden by default) -->
+      <div id="journal-form" class="card" style="display:none">
+        <div class="card-title">Log Workout</div>
+        <div class="field">
+          <label>What did you do?</label>
+          <div class="radio-row" style="flex-wrap:wrap">
+            <label><input type="radio" name="jType" value="garage_practice" checked><span class="radio-pill">Garage Moves</span></label>
+            <label><input type="radio" name="jType" value="run"><span class="radio-pill">Run</span></label>
+            <label><input type="radio" name="jType" value="ride"><span class="radio-pill">Ride</span></label>
+            <label><input type="radio" name="jType" value="strength"><span class="radio-pill">Strength</span></label>
+            <label><input type="radio" name="jType" value="other"><span class="radio-pill">Other</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Duration (minutes)</label>
+          <input type="number" id="jDuration" placeholder="e.g. 30" min="1">
+        </div>
+        <div class="field" id="jDistField">
+          <label>Distance (optional)</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="jDist" placeholder="e.g. 3.1" step="0.1" style="flex:1">
+            <select id="jDistUnit" style="width:80px">
+              <option value="mi">mi</option>
+              <option value="km">km</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>How did it feel?</label>
+          <div class="radio-row">
+            <label><input type="radio" name="jFeel" value="hard"><span class="radio-pill">Hard</span></label>
+            <label><input type="radio" name="jFeel" value="moderate" checked><span class="radio-pill">Moderate</span></label>
+            <label><input type="radio" name="jFeel" value="easy"><span class="radio-pill">Easy</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Notes</label>
+          <input type="text" id="jNotes" placeholder="e.g. Burpees felt faster, legs were heavy">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitJournalEntry()">Save</button>
+          <button class="btn btn-secondary" onclick="hideJournalForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Journal timeline -->
+      <div id="journal-entries"></div>
+
+      <div id="journal-empty" class="empty-state" style="padding:1.5rem">
+        <p>No entries yet.</p>
+        <p style="font-size:0.8rem">Take a fitness test or log a workout to start your journal.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS PAGE ===== -->
+  <div class="page" id="page-results">
+    <h2>Results</h2>
+    <p class="page-sub">Everything you've logged</p>
+
+    <div id="results-chart" class="card" style="display:none">
+      <div class="card-title">Score Trend</div>
+      <div class="chart-area">
+        <div class="chart-bars" id="chartBars"></div>
+      </div>
+    </div>
+
+    <div id="results-list"></div>
+
+    <div id="results-empty" class="empty-state">
+      <p>Nothing logged yet.</p>
+      <p style="font-size:0.8rem">Log a walk or complete a benchmark to get started.</p>
+    </div>
+  </div>
+
+  <!-- ===== TRAINING PAGE ===== -->
+  <div class="page" id="page-training">
+    <h2>Training</h2>
+    <p class="page-sub">Recent activity from Apple Health &amp; Strava</p>
+
+    <div class="card">
+      <div class="connect-card">
+        <div class="connect-icon" style="background:rgba(239,68,68,0.15)">❤️</div>
+        <div class="connect-info">
+          <div class="connect-name">Apple Health</div>
+          <div class="connect-status" id="appleStatus">Not connected</div>
+        </div>
+        <button class="connect-btn" id="appleBtn" onclick="connectAppleHealth()">Connect</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="connect-card">
+        <div class="connect-icon" style="background:rgba(249,115,22,0.15)">🏃</div>
+        <div class="connect-info">
+          <div class="connect-name">Strava</div>
+          <div class="connect-status" id="stravaStatus">Not connected</div>
+        </div>
+        <button class="connect-btn" id="stravaBtn" onclick="connectStrava()">Connect</button>
+      </div>
+    </div>
+
+    <div id="training-summary" class="card" style="display:none">
+      <div class="card-title">This Week</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-val" id="weekWorkouts">0</div><div class="stat-lbl">Workouts</div></div>
+        <div class="stat-box"><div class="stat-val" id="weekDuration">0</div><div class="stat-lbl">Minutes</div></div>
+      </div>
+    </div>
+
+    <div id="training-log"></div>
+
+    <div id="training-empty" class="empty-state">
+      <p>Connect Apple Health or Strava to see your training log.</p>
+      <p style="font-size:0.8rem">We'll compare your daily training against your benchmark scores.</p>
+    </div>
+
+  </div>
+
+  <!-- ===== PROFILE PAGE ===== -->
+  <div class="page" id="page-profile">
+    <h2>Profile</h2>
+    <p class="page-sub">Your info for scoring benchmarks</p>
+
+    <div class="card">
+      <div class="card-title">Identity</div>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="profileName" placeholder="e.g. Andrew">
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="padding:0.7rem 0 0.7rem 0.9rem;background:var(--surface);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;color:var(--muted);font-size:0.95rem">@</span>
+          <input type="text" id="profileUsername" placeholder="e.g. ariley" style="border-radius:0 8px 8px 0" autocomplete="off" autocapitalize="off">
+        </div>
+        <div class="help">Your unique handle for leaderboards and sharing</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Body</div>
+      <div class="field">
+        <label>Sex</label>
+        <div class="radio-row">
+          <label><input type="radio" name="profileSex" value="male"><span class="radio-pill">Male</span></label>
+          <label><input type="radio" name="profileSex" value="female"><span class="radio-pill">Female</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Age</label>
+        <input type="number" id="profileAge" placeholder="e.g. 35" min="16" max="80">
+      </div>
+      <div class="field">
+        <label>Waist (inches)</label>
+        <input type="number" id="profileWaist" placeholder="e.g. 34" step="0.5">
+      </div>
+      <div class="field">
+        <label>Resting Heart Rate (bpm)</label>
+        <input type="number" id="profileHR" placeholder="e.g. 65" min="20" max="120">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Dog Profile</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">For tracking dog walks. We'll tailor walk suggestions to your pup.</p>
+      <div class="field">
+        <label>Dog's Name</label>
+        <input type="text" id="dogName" placeholder="e.g. Max">
+      </div>
+      <div class="field">
+        <label>Breed</label>
+        <input type="text" id="dogBreed" placeholder="e.g. Golden Retriever" list="breedList">
+        <datalist id="breedList">
+          <option value="Labrador Retriever">
+          <option value="Golden Retriever">
+          <option value="German Shepherd">
+          <option value="French Bulldog">
+          <option value="Bulldog">
+          <option value="Poodle">
+          <option value="Beagle">
+          <option value="Rottweiler">
+          <option value="Dachshund">
+          <option value="German Shorthaired Pointer">
+          <option value="Pembroke Welsh Corgi">
+          <option value="Australian Shepherd">
+          <option value="Yorkshire Terrier">
+          <option value="Boxer">
+          <option value="Cavalier King Charles Spaniel">
+          <option value="Doberman Pinscher">
+          <option value="Great Dane">
+          <option value="Miniature Schnauzer">
+          <option value="Siberian Husky">
+          <option value="Bernese Mountain Dog">
+          <option value="Shih Tzu">
+          <option value="Boston Terrier">
+          <option value="Pomeranian">
+          <option value="Havanese">
+          <option value="Border Collie">
+          <option value="Shetland Sheepdog">
+          <option value="Brittany">
+          <option value="English Springer Spaniel">
+          <option value="Cocker Spaniel">
+          <option value="Chihuahua">
+          <option value="Vizsla">
+          <option value="Maltese">
+          <option value="Weimaraner">
+          <option value="Rhodesian Ridgeback">
+          <option value="Belgian Malinois">
+          <option value="Pit Bull">
+          <option value="Mixed Breed">
+        </datalist>
+      </div>
+      <div class="field">
+        <label>Weight (lbs)</label>
+        <input type="number" id="dogWeight" placeholder="e.g. 65" min="1" max="300" step="1">
+      </div>
+      <div class="field">
+        <label>Age (years)</label>
+        <input type="number" id="dogAge" placeholder="e.g. 3" min="0" max="25" step="0.5">
+      </div>
+      <div id="dogWalkRec" style="display:none;margin-top:0.75rem;padding:0.75rem;background:var(--surface);border-radius:8px;font-size:0.85rem;line-height:1.5"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Location</div>
+      <div class="field">
+        <label>Zip Code</label>
+        <input type="text" id="profileZip" placeholder="e.g. 72712" maxlength="5" inputmode="numeric" pattern="[0-9]{5}">
+        <div class="help">Used to recommend nearby parks, trails, and running routes</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daily Motivation</div>
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="tel" id="profilePhone" placeholder="e.g. (479) 555-1234">
+        <div class="help">Get a daily text with your streak, next benchmark reminder, and a push to train</div>
+      </div>
+      <div class="field">
+        <label>Message Time</label>
+        <div class="radio-row">
+          <label><input type="radio" name="msgTime" value="6am"><span class="radio-pill">6 AM</span></label>
+          <label><input type="radio" name="msgTime" value="7am"><span class="radio-pill">7 AM</span></label>
+          <label><input type="radio" name="msgTime" value="8am"><span class="radio-pill">8 AM</span></label>
+          <label><input type="radio" name="msgTime" value="none"><span class="radio-pill">Off</span></label>
+        </div>
+      </div>
+      <div id="smsPreview" style="margin-top:0.75rem"></div>
+      <div id="twilioStatus" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="previewSMS()">Preview Message</button>
+        <button class="btn btn-primary" onclick="sendTestSMS()">Send Test SMS</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+    <button class="btn btn-danger" onclick="clearAll()">Clear All Data</button>
+  </div>
+
+<script>
+// ─── State ───
+let selectedBenchmark = 'garage';
+let selectedActivity = 'walk';
+let timerInterval = null;
+let timerRunning = false;
+let timerSeconds = 720;
+
+function getProfile() { return JSON.parse(localStorage.getItem('ft_profile') || '{}'); }
+function getHistory() { return JSON.parse(localStorage.getItem('ft_history') || '[]'); }
+function getTraining() { return JSON.parse(localStorage.getItem('ft_training') || '[]'); }
+
+// ─── Navigation ───
+const NAV_MAP = { 'log': 'log', 'benchmark': 'test', 'results': 'results', 'training': 'training', 'profile': 'profile' };
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.remove('active');
+    const btnPage = NAV_MAP[b.textContent.toLowerCase()] || b.textContent.toLowerCase();
+    if (btnPage === name) b.classList.add('active');
+  });
+  if (name === 'log') updateLogGreeting();
+  if (name === 'test') { updateGreeting(); renderJournal(); }
+  if (name === 'results') renderResults();
+  if (name === 'training') renderTraining();
+  if (name === 'profile') loadProfile();
+}
+
+// ─── Activity Logging (walk, dog walk, run, ride, workout) ───
+function selectActivity(type) {
+  selectedActivity = type;
+  document.querySelectorAll('#log-select .benchmark-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  if (type === 'dog_walk') {
+    showDogTraining();
+    return;
+  }
+  startActivity();
+}
+
+const ACTIVITY_LABELS = { walk: 'Walk', dog_walk: 'Dog Walk', run: 'Run', ride: 'Ride', workout: 'Workout' };
+const ACTIVITY_ICONS = { walk: '🚶', dog_walk: '🐕', run: '🏃', ride: '🚴', workout: '💪' };
+
+function startActivity() {
+  document.getElementById('log-select').style.display = 'none';
+  document.getElementById('log-form').style.display = 'block';
+  document.getElementById('logFormTitle').textContent = ACTIVITY_LABELS[selectedActivity] || 'Activity';
+  // Show/hide distance field for workouts
+  document.getElementById('logDistField').style.display = selectedActivity === 'workout' ? 'none' : 'block';
+  document.getElementById('logName').value = '';
+  document.getElementById('logDist').value = '';
+  document.getElementById('logDuration').value = '';
+  document.getElementById('logNotes').value = '';
+  // Default placeholder based on type
+  const namePh = { walk: 'e.g. Morning loop', dog_walk: 'e.g. Bark Park with Max', run: 'e.g. Easy 5k', ride: 'e.g. Greenway out-and-back', workout: 'e.g. Pushups and squats' };
+  document.getElementById('logName').placeholder = namePh[selectedActivity] || '';
+}
+
+function backToLogSelect() {
+  document.getElementById('log-form').style.display = 'none';
+  document.getElementById('log-select').style.display = 'block';
+}
+
+function submitActivity() {
+  const duration = parseInt(document.getElementById('logDuration').value);
+  if (!duration) { alert('Enter how long it took (minutes).'); return; }
+
+  const dist = parseFloat(document.getElementById('logDist').value) || 0;
+  const unit = document.getElementById('logDistUnit').value;
+  const name = document.getElementById('logName').value.trim() || ACTIVITY_LABELS[selectedActivity];
+  const notes = document.getElementById('logNotes').value.trim();
+
+  const entry = {
+    type: selectedActivity === 'dog_walk' ? 'walk' : selectedActivity,
+    subtype: selectedActivity === 'dog_walk' ? 'dog_walk' : null,
+    name: name,
+    date: new Date().toISOString(),
+    duration_min: duration,
+    distance: dist || null,
+    unit: dist ? unit : null,
+    notes: notes || null,
+    source: 'manual',
+  };
+
+  const training = getTraining();
+  training.unshift(entry);
+  localStorage.setItem('ft_training', JSON.stringify(training));
+  backToLogSelect();
+  showPage('results');
+}
+
+function updateLogGreeting() {
+  const p = getProfile();
+  const el = document.getElementById('logGreeting');
+  el.textContent = p.name ? 'Hey ' + p.name : 'Log Activity';
+
+  const dog = getDogProfile();
+  if (dog.name) {
+    document.getElementById('dogWalkLabel').textContent = 'Dog Walk with ' + dog.name;
+    document.getElementById('dogWalkTag').textContent = dog.breed || 'Good boy';
+    const rec = getDogWalkRec(dog);
+    if (rec) {
+      document.getElementById('dogWalkDesc').textContent = '~' + rec.mins + ' min / ' + rec.miles + ' mi at a ' + rec.pace + ' pace.';
+    }
+  }
+}
+
+// ─── Benchmark Selection ───
+function selectBenchmark(type) {
+  selectedBenchmark = type;
+  document.querySelectorAll('#test-select .benchmark-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+function startBenchmark() {
+  document.getElementById('test-select').style.display = 'none';
+  if (selectedBenchmark === 'garage') {
+    document.getElementById('test-garage').style.display = 'block';
+    resetTimer();
+  } else if (selectedBenchmark === 'cooper') {
+    document.getElementById('test-cooper').style.display = 'block';
+  } else {
+    document.getElementById('test-cycling').style.display = 'block';
+  }
+}
+
+function backToSelect() {
+  ['test-garage','test-garage-input','test-cooper','test-cycling'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('test-select').style.display = 'block';
+  if (timerInterval) { clearInterval(timerInterval); timerRunning = false; }
+  renderJournal();
+}
+
+// ─── Fitness Journal ───
+function getJournal() { return JSON.parse(localStorage.getItem('ft_journal') || '[]'); }
+
+function showJournalForm() {
+  document.getElementById('journal-form').style.display = 'block';
+  document.getElementById('jDuration').value = '';
+  document.getElementById('jDist').value = '';
+  document.getElementById('jNotes').value = '';
+}
+
+function hideJournalForm() {
+  document.getElementById('journal-form').style.display = 'none';
+}
+
+function submitJournalEntry() {
+  const type = document.querySelector('input[name="jType"]:checked')?.value || 'other';
+  const duration = parseInt(document.getElementById('jDuration').value);
+  if (!duration) { alert('Enter how long it took.'); return; }
+  const dist = parseFloat(document.getElementById('jDist').value) || null;
+  const unit = dist ? document.getElementById('jDistUnit').value : null;
+  const feel = document.querySelector('input[name="jFeel"]:checked')?.value || 'moderate';
+  const notes = document.getElementById('jNotes').value.trim() || null;
+
+  const entry = {
+    id: Date.now(),
+    kind: 'workout',
+    type,
+    date: new Date().toISOString(),
+    duration_min: duration,
+    distance: dist,
+    unit,
+    feel,
+    notes,
+  };
+
+  const journal = getJournal();
+  journal.unshift(entry);
+  localStorage.setItem('ft_journal', JSON.stringify(journal));
+  hideJournalForm();
+  renderJournal();
+}
+
+function logBenchmarkToJournal(benchmarkEntry) {
+  const typeMap = { garage: 'Garage Test', cooper: 'Cooper Test', cycling: 'Cycling Benchmark' };
+  const entry = {
+    id: Date.now(),
+    kind: 'test',
+    type: benchmarkEntry.type,
+    date: benchmarkEntry.date,
+    label: typeMap[benchmarkEntry.type] || benchmarkEntry.type,
+    score: benchmarkEntry.score,
+    rating: benchmarkEntry.rating,
+    detail: benchmarkEntry,
+  };
+  const journal = getJournal();
+  journal.unshift(entry);
+  localStorage.setItem('ft_journal', JSON.stringify(journal));
+}
+
+function renderJournal() {
+  const journal = getJournal();
+  const history = getHistory();
+  const entries = document.getElementById('journal-entries');
+  const empty = document.getElementById('journal-empty');
+  const stats = document.getElementById('journal-stats');
+
+  if (!journal.length) {
+    entries.innerHTML = '';
+    empty.style.display = 'block';
+    stats.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  stats.style.display = 'block';
+
+  // Stats
+  const tests = journal.filter(j => j.kind === 'test').length;
+  const workouts = journal.filter(j => j.kind === 'workout').length;
+  document.getElementById('jStatTests').textContent = tests;
+  document.getElementById('jStatWorkouts').textContent = workouts;
+
+  // Streak
+  const today = new Date(); today.setHours(0,0,0,0);
+  let streak = 0;
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(today.getTime() - i * 86400000).toISOString().slice(0, 10);
+    const has = journal.some(j => j.date.slice(0, 10) === d);
+    if (has) streak++;
+    else if (i > 0) break;
+  }
+  document.getElementById('jStatStreak').textContent = streak;
+
+  // Next test nudge
+  const lastTest = journal.find(j => j.kind === 'test');
+  const nextEl = document.getElementById('jStatNextTest');
+  if (!lastTest) {
+    nextEl.textContent = 'Take your first fitness test to set a baseline.';
+  } else {
+    const days = Math.floor((Date.now() - new Date(lastTest.date).getTime()) / 86400000);
+    if (days >= 14) {
+      nextEl.innerHTML = '<span style="color:var(--accent)">It\'s been ' + days + ' days. Time to retest!</span>';
+    } else {
+      nextEl.textContent = 'Last test ' + days + ' day' + (days !== 1 ? 's' : '') + ' ago. Retest in ' + (14 - days) + ' days.';
+    }
+  }
+
+  // Group by date
+  const groups = {};
+  journal.forEach(j => {
+    const d = new Date(j.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(j);
+  });
+
+  const typeIcons = { garage: '🏋️', cooper: '🏃', cycling: '🚴', garage_practice: '💪', run: '🏃', ride: '🚴', strength: '🏋️', other: '⚡' };
+  const typeLabels = { garage_practice: 'Garage Moves Practice', run: 'Run', ride: 'Ride', strength: 'Strength', other: 'Workout', garage: 'Garage Test', cooper: 'Cooper Test', cycling: 'Cycling Benchmark' };
+
+  let html = '';
+  for (const [date, items] of Object.entries(groups)) {
+    html += '<div class="j-date-group">' + date + '</div>';
+    html += '<div class="card" style="padding:0.25rem 0.75rem">';
+    for (const j of items) {
+      const icon = typeIcons[j.type] || '📋';
+      const iconCls = j.kind === 'test' ? 'test' : (j.type === 'run' ? 'run' : j.type === 'ride' ? 'ride' : 'workout');
+
+      if (j.kind === 'test') {
+        const label = typeLabels[j.type] || j.label || 'Test';
+        html += '<div class="j-entry">';
+        html += '<div class="j-entry-header">';
+        html += '<div class="j-entry-icon test">' + icon + '</div>';
+        html += '<div><div class="j-entry-title">' + label + '</div>';
+        html += '<div class="j-entry-meta">Score: <strong>' + (j.score || '--') + '</strong> — ' + (j.rating || '') + '</div>';
+        html += '</div></div>';
+        if (j.detail) {
+          html += '<div class="j-entry-body"><div class="j-entry-stats">';
+          if (j.detail.totalReps) html += '<div class="j-entry-stat">' + j.detail.totalReps + ' <span>reps</span></div>';
+          if (j.detail.rounds !== undefined) html += '<div class="j-entry-stat">' + j.detail.rounds + '+' + (j.detail.extra || 0) + ' <span>rounds</span></div>';
+          if (j.detail.distance_m) html += '<div class="j-entry-stat">' + (j.detail.distance_m / 1609.34).toFixed(2) + ' <span>mi</span></div>';
+          if (j.detail.vo2max) html += '<div class="j-entry-stat">' + j.detail.vo2max + ' <span>VO2max</span></div>';
+          html += '</div></div>';
+        }
+        html += '</div>';
+      } else {
+        const label = typeLabels[j.type] || 'Workout';
+        html += '<div class="j-entry">';
+        html += '<div class="j-entry-header">';
+        html += '<div class="j-entry-icon ' + iconCls + '">' + icon + '</div>';
+        html += '<div><div class="j-entry-title">' + label + '<span class="j-feel ' + j.feel + '">' + j.feel + '</span></div>';
+        html += '<div class="j-entry-meta">' + j.duration_min + ' min';
+        if (j.distance) html += ' · ' + j.distance + ' ' + j.unit;
+        html += '</div></div></div>';
+        if (j.notes) {
+          html += '<div class="j-entry-body"><div class="j-entry-note">"' + j.notes + '"</div></div>';
+        }
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+  }
+  entries.innerHTML = html;
+}
+
+// ─── Timer ───
+function resetTimer() {
+  timerSeconds = 720;
+  timerRunning = false;
+  updateTimerDisplay();
+  document.getElementById('timerStartBtn').textContent = 'Start';
+  document.getElementById('currentRound').textContent = '1';
+  highlightMove(0);
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timerStartBtn').textContent = 'Resume';
+  } else {
+    timerRunning = true;
+    document.getElementById('timerStartBtn').textContent = 'Pause';
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timerStartBtn').textContent = 'Done';
+        showGarageInput();
+      }
+    }, 1000);
+  }
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  document.getElementById('timerDisplay').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function highlightMove(idx) {
+  document.querySelectorAll('.timer-move').forEach((el, i) => {
+    el.classList.toggle('current', i === idx);
+  });
+}
+
+function showGarageInput() {
+  document.getElementById('test-garage').style.display = 'none';
+  document.getElementById('test-garage-input').style.display = 'block';
+  if (timerInterval) { clearInterval(timerInterval); timerRunning = false; }
+}
+
+// ─── Scoring (client-side mirrors of Python module) ───
+const GARAGE_MALE = { 20:[140,210,280,350,420,490], 30:[130,195,260,325,385,455], 40:[115,175,235,295,350,420], 50:[100,155,210,265,315,385], 60:[85,135,185,235,280,350], 70:[70,110,155,200,245,310] };
+const GARAGE_FEMALE = { 20:[105,165,225,280,340,400], 30:[100,155,210,260,315,375], 40:[90,140,190,240,285,345], 50:[80,125,170,215,260,315], 60:[70,110,150,190,230,280], 70:[55,90,125,165,200,250] };
+const RATINGS = ['Poor', 'Below Average', 'Average', 'Good', 'Excellent', 'Elite'];
+
+function garageScore(totalReps, age, sex) {
+  const table = sex === 'male' ? GARAGE_MALE : GARAGE_FEMALE;
+  const decade = Math.min(70, Math.max(20, Math.floor(age / 10) * 10));
+  const t = table[decade];
+  if (totalReps >= t[5]) return { score: 100, rating: RATINGS[5] };
+  if (totalReps <= t[0]) return { score: Math.max(0, Math.round(totalReps / t[0] * 16)), rating: RATINGS[0] };
+  for (let i = 0; i < 5; i++) {
+    if (totalReps < t[i+1]) {
+      const pct = (totalReps - t[i]) / (t[i+1] - t[i]);
+      return { score: Math.round((i+1)*16 + pct*16), rating: RATINGS[i] };
+    }
+  }
+  return { score: 100, rating: RATINGS[5] };
+}
+
+function cooperVO2(distM) { return (distM - 504.9) / 44.73; }
+
+function badgeClass(rating) {
+  const r = rating.toLowerCase();
+  if (r === 'elite' || r === 'superior') return 'badge-elite';
+  if (r === 'excellent') return 'badge-excellent';
+  if (r === 'good') return 'badge-good';
+  if (r === 'average' || r === 'fair') return 'badge-average';
+  if (r.includes('below') || r === 'poor') return 'badge-below';
+  return 'badge-poor';
+}
+
+// ─── Submit Benchmarks ───
+function submitGarage() {
+  const profile = getProfile();
+  if (!profile.age || !profile.sex) { alert('Set your profile first (age & sex).'); showPage('profile'); return; }
+  const rounds = parseInt(document.getElementById('garageRounds').value) || 0;
+  const extra = parseInt(document.getElementById('garageExtra').value) || 0;
+  const total = rounds * 70 + extra;
+  const { score, rating } = garageScore(total, profile.age, profile.sex);
+
+  const entry = { type: 'garage', date: new Date().toISOString(), rounds, extra, totalReps: total, score, rating };
+  const history = getHistory();
+  history.unshift(entry);
+  localStorage.setItem('ft_history', JSON.stringify(history));
+  logBenchmarkToJournal(entry);
+  backToSelect();
+}
+
+function submitCooper() {
+  const profile = getProfile();
+  if (!profile.age || !profile.sex) { alert('Set your profile first (age & sex).'); showPage('profile'); return; }
+  let dist = parseFloat(document.getElementById('cooperDist').value);
+  const unit = document.getElementById('cooperUnit').value;
+  if (!dist) { alert('Enter a distance.'); return; }
+  if (unit === 'miles') dist *= 1609.34;
+  else if (unit === 'km') dist *= 1000;
+
+  const vo2 = cooperVO2(dist);
+  const entry = { type: 'cooper', date: new Date().toISOString(), distance_m: Math.round(dist), vo2max: Math.round(vo2 * 10) / 10, score: Math.min(100, Math.round(vo2 * 1.8)), rating: vo2 >= 52 ? 'Superior' : vo2 >= 43 ? 'Excellent' : vo2 >= 35 ? 'Good' : vo2 >= 27 ? 'Fair' : 'Poor' };
+  const history = getHistory();
+  history.unshift(entry);
+  localStorage.setItem('ft_history', JSON.stringify(history));
+  logBenchmarkToJournal(entry);
+  backToSelect();
+}
+
+function submitCycling() {
+  const route = document.getElementById('cycleRoute').value || 'Unnamed Route';
+  const cType = document.querySelector('input[name="cycleType"]:checked')?.value || 'road';
+  const min = parseInt(document.getElementById('cycleMin').value) || 0;
+  const sec = parseInt(document.getElementById('cycleSec').value) || 0;
+  const totalSec = min * 60 + sec;
+  let dist = parseFloat(document.getElementById('cycleDist').value) || 0;
+  const distUnit = document.getElementById('cycleDistUnit').value;
+  const strava = document.getElementById('cycleStrava').value;
+
+  if (!totalSec) { alert('Enter a time.'); return; }
+
+  const entry = { type: 'cycling', subtype: cType, date: new Date().toISOString(), route, time_sec: totalSec, distance: dist, distance_unit: distUnit, strava_link: strava, speed: dist > 0 ? Math.round(dist / (totalSec / 3600) * 10) / 10 : null };
+  const history = getHistory();
+  history.unshift(entry);
+  localStorage.setItem('ft_history', JSON.stringify(history));
+  logBenchmarkToJournal(entry);
+  backToSelect();
+}
+
+// ─── Results Rendering ───
+function renderResults() {
+  const history = getHistory();
+  const training = getTraining();
+  const list = document.getElementById('results-list');
+  const empty = document.getElementById('results-empty');
+  const chart = document.getElementById('results-chart');
+
+  // Merge benchmarks + activities into one timeline
+  const all = [
+    ...history.map(h => ({ ...h, _src: 'benchmark' })),
+    ...training.map(t => ({ ...t, _src: 'activity' })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!all.length) { list.innerHTML = ''; empty.style.display = 'block'; chart.style.display = 'none'; return; }
+  empty.style.display = 'none';
+
+  // Chart (benchmarks only)
+  const garageHistory = history.filter(h => h.type === 'garage').slice(0, 12).reverse();
+  if (garageHistory.length >= 2) {
+    chart.style.display = 'block';
+    const bars = document.getElementById('chartBars');
+    const maxScore = Math.max(...garageHistory.map(h => h.score), 100);
+    bars.innerHTML = garageHistory.map((h, i) => {
+      const pct = (h.score / maxScore) * 100;
+      const color = h.score >= 80 ? 'var(--green)' : h.score >= 50 ? 'var(--accent)' : h.score >= 30 ? 'var(--yellow)' : 'var(--red)';
+      const d = new Date(h.date);
+      const label = `${d.getMonth()+1}/${d.getDate()}`;
+      return `<div class="chart-bar" style="height:${pct}%;background:${color}"><span class="chart-label">${label}</span></div>`;
+    }).join('');
+  } else { chart.style.display = 'none'; }
+
+  // Unified list
+  const icons = { garage: '🏋️', cooper: '🏃', cycling: '🚴', walk: '🚶', run: '🏃', ride: '🚴', workout: '💪' };
+
+  list.innerHTML = '<div class="card">' + all.slice(0, 30).map((h, i) => {
+    const d = new Date(h.date);
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    let typeLabel, scoreVal, detail;
+    const icon = icons[h.type] || icons[h.subtype] || '📋';
+
+    if (h._src === 'benchmark') {
+      if (h.type === 'garage') {
+        typeLabel = 'Garage Test';
+        scoreVal = h.score;
+        detail = `${h.rounds}+${h.extra} (${h.totalReps} reps) — ${h.rating}`;
+      } else if (h.type === 'cooper') {
+        typeLabel = 'Cooper Test';
+        scoreVal = h.score;
+        detail = `${(h.distance_m/1609.34).toFixed(2)} mi — VO2max ${h.vo2max}`;
+      } else {
+        typeLabel = `${h.subtype === 'mtb' ? 'MTB' : 'Road'}: ${h.route}`;
+        const m = Math.floor(h.time_sec / 60);
+        const s = h.time_sec % 60;
+        scoreVal = h.speed ? h.speed : '--';
+        detail = `${m}:${s.toString().padStart(2,'0')} — ${h.distance} ${h.distance_unit}${h.speed ? ' — ' + h.speed + ' mph avg' : ''}`;
+      }
+      // Change from previous same-type benchmark
+      let changeHtml = '';
+      const prevIdx = history.indexOf(h);
+      const prev = history.slice(prevIdx + 1).find(p => p.type === h.type && (h.type !== 'cycling' || p.route === h.route));
+      if (prev && h.type === 'garage') {
+        const diff = h.score - prev.score;
+        if (diff > 0) changeHtml = `<span class="hi-change hi-up">+${diff}</span>`;
+        else if (diff < 0) changeHtml = `<span class="hi-change hi-down">${diff}</span>`;
+      } else if (prev && h.type === 'cycling') {
+        const diff = prev.time_sec - h.time_sec;
+        if (diff > 0) changeHtml = `<span class="hi-change hi-up">-${diff}s</span>`;
+        else if (diff < 0) changeHtml = `<span class="hi-change hi-down">+${Math.abs(diff)}s</span>`;
+      }
+      return `<div class="history-item">
+        <div class="hi-score">${scoreVal}</div>
+        <div class="hi-detail"><div class="hi-type">${icon} ${typeLabel}</div><div class="hi-date">${dateStr} — ${detail}</div></div>
+        ${changeHtml}
+      </div>`;
+    } else {
+      // Activity (walk, run, ride, workout)
+      const label = h.subtype === 'dog_walk' ? '🐕 Dog Walk' : (icon + ' ' + (h.name || h.type));
+      const parts = [];
+      if (h.duration_min) parts.push(h.duration_min + ' min');
+      if (h.distance) parts.push(h.distance + ' ' + (h.unit || 'mi'));
+      if (h.hr_avg) parts.push(h.hr_avg + ' bpm');
+      if (h.calories) parts.push(h.calories + ' cal');
+      if (h.notes) parts.push(h.notes);
+      detail = parts.join(' · ');
+      const src = h.source === 'strava' ? ' · Strava' : h.source === 'apple_health' ? ' · Health' : '';
+
+      return `<div class="history-item">
+        <div class="hi-score" style="font-size:1rem;color:var(--muted)">✓</div>
+        <div class="hi-detail"><div class="hi-type">${label}</div><div class="hi-date">${dateStr} — ${detail}${src}</div></div>
+      </div>`;
+    }
+  }).join('') + '</div>';
+}
+
+// ─── Training ───
+function connectAppleHealth() {
+  document.getElementById('appleStatus').textContent = 'Connected (demo)';
+  document.getElementById('appleBtn').textContent = '✓';
+  document.getElementById('appleBtn').classList.add('connected');
+  addDemoTraining();
+}
+
+function connectStrava() {
+  window.open('/api/strava/connect', 'strava_auth', 'width=600,height=800');
+}
+
+async function checkStravaStatus() {
+  try {
+    const resp = await fetch('/api/strava/status');
+    const data = await resp.json();
+    if (data.connected) {
+      document.getElementById('stravaStatus').textContent = `Connected · ${data.athlete}`;
+      document.getElementById('stravaBtn').textContent = '✓';
+      document.getElementById('stravaBtn').classList.add('connected');
+      await loadStravaActivities();
+    }
+  } catch(e) {}
+}
+
+async function loadStravaActivities() {
+  try {
+    const resp = await fetch('/api/strava/activities?per_page=50');
+    const data = await resp.json();
+    if (data.activities) {
+      const training = data.activities.map(a => ({
+        type: a.type === 'ride' ? 'ride' : a.type === 'run' ? 'run' : a.type === 'walk' ? 'walk' : 'workout',
+        name: a.name,
+        date: a.date,
+        duration_min: a.duration_min,
+        distance: a.distance,
+        unit: 'mi',
+        hr_avg: a.avg_hr,
+        elevation: a.elevation_gain,
+        avg_speed: a.avg_speed_mph,
+        source: 'strava',
+      }));
+      localStorage.setItem('ft_training', JSON.stringify(training));
+      renderTraining();
+    }
+  } catch(e) { console.error('Strava fetch error:', e); }
+}
+
+window.addEventListener('message', (e) => {
+  if (e.data === 'strava_connected') {
+    checkStravaStatus();
+  }
+});
+
+function renderTraining() {
+  const training = getTraining();
+  const log = document.getElementById('training-log');
+  const empty = document.getElementById('training-empty');
+  const summary = document.getElementById('training-summary');
+
+  if (!training.length) { log.innerHTML = ''; empty.style.display = 'block'; summary.style.display = 'none'; return; }
+  empty.style.display = 'none';
+  summary.style.display = 'block';
+
+  // Week summary
+  const weekAgo = Date.now() - 7 * 86400000;
+  const thisWeek = training.filter(t => new Date(t.date).getTime() > weekAgo);
+  document.getElementById('weekWorkouts').textContent = thisWeek.length;
+  document.getElementById('weekDuration').textContent = thisWeek.reduce((s, t) => s + (t.duration_min || 0), 0);
+
+  // Group by week
+  const groups = {};
+  training.forEach(t => {
+    const d = new Date(t.date);
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - d.getDay());
+    const key = weekStart.toISOString().slice(0, 10);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(t);
+  });
+
+  log.innerHTML = Object.entries(groups).map(([week, items]) => {
+    const ws = new Date(week);
+    const header = `Week of ${ws.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    const rows = items.map(t => {
+      const icon = t.type === 'run' ? '🏃' : t.type === 'ride' ? '🚴' : '💪';
+      const iconCls = t.type;
+      const d = new Date(t.date);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const mainStat = t.distance ? `${t.distance} ${t.unit || 'mi'}` : `${t.duration_min} min`;
+      const parts = [`${t.duration_min} min`];
+      if (t.hr_avg) parts.push(`${t.hr_avg} avg bpm`);
+      if (t.elevation) parts.push(`${Math.round(t.elevation)} ft`);
+      if (t.avg_speed) parts.push(`${t.avg_speed} mph`);
+      const subStat = parts.join(' · ');
+      const src = t.source === 'strava' ? '⚡ Strava' : '❤️ Health';
+      return `<div class="tw-item">
+        <div class="tw-icon ${iconCls}">${icon}</div>
+        <div><div class="tw-name">${t.name}</div><div class="tw-meta">${dateStr} · ${src}</div></div>
+        <div class="tw-stats"><div class="tw-stat-main">${mainStat}</div><div class="tw-stat-sub">${subStat}</div></div>
+      </div>`;
+    }).join('');
+    return `<div class="training-week"><div class="tw-header">${header}</div><div class="card" style="padding:0.5rem 0.75rem">${rows}</div></div>`;
+  }).join('');
+}
+
+// ─── Profile ───
+function getDogProfile() { return JSON.parse(localStorage.getItem('ft_dog_profile') || '{}'); }
+
+function getDogWalkRec(dog) {
+  if (!dog.weight || !dog.age) return null;
+  const w = dog.weight;
+  const age = dog.age;
+  const breed = (dog.breed || '').toLowerCase();
+
+  let sizeClass, energyLevel;
+  if (w <= 15) sizeClass = 'small';
+  else if (w <= 40) sizeClass = 'medium';
+  else if (w <= 80) sizeClass = 'large';
+  else sizeClass = 'giant';
+
+  const highEnergy = ['border collie','australian shepherd','german shorthaired pointer','vizsla','weimaraner','belgian malinois','siberian husky','brittany','rhodesian ridgeback','labrador retriever','golden retriever','pit bull'];
+  const lowEnergy = ['bulldog','french bulldog','shih tzu','cavalier king charles spaniel','dachshund','chihuahua','maltese','pomeranian','boston terrier','havanese'];
+
+  if (highEnergy.some(b => breed.includes(b))) energyLevel = 'high';
+  else if (lowEnergy.some(b => breed.includes(b))) energyLevel = 'low';
+  else energyLevel = 'moderate';
+
+  let baseMins, baseMiles;
+  if (energyLevel === 'high') { baseMins = 60; baseMiles = 3.0; }
+  else if (energyLevel === 'low') { baseMins = 25; baseMiles = 1.0; }
+  else { baseMins = 40; baseMiles = 2.0; }
+
+  if (age < 1) { baseMins = Math.round(baseMins * 0.4); baseMiles = Math.round(baseMiles * 0.4 * 10) / 10; }
+  else if (age < 2) { baseMins = Math.round(baseMins * 0.7); baseMiles = Math.round(baseMiles * 0.7 * 10) / 10; }
+  else if (age >= 8 && sizeClass === 'giant') { baseMins = Math.round(baseMins * 0.5); baseMiles = Math.round(baseMiles * 0.5 * 10) / 10; }
+  else if (age >= 8 && sizeClass === 'large') { baseMins = Math.round(baseMins * 0.6); baseMiles = Math.round(baseMiles * 0.6 * 10) / 10; }
+  else if (age >= 10) { baseMins = Math.round(baseMins * 0.6); baseMiles = Math.round(baseMiles * 0.6 * 10) / 10; }
+
+  let walksPerDay = energyLevel === 'high' ? 2 : (energyLevel === 'low' ? 1 : 2);
+  if (age < 1 || age >= 10) walksPerDay = Math.max(1, walksPerDay);
+
+  let pace;
+  if (sizeClass === 'small' || age >= 10 || age < 1) pace = 'easy';
+  else if (energyLevel === 'high' && age >= 1 && age < 8) pace = 'brisk';
+  else pace = 'moderate';
+
+  const nameStr = dog.name || 'your dog';
+  let ageNote = '';
+  if (age < 1) ageNote = ' Puppies need shorter, more frequent walks to protect growing joints.';
+  else if (age >= 10) ageNote = ' Senior dogs do best with gentle, consistent walks. Watch for signs of fatigue.';
+
+  return {
+    mins: baseMins, miles: baseMiles, walksPerDay, pace, sizeClass, energyLevel, nameStr, ageNote
+  };
+}
+
+function updateDogWalkRec() {
+  const dog = getDogProfile();
+  const el = document.getElementById('dogWalkRec');
+  const rec = getDogWalkRec(dog);
+  if (!rec) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<strong>' + rec.nameStr + '\'s daily target:</strong> ~' + rec.mins + ' min / ' + rec.miles + ' mi per walk, ' + rec.walksPerDay + 'x daily at a ' + rec.pace + ' pace.' + (rec.ageNote ? '<br><span style="color:var(--muted)">' + rec.ageNote + '</span>' : '');
+}
+
+function saveDogProfile() {
+  const dog = {
+    name: document.getElementById('dogName').value.trim(),
+    breed: document.getElementById('dogBreed').value.trim(),
+    weight: parseFloat(document.getElementById('dogWeight').value) || null,
+    age: parseFloat(document.getElementById('dogAge').value) || null,
+  };
+  localStorage.setItem('ft_dog_profile', JSON.stringify(dog));
+  updateDogWalkRec();
+}
+
+function loadDogProfile() {
+  const d = getDogProfile();
+  if (d.name) document.getElementById('dogName').value = d.name;
+  if (d.breed) document.getElementById('dogBreed').value = d.breed;
+  if (d.weight) document.getElementById('dogWeight').value = d.weight;
+  if (d.age) document.getElementById('dogAge').value = d.age;
+  updateDogWalkRec();
+}
+
+['dogName','dogBreed','dogWeight','dogAge'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', saveDogProfile);
+});
+
+function saveProfile() {
+  const sex = document.querySelector('input[name="profileSex"]:checked')?.value;
+  const age = parseInt(document.getElementById('profileAge').value);
+  const waist = parseFloat(document.getElementById('profileWaist').value);
+  const hr = parseInt(document.getElementById('profileHR').value);
+  const zip = document.getElementById('profileZip').value.trim();
+  const name = document.getElementById('profileName').value.trim();
+  const username = document.getElementById('profileUsername').value.trim().replace(/^@/, '');
+  const phone = document.getElementById('profilePhone').value.trim();
+  const msgTime = document.querySelector('input[name="msgTime"]:checked')?.value || 'none';
+  if (!sex || !age) { alert('Sex and age are required.'); return; }
+  const oldProfile = getProfile();
+  localStorage.setItem('ft_profile', JSON.stringify({ name, username, sex, age, waist, resting_hr: hr, zip, phone, msgTime }));
+  saveDogProfile();
+  if (zip && zip !== oldProfile.zip) {
+    localStorage.removeItem('ft_spots');
+    fetchNearbySpots(zip);
+  }
+  alert('Profile saved.');
+}
+
+function loadProfile() {
+  const p = getProfile();
+  if (p.name) document.getElementById('profileName').value = p.name;
+  if (p.username) document.getElementById('profileUsername').value = p.username;
+  if (p.sex) document.querySelector(`input[name="profileSex"][value="${p.sex}"]`).checked = true;
+  if (p.age) document.getElementById('profileAge').value = p.age;
+  if (p.waist) document.getElementById('profileWaist').value = p.waist;
+  if (p.resting_hr) document.getElementById('profileHR').value = p.resting_hr;
+  if (p.zip) document.getElementById('profileZip').value = p.zip;
+  if (p.phone) document.getElementById('profilePhone').value = p.phone;
+  if (p.msgTime) { const r = document.querySelector(`input[name="msgTime"][value="${p.msgTime}"]`); if (r) r.checked = true; }
+}
+
+// ─── Route Recommendations (Nominatim + Overpass) ───
+async function fetchNearbySpots(zip) {
+  const spotsCard = document.getElementById('nearby-spots');
+  const content = document.getElementById('spots-content');
+  spotsCard.style.display = 'block';
+  content.innerHTML = '<div class="spot-loading">Searching near ' + zip + '...</div>';
+
+  try {
+    const geoRes = await fetch('https://nominatim.openstreetmap.org/search?postalcode=' + zip + '&country=US&format=json&limit=1', { headers: { 'User-Agent': 'FitnessToolsDemo/1.0' } });
+    const geo = await geoRes.json();
+    if (!geo.length) { content.innerHTML = '<div class="spot-loading">Zip code not found. Check your profile.</div>'; return; }
+
+    const lat = parseFloat(geo[0].lat);
+    const lon = parseFloat(geo[0].lon);
+    const locationName = geo[0].display_name.split(',').slice(0, 2).join(',');
+
+    const radius = 8000; // 8km ~5mi
+    const query = `[out:json][timeout:15];
+(
+  way["leisure"="park"](around:${radius},${lat},${lon});
+  relation["leisure"="park"](around:${radius},${lat},${lon});
+  way["leisure"="track"](around:${radius},${lat},${lon});
+  way["leisure"="fitness_station"](around:${radius},${lat},${lon});
+  node["leisure"="fitness_station"](around:${radius},${lat},${lon});
+);
+out center tags 60;`;
+
+    const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    const data = await overpassRes.json();
+
+    const seen = new Set();
+    const parks = [];
+    const tracks = [];
+    const fitness = [];
+
+    for (const el of data.elements) {
+      const t = el.tags || {};
+      const name = t.name;
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+
+      const c = el.center || el;
+      const clat = c.lat || lat;
+      const clon = c.lon || lon;
+      const dist = haversine(lat, lon, clat, clon);
+      const distMi = (dist / 1609.34).toFixed(1);
+
+      const tags = [];
+      if (t.sport) tags.push(t.sport);
+      if (t.surface) tags.push(t.surface);
+      if (t.lit === 'yes') tags.push('lit');
+      if (t.dog === 'yes') tags.push('dogs ok');
+      if (t.fee === 'no' || !t.fee) tags.push('free');
+
+      const item = { name, dist: parseFloat(distMi), distLabel: distMi + ' mi', tags, mapUrl: 'https://www.openstreetmap.org/?mlat=' + clat + '&mlon=' + clon + '#map=16/' + clat + '/' + clon };
+
+      if (t.leisure === 'fitness_station') fitness.push(item);
+      else if (t.leisure === 'track') tracks.push(item);
+      else if (t.leisure === 'park') parks.push(item);
+    }
+
+    [parks, tracks, fitness].forEach(a => a.sort((x, y) => x.dist - y.dist));
+
+    const allSpots = { parks: parks.slice(0, 6), tracks: tracks.slice(0, 4), fitness: fitness.slice(0, 3) };
+    localStorage.setItem('ft_spots', JSON.stringify({ zip, lat, lon, location: locationName, spots: allSpots }));
+    renderSpots(allSpots, locationName, lat, lon);
+
+  } catch (err) {
+    content.innerHTML = '<div class="spot-loading">Could not load spots. Try again later.</div>';
+    console.error('Spot fetch error:', err);
+  }
+}
+
+function renderSpots(spots, locationName, lat, lon) {
+  const content = document.getElementById('spots-content');
+  const card = document.getElementById('nearby-spots');
+  card.style.display = 'block';
+
+  // Pull lat/lon from cache if not passed directly (page load from localStorage)
+  if (!lat || !lon) {
+    const cached = JSON.parse(localStorage.getItem('ft_spots') || '{}');
+    lat = cached.lat;
+    lon = cached.lon;
+  }
+
+  let html = '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">Near ' + locationName + '</div>';
+
+  // ─── Trailforks + MTB Project ───
+  if (lat && lon) {
+    const tfUrl = 'https://www.trailforks.com/trails/map/?activitytype=1&z=12&lat=' + lat + '&lon=' + lon;
+    const mtbpUrl = 'https://www.mtbproject.com/trail-finder?lat=' + lat + '&lon=' + lon + '&zoom=12';
+    const tfEmbedUrl = 'https://www.trailforks.com/widgets/region_map/?lat=' + lat + '&lon=' + lon + '&z=12&w=100%25&h=280&activitytype=1&basemap=trailforks';
+
+    html += '<div class="spot-section-title">MTB & Cycling Trails</div>';
+    html += '<div class="trail-sources">';
+    html += '<a class="trail-source-btn tf" href="' + tfUrl + '" target="_blank" rel="noopener">🌲 Trailforks</a>';
+    html += '<a class="trail-source-btn mtbp" href="' + mtbpUrl + '" target="_blank" rel="noopener">🚵 MTB Project</a>';
+    html += '</div>';
+    html += '<iframe class="trailforks-embed" src="' + tfEmbedUrl + '" loading="lazy" title="Trailforks trail map"></iframe>';
+  }
+
+  // ─── Parks from OSM ───
+  function renderSection(title, icon, iconCls, items) {
+    if (!items.length) return '';
+    let s = '<div class="spot-section-title">' + title + '</div>';
+    s += items.map(sp => {
+      return '<div class="spot-card" onclick="window.open(\'' + sp.mapUrl + '\',\'_blank\')">' +
+        '<div class="spot-icon ' + iconCls + '">' + icon + '</div>' +
+        '<div class="spot-info"><div class="spot-name">' + sp.name + '</div>' +
+        (sp.tags.length ? '<div class="spot-tags">' + sp.tags.map(t => '<span class="spot-tag">' + t + '</span>').join('') + '</div>' : '') +
+        '</div>' +
+        '<div class="spot-dist">' + sp.distLabel + '</div>' +
+      '</div>';
+    }).join('');
+    return s;
+  }
+
+  html += renderSection('Parks (Garage Test / Cooper Test)', '🌳', 'park', spots.parks || []);
+  html += renderSection('Tracks', '🏟', 'track', spots.tracks || []);
+  html += renderSection('Outdoor Fitness Stations', '💪', 'path', spots.fitness || []);
+
+  const hasAnything = (lat && lon) || (spots.parks || []).length || (spots.tracks || []).length || (spots.fitness || []).length;
+  if (!hasAnything) {
+    content.innerHTML = '<div class="spot-loading">No spots found nearby. Try a different zip.</div>';
+    return;
+  }
+
+  content.innerHTML = html;
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function initSpots() {
+  const cached = localStorage.getItem('ft_spots');
+  const profile = getProfile();
+  if (cached) {
+    const d = JSON.parse(cached);
+    if (d.zip === profile.zip) {
+      renderSpots(d.spots, d.location);
+      return;
+    }
+  }
+  if (profile.zip) fetchNearbySpots(profile.zip);
+}
+
+function clearAll() {
+  if (confirm('Clear all data? This cannot be undone.')) {
+    localStorage.removeItem('ft_profile');
+    localStorage.removeItem('ft_history');
+    localStorage.removeItem('ft_training');
+    localStorage.removeItem('ft_spots');
+    localStorage.removeItem('ft_journal');
+    location.reload();
+  }
+}
+
+let lastPreviewMessage = '';
+
+async function previewSMS() {
+  const p = getProfile();
+  const preview = document.getElementById('smsPreview');
+  const msgTime = document.querySelector('input[name="msgTime"]:checked')?.value || '7am';
+  preview.innerHTML = '<div class="spot-loading">Generating...</div>';
+
+  try {
+    const res = await fetch('/api/sms/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: p.name || 'there' }),
+    });
+    const data = await res.json();
+    lastPreviewMessage = data.message;
+    preview.innerHTML = '<div class="sms-bubble">' + data.message.replace(/\n/g, '<br>') + '<div class="sms-time">' + msgTime.toUpperCase() + ' daily</div></div>';
+  } catch (e) {
+    // Fallback to client-side generation if server isn't running
+    const name = p.name || 'there';
+    const greetings = ['Rise and grind, ' + name + '.', 'Morning ' + name + '. Time to move.', 'Hey ' + name + ' -- let\'s go.'];
+    const closers = ['12 minutes. That\'s it. Go.', 'Lace up. Show up. The rest handles itself.', 'Even a walk counts. Just move.'];
+    const lines = [greetings[Math.floor(Math.random() * greetings.length)]];
+
+    const training = getTraining();
+    const today = new Date(); today.setHours(0,0,0,0);
+    let streak = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today.getTime() - i * 86400000).toISOString().slice(0, 10);
+      if (training.some(t => t.date.slice(0, 10) === d)) streak++; else if (i > 0) break;
+    }
+    lines.push(streak > 0 ? '🔥 ' + streak + '-day streak. Don\'t break the chain.' : 'No activity yesterday. Today fixes that.');
+
+    const history = getHistory();
+    const lastTest = history[0];
+    if (!lastTest) lines.push('No benchmark yet. Set your baseline when you\'re ready.');
+    else {
+      const days = Math.floor((Date.now() - new Date(lastTest.date).getTime()) / 86400000);
+      if (days > 14) lines.push('It\'s been ' + days + ' days since your last test. Time to retest.');
+      else lines.push('Last score: ' + (lastTest.score || '--') + ' pts. Beat it.');
+    }
+    lines.push(closers[Math.floor(Math.random() * closers.length)]);
+    lastPreviewMessage = lines.join('\n');
+    preview.innerHTML = '<div class="sms-bubble">' + lines.join('<br>') + '<div class="sms-time">' + msgTime.toUpperCase() + ' daily (offline mode)</div></div>';
+  }
+}
+
+async function sendTestSMS() {
+  const p = getProfile();
+  const phone = p.phone || document.getElementById('profilePhone').value.trim();
+  if (!phone) { alert('Enter a phone number first.'); return; }
+  if (!lastPreviewMessage) { await previewSMS(); }
+
+  const statusEl = document.getElementById('twilioStatus');
+  statusEl.textContent = 'Sending...';
+  statusEl.style.color = 'var(--muted)';
+
+  try {
+    const res = await fetch('/api/sms/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, message: lastPreviewMessage }),
+    });
+    const data = await res.json();
+    if (data.error && !data.demo) {
+      statusEl.textContent = 'Error: ' + data.error;
+      statusEl.style.color = 'var(--red)';
+    } else if (data.demo) {
+      statusEl.innerHTML = 'Twilio not configured. Run server with env vars:<br><code style="font-size:0.7rem">TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_PHONE_NUMBER=+1... python3.12 demo/server.py</code>';
+      statusEl.style.color = 'var(--yellow)';
+    } else {
+      statusEl.textContent = 'Sent! Check your phone.';
+      statusEl.style.color = 'var(--green)';
+    }
+  } catch (e) {
+    statusEl.textContent = 'Server not running. Start with: python3.12 demo/server.py';
+    statusEl.style.color = 'var(--yellow)';
+  }
+}
+
+async function checkTwilioStatus() {
+  try {
+    const res = await fetch('/api/sms/status');
+    const data = await res.json();
+    const el = document.getElementById('twilioStatus');
+    if (data.configured) {
+      el.textContent = 'Twilio connected (' + data.from_number + ')';
+      el.style.color = 'var(--green)';
+    }
+  } catch (e) { /* server not running, that's fine */ }
+}
+
+function updateGreeting() {
+  const p = getProfile();
+  const el = document.getElementById('testGreeting');
+  el.textContent = p.name ? 'Hey ' + p.name : 'Goodbye Fitness';
+}
+
+// ─── Dog Training Flow ───
+
+function showDogTraining() {
+  document.getElementById('log-select').style.display = 'none';
+  document.getElementById('log-form').style.display = 'none';
+  document.getElementById('dog-training').style.display = 'block';
+
+  const dog = getDogProfile();
+  const assessment = getDogAssessment();
+
+  if (dog.name && dog.breed && dog.weight && dog.age && assessment.completed) {
+    loadDogProgramView();
+    showDogStep('program');
+  } else if (dog.name && dog.breed && dog.weight && dog.age) {
+    prefillDogProfile();
+    showDogStep('fitness');
+  } else {
+    prefillDogProfile();
+    showDogStep('profile');
+  }
+}
+
+function showDogStep(step) {
+  ['profile','fitness','program'].forEach(s => {
+    document.getElementById('dog-step-' + s).style.display = s === step ? 'block' : 'none';
+  });
+}
+
+function prefillDogProfile() {
+  const d = getDogProfile();
+  if (d.name) document.getElementById('dtDogName').value = d.name;
+  if (d.breed) document.getElementById('dtDogBreed').value = d.breed;
+  if (d.weight) document.getElementById('dtDogWeight').value = d.weight;
+  if (d.age) document.getElementById('dtDogAge').value = d.age;
+  if (d.photo) {
+    document.getElementById('dogPhotoImg').src = d.photo;
+    document.getElementById('dogPhotoImg').style.display = 'block';
+    document.getElementById('dogPhotoPlaceholder').style.display = 'none';
+  }
+}
+
+function handleDogPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    document.getElementById('dogPhotoImg').src = dataUrl;
+    document.getElementById('dogPhotoImg').style.display = 'block';
+    document.getElementById('dogPhotoPlaceholder').style.display = 'none';
+    const dog = getDogProfile();
+    dog.photo = dataUrl;
+    localStorage.setItem('ft_dog_profile', JSON.stringify(dog));
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveDogAndNext() {
+  const name = document.getElementById('dtDogName').value.trim();
+  const breed = document.getElementById('dtDogBreed').value.trim();
+  const weight = parseFloat(document.getElementById('dtDogWeight').value);
+  const age = parseFloat(document.getElementById('dtDogAge').value);
+
+  if (!name || !breed) { alert('Enter your dog\'s name and breed.'); return; }
+  if (!weight || !age) { alert('Enter your dog\'s weight and age.'); return; }
+
+  const existing = getDogProfile();
+  const dog = { ...existing, name, breed, weight, age };
+  localStorage.setItem('ft_dog_profile', JSON.stringify(dog));
+
+  // Sync to the profile page fields too
+  document.getElementById('dogName').value = name;
+  document.getElementById('dogBreed').value = breed;
+  document.getElementById('dogWeight').value = weight;
+  document.getElementById('dogAge').value = age;
+  updateDogWalkRec();
+
+  document.getElementById('dogFitnessSubhead').textContent = 'Let\'s figure out where ' + name + ' is at.';
+  showDogStep('fitness');
+}
+
+function getDogAssessment() { return JSON.parse(localStorage.getItem('ft_dog_assessment') || '{}'); }
+
+function generateDogProgram() {
+  const dog = getDogProfile();
+  const activity = document.querySelector('input[name="dqActivity"]:checked')?.value || 'light';
+  const endurance = document.querySelector('input[name="dqEndurance"]:checked')?.value || 'yes';
+  const joints = document.querySelector('input[name="dqJoints"]:checked')?.value || 'none';
+  const weightCond = document.querySelector('input[name="dqWeightCond"]:checked')?.value || 'healthy';
+  const leash = document.querySelector('input[name="dqLeash"]:checked')?.value || 'some_pulling';
+  const reactivity = document.querySelector('input[name="dqReactivity"]:checked')?.value || 'neutral';
+
+  // Score fitness 1-10
+  let score = 5;
+  const activityScores = { sedentary: -2, light: 0, moderate: 2, active: 3 };
+  const enduranceScores = { no: -2, barely: -1, yes: 1, easily: 2 };
+  const jointScores = { none: 0, mild: -1, moderate: -2, severe: -3 };
+  const weightScores = { under: -1, healthy: 0, over: -1, obese: -2 };
+  score += (activityScores[activity] || 0);
+  score += (enduranceScores[endurance] || 0);
+  score += (jointScores[joints] || 0);
+  score += (weightScores[weightCond] || 0);
+  score = Math.max(1, Math.min(10, score));
+
+  // Age adjustments
+  if (dog.age < 1) score = Math.min(score, 4);
+  if (dog.age >= 10) score = Math.min(score, 6);
+
+  // Build program
+  let walkMins, walkMiles, walksPerDay, pace, restDays, notes;
+
+  if (score <= 3) {
+    walkMins = 15; walkMiles = 0.5; walksPerDay = 1; pace = 'easy'; restDays = 3;
+    notes = 'Start slow. Short walks, flat terrain. Build up over 4 weeks.';
+  } else if (score <= 5) {
+    walkMins = 25; walkMiles = 1.0; walksPerDay = 2; pace = 'easy'; restDays = 2;
+    notes = 'Steady foundation. Focus on consistency before distance.';
+  } else if (score <= 7) {
+    walkMins = 35; walkMiles = 1.5; walksPerDay = 2; pace = 'moderate'; restDays = 1;
+    notes = 'Solid base. Mix in hills or varied terrain 2x per week.';
+  } else {
+    walkMins = 50; walkMiles = 2.5; walksPerDay = 2; pace = 'brisk'; restDays = 1;
+    notes = 'Strong shape. Add longer weekend walks or trail hikes.';
+  }
+
+  // Joint issues override
+  if (joints === 'severe') {
+    walkMins = Math.min(walkMins, 15); pace = 'easy'; restDays = Math.max(restDays, 3);
+    notes = 'Vet-managed joints. Keep walks short and flat. Follow vet guidance.';
+  } else if (joints === 'moderate') {
+    walkMins = Math.min(walkMins, 25); pace = 'easy';
+    notes += ' Avoid hard surfaces when possible.';
+  }
+
+  // Weight condition adjustments
+  if (weightCond === 'obese') {
+    walkMins = Math.min(walkMins, 20); pace = 'easy';
+    notes += ' Weight loss priority: short, frequent walks.';
+    walksPerDay = Math.max(walksPerDay, 2);
+  }
+
+  const assessment = {
+    completed: true,
+    date: new Date().toISOString(),
+    answers: { activity, endurance, joints, weightCond, leash, reactivity },
+    score,
+    program: { walkMins, walkMiles, walksPerDay, pace, restDays, notes, leash, reactivity }
+  };
+  localStorage.setItem('ft_dog_assessment', JSON.stringify(assessment));
+
+  loadDogProgramView();
+  showDogStep('program');
+}
+
+function loadDogProgramView() {
+  const dog = getDogProfile();
+  const a = getDogAssessment();
+  if (!a.completed) return;
+  const p = a.program;
+
+  // Header
+  document.getElementById('dogProgramTitle').textContent = dog.name + '\'s Walk Program';
+  document.getElementById('dogProgramSub').textContent = dog.breed + ' · ' + dog.weight + ' lbs · ' + dog.age + ' yrs';
+
+  // Summary card
+  document.getElementById('progDogName').textContent = dog.name;
+  document.getElementById('progDogMeta').textContent = dog.breed + ' · ' + dog.weight + ' lbs · ' + dog.age + ' yrs';
+  document.getElementById('progFitnessScore').textContent = a.score + '/10';
+
+  if (dog.photo) {
+    document.getElementById('progDogImg').src = dog.photo;
+    document.getElementById('progDogImg').style.display = 'block';
+    document.getElementById('progDogEmoji').style.display = 'none';
+  }
+
+  // Color the score
+  const scoreEl = document.getElementById('progFitnessScore');
+  if (a.score >= 8) scoreEl.style.color = 'var(--green)';
+  else if (a.score >= 5) scoreEl.style.color = 'var(--accent)';
+  else if (a.score >= 3) scoreEl.style.color = 'var(--yellow)';
+  else scoreEl.style.color = 'var(--red)';
+
+  // Weekly program
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const activeDays = 7 - p.restDays;
+  let html = '<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem">' + p.notes + '</div>';
+
+  days.forEach((day, i) => {
+    const isRest = i >= activeDays;
+    const isSunday = i === 6;
+    let label, detail, icon;
+
+    if (isRest) {
+      label = 'Rest Day'; detail = 'Recovery & light play'; icon = '😴';
+    } else if (isSunday || i === 5) {
+      label = 'Long Walk'; detail = Math.round(p.walkMins * 1.5) + ' min · ' + (p.walkMiles * 1.5).toFixed(1) + ' mi · ' + p.pace;
+      icon = '🌲';
+    } else {
+      label = p.walksPerDay > 1 ? p.walksPerDay + ' walks' : '1 walk';
+      detail = p.walkMins + ' min · ' + p.walkMiles + ' mi · ' + p.pace;
+      icon = '🐕';
+    }
+
+    html += '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;' + (i < 6 ? 'border-bottom:1px solid #1e1e1e' : '') + '">';
+    html += '<div style="width:32px;height:32px;border-radius:8px;background:' + (isRest ? 'rgba(119,119,119,0.1)' : 'rgba(59,130,246,0.1)') + ';display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">' + icon + '</div>';
+    html += '<div style="flex:1"><div style="font-size:0.85rem;font-weight:500">' + day + '</div><div style="font-size:0.75rem;color:var(--muted)">' + label + '</div></div>';
+    html += '<div style="font-size:0.75rem;color:var(--muted)">' + detail + '</div>';
+    html += '</div>';
+  });
+
+  // Leash & reactivity tips
+  if (p.leash === 'pulls') {
+    html += '<div style="margin-top:0.75rem;padding:0.6rem;background:rgba(234,179,8,0.08);border-radius:6px;font-size:0.8rem;color:var(--yellow)">Tip: Use a front-clip harness to reduce pulling. Keep walks shorter until leash manners improve.</div>';
+  }
+  if (p.reactivity === 'reactive') {
+    html += '<div style="margin-top:0.5rem;padding:0.6rem;background:rgba(239,68,68,0.08);border-radius:6px;font-size:0.8rem;color:var(--red)">Tip: Walk during off-peak hours to avoid triggers. Keep distance from other dogs and reward calm behavior.</div>';
+  }
+
+  document.getElementById('dogProgramContent').innerHTML = html;
+
+  // Load reminder settings
+  const reminders = JSON.parse(localStorage.getItem('ft_dog_reminders') || '{}');
+  if (reminders.enabled) {
+    document.getElementById('dogReminderOptIn').checked = true;
+    document.getElementById('dogReminderSettings').style.display = 'block';
+    if (reminders.amTime) {
+      const r = document.querySelector('input[name="dogWalkAM"][value="' + reminders.amTime + '"]');
+      if (r) r.checked = true;
+    }
+    if (reminders.pmTime) {
+      const r = document.querySelector('input[name="dogWalkPM"][value="' + reminders.pmTime + '"]');
+      if (r) r.checked = true;
+    }
+  }
+
+  if (Notification.permission === 'granted') {
+    document.getElementById('dogNotifPermission').checked = true;
+    document.getElementById('dogNotifStatus').textContent = 'Notifications enabled';
+    document.getElementById('dogNotifStatus').style.color = 'var(--green)';
+  }
+}
+
+function toggleDogReminders() {
+  const checked = document.getElementById('dogReminderOptIn').checked;
+  document.getElementById('dogReminderSettings').style.display = checked ? 'block' : 'none';
+  saveDogReminders();
+}
+
+function requestNotifPermission() {
+  const cb = document.getElementById('dogNotifPermission');
+  const status = document.getElementById('dogNotifStatus');
+  if (!cb.checked) {
+    status.textContent = 'Notifications disabled';
+    status.style.color = 'var(--muted)';
+    saveDogReminders();
+    return;
+  }
+  if (!('Notification' in window)) {
+    status.textContent = 'Browser does not support notifications';
+    status.style.color = 'var(--red)';
+    cb.checked = false;
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      status.textContent = 'Notifications enabled';
+      status.style.color = 'var(--green)';
+      cb.checked = true;
+      new Notification('Walk Reminder', { body: 'Reminders are set up! You\'ll get notified when it\'s walk time.', icon: '🐕' });
+    } else {
+      status.textContent = 'Permission denied. Enable in browser settings.';
+      status.style.color = 'var(--red)';
+      cb.checked = false;
+    }
+    saveDogReminders();
+  });
+}
+
+function saveDogReminders() {
+  const enabled = document.getElementById('dogReminderOptIn').checked;
+  const notif = document.getElementById('dogNotifPermission').checked;
+  const amTime = document.querySelector('input[name="dogWalkAM"]:checked')?.value || '7:00';
+  const pmTime = document.querySelector('input[name="dogWalkPM"]:checked')?.value || '18:00';
+
+  const reminders = { enabled, notifications: notif, amTime, pmTime };
+  localStorage.setItem('ft_dog_reminders', JSON.stringify(reminders));
+
+  // Schedule check (simplified: uses setInterval to check every minute)
+  if (enabled && notif && Notification.permission === 'granted') {
+    scheduleDogWalkReminders();
+  }
+}
+
+let dogReminderInterval = null;
+function scheduleDogWalkReminders() {
+  if (dogReminderInterval) clearInterval(dogReminderInterval);
+  dogReminderInterval = setInterval(() => {
+    const reminders = JSON.parse(localStorage.getItem('ft_dog_reminders') || '{}');
+    if (!reminders.enabled || Notification.permission !== 'granted') return;
+    const now = new Date();
+    const hhmm = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+    const dog = getDogProfile();
+    const name = dog.name || 'your dog';
+    if (hhmm === reminders.amTime) {
+      new Notification('Morning Walk', { body: 'Time to take ' + name + ' out! ☀️', icon: '🐕' });
+    }
+    if (hhmm === reminders.pmTime) {
+      new Notification('Evening Walk', { body: name + ' is ready for the evening walk! 🌙', icon: '🐕' });
+    }
+  }, 60000);
+}
+
+function addDogWalkToCalendar(type) {
+  const dog = getDogProfile();
+  const a = getDogAssessment();
+  const reminders = JSON.parse(localStorage.getItem('ft_dog_reminders') || '{}');
+  const name = dog.name || 'Dog';
+  const p = a.program || {};
+  const amTime = reminders.amTime || '7:00';
+  const pmTime = reminders.pmTime || '18:00';
+  const detail = (p.walkMins || 30) + ' min, ' + (p.walkMiles || 1) + ' mi, ' + (p.pace || 'moderate') + ' pace';
+
+  if (type === 'google') {
+    const [amH, amM] = amTime.split(':');
+    const startDate = new Date();
+    startDate.setHours(parseInt(amH), parseInt(amM), 0, 0);
+    const endDate = new Date(startDate.getTime() + (p.walkMins || 30) * 60000);
+
+    const fmt = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+      + '&text=' + encodeURIComponent('Walk ' + name)
+      + '&details=' + encodeURIComponent(detail)
+      + '&dates=' + fmt(startDate) + '/' + fmt(endDate)
+      + '&recur=RRULE:FREQ=DAILY';
+
+    window.open(url, '_blank');
+    document.getElementById('calendarConfirm').style.display = 'block';
+    document.getElementById('calendarConfirm').textContent = 'Google Calendar opened. Add the recurring event there.';
+  } else {
+    const [amH, amM] = amTime.split(':');
+    const now = new Date();
+    now.setHours(parseInt(amH), parseInt(amM), 0, 0);
+    const end = new Date(now.getTime() + (p.walkMins || 30) * 60000);
+    const pad = n => String(n).padStart(2, '0');
+    const fmtICS = d => d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00';
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      'DTSTART:' + fmtICS(now),
+      'DTEND:' + fmtICS(end),
+      'RRULE:FREQ=DAILY',
+      'SUMMARY:Walk ' + name,
+      'DESCRIPTION:' + detail,
+      'BEGIN:VALARM',
+      'TRIGGER:-PT10M',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Time to walk ' + name + '!',
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'walk-' + name.toLowerCase().replace(/\s/g, '-') + '.ics';
+    a.click();
+    document.getElementById('calendarConfirm').style.display = 'block';
+    document.getElementById('calendarConfirm').textContent = 'Calendar file downloaded. Open it to add the recurring walk event.';
+  }
+}
+
+function startDogWalkLog() {
+  selectedActivity = 'dog_walk';
+  document.getElementById('dog-training').style.display = 'none';
+  document.getElementById('log-form').style.display = 'block';
+  document.getElementById('logFormTitle').textContent = 'Dog Walk';
+  document.getElementById('logDistField').style.display = 'block';
+
+  const dog = getDogProfile();
+  const a = getDogAssessment();
+  if (dog.name) document.getElementById('logName').placeholder = 'e.g. Morning walk with ' + dog.name;
+  if (a.program) {
+    document.getElementById('logDist').placeholder = a.program.walkMiles + ' mi (recommended)';
+    document.getElementById('logDuration').placeholder = a.program.walkMins + ' min (recommended)';
+  }
+}
+
+// Override backToLogSelect to also hide dog training
+const _origBackToLogSelect = backToLogSelect;
+backToLogSelect = function() {
+  document.getElementById('dog-training').style.display = 'none';
+  document.getElementById('log-form').style.display = 'none';
+  document.getElementById('log-select').style.display = 'block';
+};
+
+// Listen for reminder radio changes
+document.querySelectorAll('input[name="dogWalkAM"], input[name="dogWalkPM"]').forEach(r => {
+  r.addEventListener('change', saveDogReminders);
+});
+
+// Boot reminders if already enabled
+(function() {
+  const r = JSON.parse(localStorage.getItem('ft_dog_reminders') || '{}');
+  if (r.enabled && r.notifications && Notification.permission === 'granted') {
+    scheduleDogWalkReminders();
+  }
+})();
+
+// Init
+loadProfile();
+loadDogProfile();
+updateLogGreeting();
+updateGreeting();
+initSpots();
+checkTwilioStatus();
+checkStravaStatus();
+renderJournal();
+</script>
+</body>
+</html>
