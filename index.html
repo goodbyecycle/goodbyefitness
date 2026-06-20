@@ -195,11 +195,104 @@
     .sms-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 12px 12px 12px 2px; padding: 0.75rem 1rem; font-size: 0.85rem; line-height: 1.6; position: relative; max-width: 90%; }
     .sms-bubble::before { content: 'Goodbye Fitness'; display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.35rem; font-weight: 600; }
     .sms-time { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
+    /* Auth Screen */
+    #auth-screen { min-height: 100vh; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    #auth-screen.hidden { display: none !important; }
+    .auth-container { width: 100%; max-width: 400px; }
+    .auth-title { text-align: center; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .auth-subtitle { text-align: center; color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    .auth-card .field { margin-bottom: 1rem; }
+    .auth-card input[type="email"], .auth-card input[type="password"], .auth-card input[type="text"] {
+      width: 100%; padding: 0.7rem 0.9rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.95rem; outline: none;
+    }
+    .auth-card input:focus { border-color: var(--accent); }
+    .auth-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: var(--red); font-size: 0.85rem; padding: 0.6rem 0.9rem; border-radius: 8px; margin-bottom: 1rem; display: none; }
+    .auth-links { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
+    .auth-links a { color: var(--accent); cursor: pointer; text-decoration: none; }
+    .auth-links a:hover { text-decoration: underline; }
+    .auth-checkbox { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
+    .auth-checkbox input[type="checkbox"] { margin-top: 0.15rem; accent-color: var(--accent); }
+    .auth-forgot { text-align: right; margin-bottom: 1rem; }
+    .auth-forgot a { color: var(--accent); cursor: pointer; text-decoration: none; font-size: 0.8rem; }
+    .auth-forgot a:hover { text-decoration: underline; }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-  <nav class="nav">
+  <!-- ===== AUTH SCREEN ===== -->
+  <div id="auth-screen">
+    <div class="auth-container">
+      <div class="auth-title">Goodbye Fitness</div>
+      <div class="auth-subtitle">Track your benchmarks. Own your progress.</div>
+
+      <!-- Sign In Form (default) -->
+      <div id="auth-signin" class="auth-card">
+        <div class="auth-error" id="signin-error"></div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="signin-email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="signin-password" placeholder="Your password">
+        </div>
+        <div class="auth-forgot"><a onclick="showForgotPassword()">Forgot password?</a></div>
+        <button class="btn btn-primary" onclick="handleSignIn()">Sign In</button>
+        <div class="auth-links">Don't have an account? <a onclick="showAuthMode('signup')">Sign up</a></div>
+      </div>
+
+      <!-- Sign Up Form -->
+      <div id="auth-signup" class="auth-card" style="display:none">
+        <div class="auth-error" id="signup-error"></div>
+        <div style="display:flex;gap:0.5rem">
+          <div class="field" style="flex:1">
+            <label>First Name</label>
+            <input type="text" id="signup-firstname" placeholder="First">
+          </div>
+          <div class="field" style="flex:1">
+            <label>Last Name</label>
+            <input type="text" id="signup-lastname" placeholder="Last">
+          </div>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Min 6 characters">
+        </div>
+        <div class="field">
+          <label>Confirm Password</label>
+          <input type="password" id="signup-confirm" placeholder="Re-enter password">
+        </div>
+        <label class="auth-checkbox">
+          <input type="checkbox" id="signup-terms">
+          I agree to the Terms of Service and Privacy Policy for the free subscription
+        </label>
+        <button class="btn btn-primary" onclick="handleSignUp()">Create Account</button>
+        <div class="auth-links">Already have an account? <a onclick="showAuthMode('signin')">Sign in</a></div>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div id="auth-forgot" class="auth-card" style="display:none">
+        <div class="auth-error" id="forgot-error"></div>
+        <div style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem">Enter your email and we'll send a password reset link.</div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="forgot-email" placeholder="you@example.com">
+        </div>
+        <button class="btn btn-primary" onclick="handleForgotPassword()">Send Reset Email</button>
+        <div class="auth-links"><a onclick="showAuthMode('signin')">Back to sign in</a></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav" style="display:none">
     <button class="nav-btn active" onclick="showPage('log')">Log</button>
     <button class="nav-btn" onclick="showPage('test')">Benchmark</button>
     <button class="nav-btn" onclick="showPage('results')">Results</button>
@@ -922,6 +1015,7 @@
       </div>
     </div>
     <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+    <button class="btn btn-secondary" onclick="handleSignOut()" style="margin-top:0.5rem">Sign Out</button>
     <button class="btn btn-danger" onclick="clearAll()">Clear All Data</button>
   </div>
 
@@ -2353,15 +2447,221 @@ document.querySelectorAll('input[name="dogWalkAM"], input[name="dogWalkPM"]').fo
   }
 })();
 
-// Init
-loadProfile();
-loadDogProfile();
-updateLogGreeting();
-updateGreeting();
-initSpots();
-checkTwilioStatus();
-checkStravaStatus();
-renderJournal();
+// ─── Firebase Auth ───
+const firebaseConfig = {
+  apiKey: "AIzaSyCzb4rZzf3_EqVBZaJlrjsESPrb8V3lyJ8",
+  authDomain: "project-ca10027d-1c99-46ef-87f.firebaseapp.com",
+  projectId: "project-ca10027d-1c99-46ef-87f",
+  storageBucket: "project-ca10027d-1c99-46ef-87f.firebasestorage.app",
+  messagingSenderId: "634375568952",
+  appId: "1:634375568952:web:fe415c21d22c9495d2b0cd",
+  measurementId: "G-NV2LRY0X5Z"
+};
+firebase.initializeApp(firebaseConfig);
+
+function showAuthMode(mode) {
+  document.getElementById('auth-signin').style.display = mode === 'signin' ? 'block' : 'none';
+  document.getElementById('auth-signup').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-forgot').style.display = mode === 'forgot' ? 'block' : 'none';
+  // Clear errors
+  document.getElementById('signin-error').style.display = 'none';
+  document.getElementById('signup-error').style.display = 'none';
+  document.getElementById('forgot-error').style.display = 'none';
+}
+
+function showForgotPassword() {
+  showAuthMode('forgot');
+}
+
+function showAuthError(elementId, message) {
+  const el = document.getElementById(elementId);
+  el.textContent = message;
+  el.style.display = 'block';
+}
+
+function firebaseErrorMessage(code) {
+  const messages = {
+    'auth/email-already-in-use': 'An account with this email already exists.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/user-disabled': 'This account has been disabled.',
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password. Please try again.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/too-many-requests': 'Too many attempts. Please try again later.',
+    'auth/invalid-credential': 'Invalid email or password. Please try again.',
+    'auth/missing-password': 'Please enter a password.',
+  };
+  return messages[code] || 'Something went wrong. Please try again.';
+}
+
+async function handleSignIn() {
+  const email = document.getElementById('signin-email').value.trim();
+  const password = document.getElementById('signin-password').value;
+  document.getElementById('signin-error').style.display = 'none';
+
+  if (!email || !password) {
+    showAuthError('signin-error', 'Please enter your email and password.');
+    return;
+  }
+
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, password);
+  } catch (err) {
+    showAuthError('signin-error', firebaseErrorMessage(err.code));
+  }
+}
+
+async function handleSignUp() {
+  const firstName = document.getElementById('signup-firstname').value.trim();
+  const lastName = document.getElementById('signup-lastname').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+  const terms = document.getElementById('signup-terms').checked;
+  document.getElementById('signup-error').style.display = 'none';
+
+  if (!firstName || !lastName) {
+    showAuthError('signup-error', 'Please enter your first and last name.');
+    return;
+  }
+  if (!email) {
+    showAuthError('signup-error', 'Please enter your email address.');
+    return;
+  }
+  if (!password) {
+    showAuthError('signup-error', 'Please enter a password.');
+    return;
+  }
+  if (password.length < 6) {
+    showAuthError('signup-error', 'Password must be at least 6 characters.');
+    return;
+  }
+  if (password !== confirm) {
+    showAuthError('signup-error', 'Passwords do not match.');
+    return;
+  }
+  if (!terms) {
+    showAuthError('signup-error', 'You must agree to the Terms of Service and Privacy Policy.');
+    return;
+  }
+
+  try {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    await cred.user.updateProfile({ displayName: firstName + ' ' + lastName });
+  } catch (err) {
+    showAuthError('signup-error', firebaseErrorMessage(err.code));
+  }
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  document.getElementById('forgot-error').style.display = 'none';
+
+  if (!email) {
+    showAuthError('forgot-error', 'Please enter your email address.');
+    return;
+  }
+
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    const el = document.getElementById('forgot-error');
+    el.textContent = 'Password reset email sent. Check your inbox.';
+    el.style.display = 'block';
+    el.style.background = 'rgba(34,197,94,0.1)';
+    el.style.borderColor = 'rgba(34,197,94,0.25)';
+    el.style.color = 'var(--green)';
+  } catch (err) {
+    showAuthError('forgot-error', firebaseErrorMessage(err.code));
+  }
+}
+
+function handleSignOut() {
+  firebase.auth().signOut();
+}
+
+function setAppVisible(visible) {
+  const authScreen = document.getElementById('auth-screen');
+  const nav = document.querySelector('.nav');
+  const pages = document.querySelectorAll('.page');
+
+  if (visible) {
+    authScreen.classList.add('hidden');
+    nav.style.display = 'flex';
+    // Restore active page visibility
+    pages.forEach(p => {
+      if (p.classList.contains('active')) p.style.display = 'block';
+    });
+  } else {
+    authScreen.classList.remove('hidden');
+    nav.style.display = 'none';
+    pages.forEach(p => p.style.display = 'none');
+  }
+}
+
+// Auth state listener
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    setAppVisible(true);
+    // Update greeting with Firebase displayName
+    const displayName = user.displayName;
+    if (displayName) {
+      const firstName = displayName.split(' ')[0];
+      const logEl = document.getElementById('logGreeting');
+      const testEl = document.getElementById('testGreeting');
+      if (logEl) logEl.textContent = 'Hey ' + firstName;
+      if (testEl) testEl.textContent = 'Hey ' + firstName;
+    }
+    // Run init
+    loadProfile();
+    loadDogProfile();
+    updateLogGreeting();
+    initSpots();
+    checkTwilioStatus();
+    checkStravaStatus();
+    renderJournal();
+  } else {
+    setAppVisible(false);
+    showAuthMode('signin');
+  }
+});
+
+// Override greeting functions to use Firebase displayName when available
+const _origUpdateLogGreeting = updateLogGreeting;
+updateLogGreeting = function() {
+  const user = firebase.auth().currentUser;
+  if (user && user.displayName) {
+    const firstName = user.displayName.split(' ')[0];
+    document.getElementById('logGreeting').textContent = 'Hey ' + firstName;
+  } else {
+    _origUpdateLogGreeting();
+  }
+  // Still update dog walk card
+  const dog = getDogProfile();
+  if (dog.name) {
+    document.getElementById('dogWalkLabel').textContent = 'Dog Walk with ' + dog.name;
+    document.getElementById('dogWalkTag').textContent = dog.breed || 'Good boy';
+    const rec = getDogWalkRec(dog);
+    if (rec) {
+      document.getElementById('dogWalkDesc').textContent = '~' + rec.mins + ' min / ' + rec.miles + ' mi at a ' + rec.pace + ' pace.';
+    }
+  }
+};
+
+const _origUpdateGreeting = updateGreeting;
+updateGreeting = function() {
+  const user = firebase.auth().currentUser;
+  if (user && user.displayName) {
+    const firstName = user.displayName.split(' ')[0];
+    document.getElementById('testGreeting').textContent = 'Hey ' + firstName;
+  } else {
+    _origUpdateGreeting();
+  }
+};
+
+// Allow Enter key to submit auth forms
+document.getElementById('signin-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleSignIn(); });
+document.getElementById('signup-confirm').addEventListener('keydown', e => { if (e.key === 'Enter') handleSignUp(); });
+document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') handleForgotPassword(); });
 </script>
 </body>
 </html>
