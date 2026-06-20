@@ -397,4 +397,5 @@ if __name__ == "__main__":
         print("     TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER\n")
     else:
         print(f"  ✓  Twilio ready (from {TWILIO_FROM})\n")
-    app.run(host="0.0.0.0", port=8090, debug=False)
+    port = int(os.environ.get("PORT", 8090))
+    app.run(host="0.0.0.0", port=port, debug=False)
