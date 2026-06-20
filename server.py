@@ -46,6 +46,11 @@ def save_data(data):
 # ─── Static files ───
 
 @app.route("/")
+def landing():
+    return send_from_directory(".", "landing.html")
+
+
+@app.route("/app")
 def index():
     return send_from_directory(".", "index.html")
 
