@@ -195,6 +195,45 @@
     .sms-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 12px 12px 12px 2px; padding: 0.75rem 1rem; font-size: 0.85rem; line-height: 1.6; position: relative; max-width: 90%; }
     .sms-bubble::before { content: 'Goodbye Fitness'; display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.35rem; font-weight: 600; }
     .sms-time { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
+    /* GPS Tracker */
+    .gps-tracker { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; overflow-y: auto; }
+    .gps-tracker-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .gps-tracker-title { font-size: 1rem; font-weight: 700; }
+    .gps-tracker-back { background: none; border: none; color: var(--muted); font-size: 0.85rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 6px; }
+    .gps-tracker-back:hover { color: var(--text); background: var(--card); }
+    .gps-tracker-body { flex: 1; padding: 1.25rem 1rem; max-width: 600px; margin: 0 auto; width: 100%; }
+    .gps-big-stat { text-align: center; margin-bottom: 0.5rem; }
+    .gps-big-val { font-size: 4rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+    .gps-big-lbl { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .gps-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+    .gps-stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem; text-align: center; }
+    .gps-stat-val { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .gps-stat-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 0.1rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .gps-route-canvas { width: 100%; height: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 1rem 0; }
+    .gps-controls { display: flex; gap: 0.75rem; margin-top: 1rem; }
+    .gps-controls .btn { flex: 1; padding: 1rem; font-size: 1rem; border-radius: 10px; }
+    .gps-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--red); font-size: 0.85rem; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; }
+    .gps-status { font-size: 0.75rem; color: var(--muted); text-align: center; margin-top: 0.5rem; }
+    .gps-status.acquiring { color: var(--yellow); }
+    .gps-status.tracking { color: var(--green); }
+    .gps-status.paused { color: var(--orange); }
+
+    /* GPS Summary (after stopping) */
+    .gps-summary { text-align: center; padding: 1rem 0; }
+    .gps-summary-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; }
+    .gps-summary-hero { font-size: 3rem; font-weight: 800; line-height: 1; }
+    .gps-summary-unit { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* Activity choice overlay */
+    .activity-choice { margin-top: 1rem; }
+    .activity-choice-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .activity-choice-btns { display: flex; gap: 0.5rem; }
+    .activity-choice-btns .btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.9rem 0.5rem; }
+    .btn-gps { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    .btn-gps:hover { background: rgba(34,197,94,0.18); }
+    .btn-manual { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+    .btn-manual:hover { background: var(--card); color: var(--text); }
+
     /* Auth Screen */
     #auth-screen { min-height: 100vh; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 1rem; }
     #auth-screen.hidden { display: none !important; }
@@ -346,7 +385,7 @@
         <p class="bm-desc">Bodyweight, gym, yoga, whatever you did.</p>
       </div>
 
-      <button class="btn btn-primary" onclick="startActivity()">Log It</button>
+      <button class="btn btn-primary" onclick="logItClicked()">Log It</button>
     </div>
 
     <!-- Activity input form -->
@@ -378,6 +417,19 @@
       </div>
       <button class="btn btn-primary" onclick="submitActivity()">Save</button>
       <button class="btn btn-secondary" onclick="backToLogSelect()">Cancel</button>
+    </div>
+
+    <!-- Activity choice: GPS vs Manual -->
+    <div id="log-choice" style="display:none">
+      <div class="card">
+        <div class="card-title" id="logChoiceTitle">Walk</div>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem" id="logChoiceDesc">How do you want to log this?</p>
+        <div class="activity-choice-btns">
+          <button class="btn btn-gps" onclick="startGPSTracker()">📍 Track with GPS</button>
+          <button class="btn btn-manual" onclick="startManualLog()">✏️ Log manually</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="backToLogSelect()" style="margin-top:0.75rem">Cancel</button>
     </div>
 
     <!-- ===== DOG TRAINING SECTION ===== -->
@@ -1019,6 +1071,97 @@
     <button class="btn btn-danger" onclick="clearAll()">Clear All Data</button>
   </div>
 
+<!-- ===== GPS TRACKER OVERLAY ===== -->
+<div id="gps-tracker" class="gps-tracker" style="display:none">
+  <div class="gps-tracker-header">
+    <button class="gps-tracker-back" onclick="cancelGPSTracker()">← Back</button>
+    <div class="gps-tracker-title" id="gpsTrackerTitle">GPS Tracker</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="gps-tracker-body">
+    <!-- Error display -->
+    <div id="gpsError" class="gps-error" style="display:none"></div>
+
+    <!-- Live tracking view -->
+    <div id="gpsLiveView">
+      <div id="gpsStatusBar" class="gps-status acquiring">Acquiring GPS signal...</div>
+
+      <div class="gps-big-stat">
+        <div class="gps-big-val" id="gpsTimer">00:00</div>
+        <div class="gps-big-lbl">Elapsed Time</div>
+      </div>
+
+      <div class="gps-big-stat">
+        <div class="gps-big-val" id="gpsDistance">0.00</div>
+        <div class="gps-big-lbl">Miles</div>
+      </div>
+
+      <div class="gps-stats-grid">
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsCurrentPace">--:--</div>
+          <div class="gps-stat-lbl">Current Pace</div>
+        </div>
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsAvgPace">--:--</div>
+          <div class="gps-stat-lbl">Avg Pace</div>
+        </div>
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsCalories">0</div>
+          <div class="gps-stat-lbl">Calories</div>
+        </div>
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsPoints">0</div>
+          <div class="gps-stat-lbl">GPS Points</div>
+        </div>
+      </div>
+
+      <canvas id="gpsRouteCanvas" class="gps-route-canvas"></canvas>
+
+      <div id="gpsDogInfo" style="display:none;text-align:center;font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem"></div>
+
+      <div class="gps-controls">
+        <button class="btn btn-secondary" id="gpsPauseBtn" onclick="toggleGPSPause()" style="font-size:1rem">⏸ Pause</button>
+        <button class="btn btn-danger" id="gpsStopBtn" onclick="stopGPSTracker()" style="font-size:1rem">⏹ Stop</button>
+      </div>
+    </div>
+
+    <!-- Summary view (after stop) -->
+    <div id="gpsSummaryView" style="display:none">
+      <div class="gps-summary">
+        <div class="gps-summary-title">Activity Complete</div>
+        <div class="gps-summary-hero" id="gpsSumDistance">0.00</div>
+        <div class="gps-summary-unit">miles</div>
+      </div>
+
+      <div class="gps-stats-grid">
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsSumTime">00:00</div>
+          <div class="gps-stat-lbl">Total Time</div>
+        </div>
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsSumPace">--:--</div>
+          <div class="gps-stat-lbl">Avg Pace (min/mi)</div>
+        </div>
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsSumCalories">0</div>
+          <div class="gps-stat-lbl">Calories</div>
+        </div>
+        <div class="gps-stat-card">
+          <div class="gps-stat-val" id="gpsSumPoints">0</div>
+          <div class="gps-stat-lbl">GPS Points</div>
+        </div>
+      </div>
+
+      <canvas id="gpsSumRouteCanvas" class="gps-route-canvas"></canvas>
+
+      <div class="gps-controls" style="margin-top:1.5rem">
+        <button class="btn btn-primary" onclick="saveGPSWalk()" style="font-size:1rem">Save</button>
+        <button class="btn btn-danger" onclick="discardGPSWalk()" style="font-size:1rem">Discard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── State ───
 let selectedBenchmark = 'garage';
@@ -1050,6 +1193,8 @@ function showPage(name) {
 }
 
 // ─── Activity Logging (walk, dog walk, run, ride, workout) ───
+const GPS_ELIGIBLE = ['walk', 'dog_walk', 'run'];
+
 function selectActivity(type) {
   selectedActivity = type;
   document.querySelectorAll('#log-select .benchmark-card').forEach(c => c.classList.remove('selected'));
@@ -1058,14 +1203,46 @@ function selectActivity(type) {
     showDogTraining();
     return;
   }
-  startActivity();
+  if (GPS_ELIGIBLE.includes(type)) {
+    showActivityChoice(type);
+  } else {
+    startManualLog();
+  }
+}
+
+function showActivityChoice(type) {
+  document.getElementById('log-select').style.display = 'none';
+  document.getElementById('log-choice').style.display = 'block';
+  document.getElementById('logChoiceTitle').textContent = ACTIVITY_LABELS[type] || 'Activity';
+  const dog = getDogProfile();
+  if (type === 'dog_walk' && dog.name) {
+    document.getElementById('logChoiceDesc').textContent = 'Walking with ' + dog.name + '. Track live or enter details manually?';
+  } else {
+    document.getElementById('logChoiceDesc').textContent = 'How do you want to log this?';
+  }
 }
 
 const ACTIVITY_LABELS = { walk: 'Walk', dog_walk: 'Dog Walk', run: 'Run', ride: 'Ride', workout: 'Workout' };
 const ACTIVITY_ICONS = { walk: '🚶', dog_walk: '🐕', run: '🏃', ride: '🚴', workout: '💪' };
 
+function logItClicked() {
+  if (selectedActivity === 'dog_walk') {
+    showDogTraining();
+  } else if (GPS_ELIGIBLE.includes(selectedActivity)) {
+    showActivityChoice(selectedActivity);
+  } else {
+    startActivity();
+  }
+}
+
+function startManualLog() {
+  document.getElementById('log-choice').style.display = 'none';
+  startActivity();
+}
+
 function startActivity() {
   document.getElementById('log-select').style.display = 'none';
+  document.getElementById('log-choice').style.display = 'none';
   document.getElementById('log-form').style.display = 'block';
   document.getElementById('logFormTitle').textContent = ACTIVITY_LABELS[selectedActivity] || 'Activity';
   // Show/hide distance field for workouts
@@ -2413,6 +2590,11 @@ function addDogWalkToCalendar(type) {
 function startDogWalkLog() {
   selectedActivity = 'dog_walk';
   document.getElementById('dog-training').style.display = 'none';
+  showActivityChoice('dog_walk');
+}
+
+function startDogWalkManualLog() {
+  document.getElementById('log-choice').style.display = 'none';
   document.getElementById('log-form').style.display = 'block';
   document.getElementById('logFormTitle').textContent = 'Dog Walk';
   document.getElementById('logDistField').style.display = 'block';
@@ -2426,11 +2608,12 @@ function startDogWalkLog() {
   }
 }
 
-// Override backToLogSelect to also hide dog training
+// Override backToLogSelect to also hide dog training and GPS choice
 const _origBackToLogSelect = backToLogSelect;
 backToLogSelect = function() {
   document.getElementById('dog-training').style.display = 'none';
   document.getElementById('log-form').style.display = 'none';
+  document.getElementById('log-choice').style.display = 'none';
   document.getElementById('log-select').style.display = 'block';
 };
 
@@ -2662,6 +2845,423 @@ updateGreeting = function() {
 document.getElementById('signin-password').addEventListener('keydown', e => { if (e.key === 'Enter') handleSignIn(); });
 document.getElementById('signup-confirm').addEventListener('keydown', e => { if (e.key === 'Enter') handleSignUp(); });
 document.getElementById('forgot-email').addEventListener('keydown', e => { if (e.key === 'Enter') handleForgotPassword(); });
+
+// ─── GPS Tracker ───
+let gpsState = {
+  watchId: null,
+  points: [],           // {lat, lng, timestamp}
+  totalDistance: 0,      // miles
+  timerInterval: null,
+  startTime: null,       // Date when tracking started (or resumed)
+  elapsedBeforePause: 0, // ms accumulated before current run
+  isPaused: false,
+  isRunning: false,
+  activityType: 'walk',  // walk, dog_walk, run
+  lastPositionTime: null, // for current pace calculation
+  lastPositionDist: 0,    // distance at last pace sample
+  recentSpeeds: [],       // last few segment speeds for current pace
+};
+
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // Earth radius in miles
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatPace(minsPerMile) {
+  if (!minsPerMile || !isFinite(minsPerMile) || minsPerMile > 99) return '--:--';
+  const m = Math.floor(minsPerMile);
+  const s = Math.round((minsPerMile - m) * 60);
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function formatGPSTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function getGPSElapsed() {
+  if (!gpsState.startTime) return gpsState.elapsedBeforePause;
+  if (gpsState.isPaused) return gpsState.elapsedBeforePause;
+  return gpsState.elapsedBeforePause + (Date.now() - gpsState.startTime);
+}
+
+function estimateCalories(distMiles, elapsedMs) {
+  const profile = getProfile();
+  // MET values: walking ~3.5, running ~8-10
+  // Simplified: ~100 cal/mile walking, ~120 cal/mile running, adjusted by weight
+  const weightLbs = profile.waist ? 180 : 170; // rough default
+  const weightKg = weightLbs * 0.453592;
+  const met = gpsState.activityType === 'run' ? 9.0 : 3.5;
+  const hours = elapsedMs / 3600000;
+  return Math.round(met * weightKg * hours);
+}
+
+function startGPSTracker() {
+  if (!navigator.geolocation) {
+    alert('GPS is not available in this browser.');
+    return;
+  }
+
+  // Reset state
+  gpsState.points = [];
+  gpsState.totalDistance = 0;
+  gpsState.elapsedBeforePause = 0;
+  gpsState.startTime = Date.now();
+  gpsState.isPaused = false;
+  gpsState.isRunning = true;
+  gpsState.activityType = selectedActivity;
+  gpsState.lastPositionTime = null;
+  gpsState.lastPositionDist = 0;
+  gpsState.recentSpeeds = [];
+
+  // Show tracker overlay
+  document.getElementById('log-choice').style.display = 'none';
+  document.getElementById('gps-tracker').style.display = 'flex';
+  document.getElementById('gpsLiveView').style.display = 'block';
+  document.getElementById('gpsSummaryView').style.display = 'none';
+  document.getElementById('gpsError').style.display = 'none';
+
+  // Set title
+  const titleMap = { walk: 'Walk Tracker', dog_walk: 'Dog Walk Tracker', run: 'Run Tracker' };
+  document.getElementById('gpsTrackerTitle').textContent = titleMap[selectedActivity] || 'GPS Tracker';
+
+  // Dog info
+  const dogInfo = document.getElementById('gpsDogInfo');
+  if (selectedActivity === 'dog_walk') {
+    const dog = getDogProfile();
+    if (dog.name) {
+      dogInfo.style.display = 'block';
+      dogInfo.textContent = 'Walking with ' + dog.name + (dog.breed ? ' (' + dog.breed + ')' : '');
+    } else {
+      dogInfo.style.display = 'none';
+    }
+  } else {
+    dogInfo.style.display = 'none';
+  }
+
+  // Reset display
+  document.getElementById('gpsTimer').textContent = '00:00';
+  document.getElementById('gpsDistance').textContent = '0.00';
+  document.getElementById('gpsCurrentPace').textContent = '--:--';
+  document.getElementById('gpsAvgPace').textContent = '--:--';
+  document.getElementById('gpsCalories').textContent = '0';
+  document.getElementById('gpsPoints').textContent = '0';
+  document.getElementById('gpsPauseBtn').textContent = '⏸ Pause';
+
+  const statusBar = document.getElementById('gpsStatusBar');
+  statusBar.textContent = 'Acquiring GPS signal...';
+  statusBar.className = 'gps-status acquiring';
+
+  // Clear route canvas
+  const canvas = document.getElementById('gpsRouteCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = canvas.offsetHeight * 2;
+  ctx.scale(2, 2);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Start timer
+  gpsState.timerInterval = setInterval(updateGPSTimer, 1000);
+
+  // Start geolocation watch
+  startGPSWatch();
+}
+
+function startGPSWatch() {
+  gpsState.watchId = navigator.geolocation.watchPosition(
+    onGPSPosition,
+    onGPSError,
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+  );
+}
+
+function onGPSPosition(pos) {
+  if (!gpsState.isRunning || gpsState.isPaused) return;
+
+  const point = {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    timestamp: Date.now(),
+    accuracy: pos.coords.accuracy
+  };
+
+  const statusBar = document.getElementById('gpsStatusBar');
+  statusBar.textContent = 'Tracking · Accuracy: ' + Math.round(point.accuracy) + 'm';
+  statusBar.className = 'gps-status tracking';
+
+  // Filter GPS jitter
+  if (gpsState.points.length > 0) {
+    const last = gpsState.points[gpsState.points.length - 1];
+    const segDist = haversineMiles(last.lat, last.lng, point.lat, point.lng);
+    const segDistMeters = segDist * 1609.34;
+    const timeDiffHrs = (point.timestamp - last.timestamp) / 3600000;
+
+    // Ignore if less than 2 meters from last point
+    if (segDistMeters < 2) return;
+
+    // Ignore if speed > 15 mph (GPS error)
+    if (timeDiffHrs > 0) {
+      const speedMph = segDist / timeDiffHrs;
+      if (speedMph > 15) return;
+
+      // Track recent speeds for current pace
+      gpsState.recentSpeeds.push(speedMph);
+      if (gpsState.recentSpeeds.length > 5) gpsState.recentSpeeds.shift();
+    }
+
+    gpsState.totalDistance += segDist;
+  }
+
+  gpsState.points.push(point);
+  updateGPSDisplay();
+  drawGPSRoute(document.getElementById('gpsRouteCanvas'));
+}
+
+function onGPSError(err) {
+  const errorEl = document.getElementById('gpsError');
+  const messages = {
+    1: 'Location permission denied. Please enable location access in your browser settings and try again.',
+    2: 'Position unavailable. Make sure GPS/location services are enabled on your device.',
+    3: 'Location request timed out. Trying again...'
+  };
+  errorEl.textContent = messages[err.code] || 'GPS error: ' + err.message;
+  errorEl.style.display = 'block';
+
+  // For timeout, keep trying (watchPosition will retry)
+  if (err.code === 3) {
+    setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
+  }
+}
+
+function updateGPSTimer() {
+  if (gpsState.isPaused) return;
+  document.getElementById('gpsTimer').textContent = formatGPSTime(getGPSElapsed());
+}
+
+function updateGPSDisplay() {
+  const dist = gpsState.totalDistance;
+  const elapsed = getGPSElapsed();
+
+  document.getElementById('gpsDistance').textContent = dist.toFixed(2);
+  document.getElementById('gpsPoints').textContent = gpsState.points.length;
+
+  // Average pace (min/mile)
+  if (dist > 0.01) {
+    const elapsedMin = elapsed / 60000;
+    const avgPace = elapsedMin / dist;
+    document.getElementById('gpsAvgPace').textContent = formatPace(avgPace);
+  }
+
+  // Current pace from recent speeds
+  if (gpsState.recentSpeeds.length > 0) {
+    const avgRecentSpeed = gpsState.recentSpeeds.reduce((a, b) => a + b, 0) / gpsState.recentSpeeds.length;
+    if (avgRecentSpeed > 0.1) {
+      const currentPace = 60 / avgRecentSpeed; // min/mile
+      document.getElementById('gpsCurrentPace').textContent = formatPace(currentPace);
+    }
+  }
+
+  // Calories
+  document.getElementById('gpsCalories').textContent = estimateCalories(dist, elapsed);
+}
+
+function drawGPSRoute(canvas) {
+  if (gpsState.points.length < 2) return;
+
+  const ctx = canvas.getContext('2d');
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+
+  // Set canvas resolution
+  if (canvas.width !== w * 2 || canvas.height !== h * 2) {
+    canvas.width = w * 2;
+    canvas.height = h * 2;
+    ctx.scale(2, 2);
+  }
+
+  // Find bounds
+  let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+  for (const p of gpsState.points) {
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
+    if (p.lng < minLng) minLng = p.lng;
+    if (p.lng > maxLng) maxLng = p.lng;
+  }
+
+  // Add padding
+  const pad = 20;
+  const latRange = maxLat - minLat || 0.0005;
+  const lngRange = maxLng - minLng || 0.0005;
+  const drawW = w - pad * 2;
+  const drawH = h - pad * 2;
+
+  // Clear
+  ctx.fillStyle = '#141414';
+  ctx.fillRect(0, 0, w, h);
+
+  // Draw path
+  ctx.beginPath();
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  for (let i = 0; i < gpsState.points.length; i++) {
+    const p = gpsState.points[i];
+    const x = pad + ((p.lng - minLng) / lngRange) * drawW;
+    const y = pad + ((maxLat - p.lat) / latRange) * drawH; // lat is inverted (north = up)
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Draw start point (green)
+  const s = gpsState.points[0];
+  const sx = pad + ((s.lng - minLng) / lngRange) * drawW;
+  const sy = pad + ((maxLat - s.lat) / latRange) * drawH;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#22c55e';
+  ctx.fill();
+
+  // Draw current point (blue, pulsing)
+  const c = gpsState.points[gpsState.points.length - 1];
+  const cx = pad + ((c.lng - minLng) / lngRange) * drawW;
+  const cy = pad + ((maxLat - c.lat) / latRange) * drawH;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#3b82f6';
+  ctx.fill();
+}
+
+function toggleGPSPause() {
+  if (gpsState.isPaused) {
+    // Resume
+    gpsState.isPaused = false;
+    gpsState.startTime = Date.now();
+    document.getElementById('gpsPauseBtn').textContent = '⏸ Pause';
+    const statusBar = document.getElementById('gpsStatusBar');
+    statusBar.textContent = 'Resuming GPS...';
+    statusBar.className = 'gps-status acquiring';
+    startGPSWatch();
+  } else {
+    // Pause
+    gpsState.elapsedBeforePause = getGPSElapsed();
+    gpsState.startTime = null;
+    gpsState.isPaused = true;
+    document.getElementById('gpsPauseBtn').textContent = '▶ Resume';
+    const statusBar = document.getElementById('gpsStatusBar');
+    statusBar.textContent = 'Paused';
+    statusBar.className = 'gps-status paused';
+    if (gpsState.watchId !== null) {
+      navigator.geolocation.clearWatch(gpsState.watchId);
+      gpsState.watchId = null;
+    }
+  }
+}
+
+function stopGPSTracker() {
+  // Stop watching
+  if (gpsState.watchId !== null) {
+    navigator.geolocation.clearWatch(gpsState.watchId);
+    gpsState.watchId = null;
+  }
+  if (gpsState.timerInterval) {
+    clearInterval(gpsState.timerInterval);
+    gpsState.timerInterval = null;
+  }
+
+  // Finalize elapsed time
+  if (!gpsState.isPaused && gpsState.startTime) {
+    gpsState.elapsedBeforePause = getGPSElapsed();
+    gpsState.startTime = null;
+  }
+  gpsState.isRunning = false;
+  gpsState.isPaused = false;
+
+  const dist = gpsState.totalDistance;
+  const elapsed = gpsState.elapsedBeforePause;
+  const elapsedMin = elapsed / 60000;
+
+  // Populate summary
+  document.getElementById('gpsSumDistance').textContent = dist.toFixed(2);
+  document.getElementById('gpsSumTime').textContent = formatGPSTime(elapsed);
+  document.getElementById('gpsSumPace').textContent = dist > 0.01 ? formatPace(elapsedMin / dist) : '--:--';
+  document.getElementById('gpsSumCalories').textContent = estimateCalories(dist, elapsed);
+  document.getElementById('gpsSumPoints').textContent = gpsState.points.length;
+
+  // Draw summary route
+  const sumCanvas = document.getElementById('gpsSumRouteCanvas');
+  sumCanvas.width = sumCanvas.offsetWidth * 2;
+  sumCanvas.height = sumCanvas.offsetHeight * 2;
+  drawGPSRoute(sumCanvas);
+
+  // Switch views
+  document.getElementById('gpsLiveView').style.display = 'none';
+  document.getElementById('gpsSummaryView').style.display = 'block';
+}
+
+function saveGPSWalk() {
+  const dist = gpsState.totalDistance;
+  const elapsed = gpsState.elapsedBeforePause;
+  const durationMin = Math.round(elapsed / 60000);
+  const elapsedMin = elapsed / 60000;
+  const avgPace = dist > 0.01 ? formatPace(elapsedMin / dist) : null;
+
+  const entry = {
+    type: gpsState.activityType === 'dog_walk' ? 'walk' : gpsState.activityType,
+    subtype: gpsState.activityType === 'dog_walk' ? 'dog_walk' : null,
+    name: ACTIVITY_LABELS[gpsState.activityType] + ' (GPS)',
+    date: new Date().toISOString(),
+    duration_min: durationMin,
+    distance: Math.round(dist * 100) / 100,
+    unit: 'mi',
+    avg_pace: avgPace,
+    calories: estimateCalories(dist, elapsed),
+    notes: gpsState.points.length + ' GPS points recorded',
+    source: 'gps',
+  };
+
+  const training = getTraining();
+  training.unshift(entry);
+  localStorage.setItem('ft_training', JSON.stringify(training));
+
+  // Close tracker and go to results
+  document.getElementById('gps-tracker').style.display = 'none';
+  showPage('results');
+}
+
+function discardGPSWalk() {
+  if (!confirm('Discard this activity? This cannot be undone.')) return;
+  document.getElementById('gps-tracker').style.display = 'none';
+  document.getElementById('log-select').style.display = 'block';
+}
+
+function cancelGPSTracker() {
+  if (gpsState.isRunning && gpsState.points.length > 0) {
+    if (!confirm('Stop tracking and discard data?')) return;
+  }
+  // Clean up
+  if (gpsState.watchId !== null) {
+    navigator.geolocation.clearWatch(gpsState.watchId);
+    gpsState.watchId = null;
+  }
+  if (gpsState.timerInterval) {
+    clearInterval(gpsState.timerInterval);
+    gpsState.timerInterval = null;
+  }
+  gpsState.isRunning = false;
+  gpsState.isPaused = false;
+  document.getElementById('gps-tracker').style.display = 'none';
+  document.getElementById('log-select').style.display = 'block';
+}
 </script>
 </body>
 </html>
