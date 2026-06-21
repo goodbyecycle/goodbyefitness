@@ -313,6 +313,10 @@
           <input type="checkbox" id="signup-terms">
           I agree to the Terms of Service and Privacy Policy for the free subscription
         </label>
+        <label class="auth-checkbox">
+          <input type="checkbox" id="signup-notifications" checked>
+          I'd like to receive updates, tips, and notifications from Goodbye Fitness
+        </label>
         <button class="btn btn-primary" onclick="handleSignUp()">Create Account</button>
         <div class="auth-links">Already have an account? <a onclick="showAuthMode('signin')">Sign in</a></div>
       </div>
@@ -2728,9 +2732,20 @@ async function handleSignUp() {
     return;
   }
 
+  const notifOptIn = document.getElementById('signup-notifications').checked;
+
   try {
     const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
     await cred.user.updateProfile({ displayName: firstName + ' ' + lastName });
+    const subscribers = JSON.parse(localStorage.getItem('ft_subscribers') || '[]');
+    subscribers.push({
+      uid: cred.user.uid,
+      email: email,
+      name: firstName + ' ' + lastName,
+      notificationsOptIn: notifOptIn,
+      signedUpAt: new Date().toISOString()
+    });
+    localStorage.setItem('ft_subscribers', JSON.stringify(subscribers));
   } catch (err) {
     showAuthError('signup-error', firebaseErrorMessage(err.code));
   }
