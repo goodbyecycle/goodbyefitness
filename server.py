@@ -3,8 +3,10 @@
 import json
 import os
 import random
+import smtplib
 import time
 from datetime import datetime, timedelta
+from email.mime.text import MIMEText
 from pathlib import Path
 
 import requests as http_requests
@@ -24,6 +26,29 @@ TWILIO_FROM = os.environ.get("TWILIO_PHONE_NUMBER", "")
 STRAVA_CLIENT_ID = "258611"
 STRAVA_CLIENT_SECRET = "cd3f35375e91200db7a98ea1a289c062b0a780ae"
 STRAVA_REDIRECT_URI = "http://localhost:8090/callback/strava"
+
+# ─── Email notifications ───
+NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL", "goodbyefitness@gmail.com")
+NOTIFY_APP_PASSWORD = os.environ.get("NOTIFY_APP_PASSWORD", "")
+
+
+def send_notification_email(subject, body):
+    if not NOTIFY_APP_PASSWORD:
+        print(f"[EMAIL] Not configured, skipping: {subject}")
+        return False
+    try:
+        msg = MIMEText(body, "html")
+        msg["Subject"] = subject
+        msg["From"] = NOTIFY_EMAIL
+        msg["To"] = NOTIFY_EMAIL
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(NOTIFY_EMAIL, NOTIFY_APP_PASSWORD)
+            server.send_message(msg)
+        print(f"[EMAIL] Sent: {subject}")
+        return True
+    except Exception as e:
+        print(f"[EMAIL] Error: {e}")
+        return False
 
 
 def get_twilio_client():
@@ -53,6 +78,26 @@ def landing():
 @app.route("/app")
 def index():
     return send_from_directory(".", "index.html")
+
+
+# ─── API: Notifications ───
+
+@app.route("/api/notify/signup", methods=["POST"])
+def notify_signup():
+    body = request.json or {}
+    name = body.get("name", "Unknown")
+    email = body.get("email", "Unknown")
+    opted_in = body.get("notificationsOptIn", False)
+    now = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+    send_notification_email(
+        f"New Signup: {name}",
+        f"<h2>New Goodbye Fitness Signup</h2>"
+        f"<p><b>Name:</b> {name}</p>"
+        f"<p><b>Email:</b> {email}</p>"
+        f"<p><b>Notifications opt-in:</b> {'Yes' if opted_in else 'No'}</p>"
+        f"<p><b>Signed up:</b> {now}</p>"
+    )
+    return jsonify({"ok": True})
 
 
 # ─── API: Profile ───
