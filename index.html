@@ -961,6 +961,7 @@
         <div class="radio-row">
           <label><input type="radio" name="profileSex" value="male"><span class="radio-pill">Male</span></label>
           <label><input type="radio" name="profileSex" value="female"><span class="radio-pill">Female</span></label>
+          <label><input type="radio" name="profileSex" value="unspecified"><span class="radio-pill">Rather not say</span></label>
         </div>
       </div>
       <div class="field">
@@ -1047,29 +1048,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Daily Motivation</div>
-      <div class="field">
-        <label>Phone Number</label>
-        <input type="tel" id="profilePhone" placeholder="e.g. (479) 555-1234">
-        <div class="help">Get a daily text with your streak, next benchmark reminder, and a push to train</div>
-      </div>
-      <div class="field">
-        <label>Message Time</label>
-        <div class="radio-row">
-          <label><input type="radio" name="msgTime" value="6am"><span class="radio-pill">6 AM</span></label>
-          <label><input type="radio" name="msgTime" value="7am"><span class="radio-pill">7 AM</span></label>
-          <label><input type="radio" name="msgTime" value="8am"><span class="radio-pill">8 AM</span></label>
-          <label><input type="radio" name="msgTime" value="none"><span class="radio-pill">Off</span></label>
-        </div>
-      </div>
-      <div id="smsPreview" style="margin-top:0.75rem"></div>
-      <div id="twilioStatus" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem"></div>
-      <div class="btn-row">
-        <button class="btn btn-secondary" onclick="previewSMS()">Preview Message</button>
-        <button class="btn btn-primary" onclick="sendTestSMS()">Send Test SMS</button>
-      </div>
-    </div>
     <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
     <button class="btn btn-secondary" onclick="handleSignOut()" style="margin-top:0.5rem">Sign Out</button>
     <button class="btn btn-danger" onclick="clearAll()">Clear All Data</button>
