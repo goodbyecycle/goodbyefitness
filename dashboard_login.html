@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#0a0a0a;color:#e4e4e4;display:flex;align-items:center;
+  justify-content:center;min-height:100vh;
+}
+.login-box{
+  background:#111113;border:1px solid #1e1e22;border-radius:16px;
+  padding:2.5rem;width:90%;max-width:360px;text-align:center;
+}
+.login-box h1{font-size:1.4rem;margin-bottom:.5rem}
+.login-box p{color:#888;font-size:.9rem;margin-bottom:1.5rem}
+input[type=password]{
+  width:100%;padding:.75rem 1rem;background:#1a1a1e;border:1px solid #2a2a2e;
+  border-radius:10px;color:#fff;font-size:1rem;margin-bottom:1rem;
+  outline:none;
+}
+input[type=password]:focus{border-color:#3b82f6}
+button{
+  width:100%;padding:.75rem;background:#3b82f6;color:#fff;font-size:1rem;
+  font-weight:600;border:none;border-radius:10px;cursor:pointer;
+}
+button:hover{background:#2563eb}
+</style>
+</head>
+<body>
+<form class="login-box" method="POST" action="/dashboard/login">
+  <h1>Dashboard</h1>
+  <p>Enter your password to continue</p>
+  <input type="password" name="password" placeholder="Password" autofocus>
+  <button type="submit">Log In</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--text:#e4e4e4;--accent:#3b82f6;
+  --card:#111113;--border:#1e1e22;--muted:#888;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;
+  padding:1rem;max-width:800px;margin:0 auto;
+}
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;
+}
+header h1{font-size:1.5rem;font-weight:700}
+.logout{color:var(--muted);text-decoration:none;font-size:.85rem}
+.logout:hover{color:var(--text)}
+
+.section{margin-bottom:2rem}
+.section h2{
+  font-size:1.1rem;font-weight:600;margin-bottom:.75rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.section h2 .count{
+  background:var(--accent);color:#fff;font-size:.75rem;
+  padding:2px 8px;border-radius:99px;font-weight:500;
+}
+
+/* Today's reminders banner */
+.today-banner{
+  background:linear-gradient(135deg,#1a1a2e,#16213e);
+  border:1px solid #2a2a4e;border-radius:14px;
+  padding:1.25rem 1.5rem;margin-bottom:1.5rem;
+}
+.today-banner h2{margin-bottom:.5rem;color:#93c5fd}
+.reminder-item{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.06);
+}
+.reminder-item:last-child{border-bottom:none}
+.reminder-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0;
+}
+.reminder-text{flex:1;font-size:.95rem}
+.reminder-link{
+  color:var(--accent);text-decoration:none;font-size:.85rem;white-space:nowrap;
+}
+.reminder-link:hover{text-decoration:underline}
+.reminder-day{color:var(--muted);font-size:.8rem;text-transform:capitalize}
+
+/* Cards / items */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+}
+.item{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.75rem 1rem;border-bottom:1px solid var(--border);
+}
+.item:last-child{border-bottom:none}
+.item.done .item-text{text-decoration:line-through;color:var(--muted)}
+
+.item input[type=checkbox]{
+  width:20px;height:20px;accent-color:var(--green);cursor:pointer;flex-shrink:0;
+}
+.item-text{flex:1;font-size:.95rem}
+.item-link{
+  color:var(--accent);text-decoration:none;font-size:.8rem;
+  background:rgba(59,130,246,.1);padding:3px 10px;border-radius:6px;
+}
+.item-link:hover{background:rgba(59,130,246,.2)}
+.item-delete{
+  background:none;border:none;color:#555;cursor:pointer;font-size:1.1rem;
+  padding:0 4px;
+}
+.item-delete:hover{color:var(--red)}
+
+.empty{color:var(--muted);font-size:.9rem;padding:1.5rem;text-align:center}
+
+/* Add forms */
+.add-form{
+  display:flex;gap:.5rem;padding:.75rem 1rem;
+  background:rgba(255,255,255,.02);border-top:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.add-form input,.add-form select{
+  padding:.5rem .75rem;background:#1a1a1e;border:1px solid #2a2a2e;
+  border-radius:8px;color:#fff;font-size:.9rem;outline:none;
+}
+.add-form input:focus,.add-form select:focus{border-color:var(--accent)}
+.add-form input[name=text]{flex:2;min-width:150px}
+.add-form input[name=link]{flex:1;min-width:120px}
+.add-form button{
+  padding:.5rem 1rem;background:var(--accent);color:#fff;border:none;
+  border-radius:8px;cursor:pointer;font-weight:600;font-size:.85rem;
+}
+.add-form button:hover{background:#2563eb}
+
+/* All reminders list */
+.reminder-full{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.75rem 1rem;border-bottom:1px solid var(--border);
+}
+.reminder-full:last-child{border-bottom:none}
+.day-badge{
+  display:inline-block;background:rgba(59,130,246,.15);color:var(--accent);
+  font-size:.75rem;font-weight:600;padding:2px 10px;border-radius:6px;
+  text-transform:capitalize;min-width:60px;text-align:center;
+}
+
+@media(max-width:500px){
+  .add-form{flex-direction:column}
+  .add-form input,.add-form select{width:100%}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>My Dashboard</h1>
+  <a href="/dashboard/logout" class="logout">Log out</a>
+</header>
+
+<!-- Today's reminders -->
+<div class="today-banner" id="todayBanner" style="display:none">
+  <h2>Today's Reminders</h2>
+  <div id="todayList"></div>
+</div>
+
+<!-- To-Do List -->
+<div class="section">
+  <h2>To-Do List <span class="count" id="todoCount">0</span></h2>
+  <div class="card">
+    <div id="todoList"></div>
+    <form class="add-form" id="todoForm">
+      <input name="text" placeholder="What needs doing?" required>
+      <input name="link" placeholder="Link (optional)">
+      <button type="submit">Add</button>
+    </form>
+  </div>
+</div>
+
+<!-- Recurring Reminders -->
+<div class="section">
+  <h2>Recurring Reminders <span class="count" id="reminderCount">0</span></h2>
+  <div class="card">
+    <div id="reminderList"></div>
+    <form class="add-form" id="reminderForm">
+      <input name="text" placeholder="e.g. Check Nicki's social post" required>
+      <input name="link" placeholder="Link (optional)">
+      <select name="day" required>
+        <option value="" disabled selected>Day</option>
+        <option value="monday">Monday</option>
+        <option value="tuesday">Tuesday</option>
+        <option value="wednesday">Wednesday</option>
+        <option value="thursday">Thursday</option>
+        <option value="friday">Friday</option>
+        <option value="saturday">Saturday</option>
+        <option value="sunday">Sunday</option>
+        <option value="daily">Every day</option>
+      </select>
+      <button type="submit">Add</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+const TODAY = DAYS[new Date().getDay()];
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: {'Content-Type': 'application/json'},
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (res.status === 401) { location.href = '/dashboard/login'; return null; }
+  return res.json();
+}
+
+// ── To-Dos ──
+let todos = [];
+
+async function loadTodos() {
+  todos = await api('/api/dashboard/todos') || [];
+  renderTodos();
+}
+
+function renderTodos() {
+  const el = document.getElementById('todoList');
+  const pending = todos.filter(t => !t.done);
+  const done = todos.filter(t => t.done);
+  const sorted = [...pending, ...done];
+  document.getElementById('todoCount').textContent = pending.length;
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty">No to-dos yet. Add one below.</div>';
+    return;
+  }
+  el.innerHTML = sorted.map(t => `
+    <div class="item ${t.done ? 'done' : ''}">
+      <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}',this.checked)">
+      <span class="item-text">${esc(t.text)}</span>
+      ${t.link ? `<a href="${esc(t.link)}" target="_blank" class="item-link">Open</a>` : ''}
+      <button class="item-delete" onclick="deleteTodo('${t.id}')">&times;</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('todoForm').onsubmit = async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  await api('/api/dashboard/todos', {
+    method: 'POST',
+    body: { text: f.get('text'), link: f.get('link') },
+  });
+  e.target.reset();
+  loadTodos();
+};
+
+async function toggleTodo(id, done) {
+  await api(`/api/dashboard/todos/${id}`, { method: 'PATCH', body: { done } });
+  loadTodos();
+}
+
+async function deleteTodo(id) {
+  await api(`/api/dashboard/todos/${id}`, { method: 'DELETE' });
+  loadTodos();
+}
+
+// ── Reminders ──
+let reminders = [];
+
+async function loadReminders() {
+  reminders = await api('/api/dashboard/reminders') || [];
+  renderReminders();
+  renderToday();
+}
+
+function renderReminders() {
+  const el = document.getElementById('reminderList');
+  document.getElementById('reminderCount').textContent = reminders.length;
+
+  if (!reminders.length) {
+    el.innerHTML = '<div class="empty">No reminders yet. Add one below.</div>';
+    return;
+  }
+  el.innerHTML = reminders.map(r => `
+    <div class="reminder-full">
+      <span class="day-badge">${r.day === 'daily' ? 'Daily' : r.day}</span>
+      <span class="item-text">${esc(r.text)}</span>
+      ${r.link ? `<a href="${esc(r.link)}" target="_blank" class="item-link">Open</a>` : ''}
+      <button class="item-delete" onclick="deleteReminder('${r.id}')">&times;</button>
+    </div>
+  `).join('');
+}
+
+function renderToday() {
+  const todayReminders = reminders.filter(r => r.day === TODAY || r.day === 'daily');
+  const banner = document.getElementById('todayBanner');
+  const list = document.getElementById('todayList');
+
+  if (!todayReminders.length) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  list.innerHTML = todayReminders.map(r => `
+    <div class="reminder-item">
+      <span class="reminder-dot"></span>
+      <span class="reminder-text">${esc(r.text)}</span>
+      ${r.link ? `<a href="${esc(r.link)}" target="_blank" class="reminder-link">Open link &rarr;</a>` : ''}
+    </div>
+  `).join('');
+}
+
+document.getElementById('reminderForm').onsubmit = async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  await api('/api/dashboard/reminders', {
+    method: 'POST',
+    body: { text: f.get('text'), link: f.get('link'), day: f.get('day') },
+  });
+  e.target.reset();
+  loadReminders();
+};
+
+async function deleteReminder(id) {
+  await api(`/api/dashboard/reminders/${id}`, { method: 'DELETE' });
+  loadReminders();
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// Boot
+loadTodos();
+loadReminders();
+</script>
+</body>
+</html>

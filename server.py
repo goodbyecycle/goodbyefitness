@@ -4,9 +4,12 @@ import json
 import os
 import random
 import smtplib
+import threading
 import time
+import uuid
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
+from functools import wraps
 from pathlib import Path
 
 import requests as http_requests
@@ -14,8 +17,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, redirect, request, send_from_directory
 
 app = Flask(__name__, static_folder=".", static_url_path="")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
 DATA_FILE = Path(__file__).parent / "user_data.json"
+DASHBOARD_FILE = Path(__file__).parent / "dashboard_data.json"
+
+DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "letmein")
 
 # ─── Twilio config (set these env vars or they'll be prompted on first send) ───
 TWILIO_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
@@ -32,23 +39,25 @@ NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL", "goodbyefitness@gmail.com")
 NOTIFY_APP_PASSWORD = os.environ.get("NOTIFY_APP_PASSWORD", "")
 
 
-def send_notification_email(subject, body):
-    if not NOTIFY_APP_PASSWORD:
-        print(f"[EMAIL] Not configured, skipping: {subject}")
-        return False
+def _send_email_sync(subject, body):
     try:
         msg = MIMEText(body, "html")
         msg["Subject"] = subject
         msg["From"] = NOTIFY_EMAIL
         msg["To"] = NOTIFY_EMAIL
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
             server.login(NOTIFY_EMAIL, NOTIFY_APP_PASSWORD)
             server.send_message(msg)
         print(f"[EMAIL] Sent: {subject}")
-        return True
     except Exception as e:
         print(f"[EMAIL] Error: {e}")
-        return False
+
+
+def send_notification_email(subject, body):
+    if not NOTIFY_APP_PASSWORD:
+        print(f"[EMAIL] Not configured, skipping: {subject}")
+        return
+    threading.Thread(target=_send_email_sync, args=(subject, body), daemon=True).start()
 
 
 def get_twilio_client():
@@ -431,6 +440,139 @@ def generate_message():
         data.get("training", []),
     )
     return jsonify({"message": message})
+
+
+# ─── Dashboard (private) ───
+
+from flask import session as flask_session
+
+
+def load_dashboard():
+    if DASHBOARD_FILE.exists():
+        return json.loads(DASHBOARD_FILE.read_text())
+    return {"todos": [], "reminders": []}
+
+
+def save_dashboard(data):
+    DASHBOARD_FILE.write_text(json.dumps(data, indent=2))
+
+
+def require_dashboard_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not flask_session.get("dashboard_auth"):
+            if request.is_json:
+                return jsonify({"error": "unauthorized"}), 401
+            return redirect("/dashboard/login")
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route("/dashboard/login", methods=["GET", "POST"])
+def dashboard_login():
+    if request.method == "POST":
+        pw = (request.form.get("password") or "").strip()
+        if pw == DASHBOARD_PASSWORD:
+            flask_session["dashboard_auth"] = True
+            return redirect("/dashboard")
+        return send_from_directory(".", "dashboard_login.html")
+    return send_from_directory(".", "dashboard_login.html")
+
+
+@app.route("/dashboard/logout")
+def dashboard_logout():
+    flask_session.pop("dashboard_auth", None)
+    return redirect("/dashboard/login")
+
+
+@app.route("/dashboard")
+@require_dashboard_auth
+def dashboard():
+    return send_from_directory(".", "dashboard.html")
+
+
+@app.route("/api/dashboard/todos", methods=["GET"])
+@require_dashboard_auth
+def get_todos():
+    return jsonify(load_dashboard().get("todos", []))
+
+
+@app.route("/api/dashboard/todos", methods=["POST"])
+@require_dashboard_auth
+def add_todo():
+    data = load_dashboard()
+    body = request.json or {}
+    todo = {
+        "id": str(uuid.uuid4())[:8],
+        "text": body.get("text", ""),
+        "link": body.get("link", ""),
+        "done": False,
+        "created": datetime.now().isoformat(),
+    }
+    data["todos"].append(todo)
+    save_dashboard(data)
+    return jsonify(todo)
+
+
+@app.route("/api/dashboard/todos/<todo_id>", methods=["PATCH"])
+@require_dashboard_auth
+def update_todo(todo_id):
+    data = load_dashboard()
+    body = request.json or {}
+    for t in data["todos"]:
+        if t["id"] == todo_id:
+            if "done" in body:
+                t["done"] = body["done"]
+            if "text" in body:
+                t["text"] = body["text"]
+            if "link" in body:
+                t["link"] = body["link"]
+            save_dashboard(data)
+            return jsonify(t)
+    return jsonify({"error": "not found"}), 404
+
+
+@app.route("/api/dashboard/todos/<todo_id>", methods=["DELETE"])
+@require_dashboard_auth
+def delete_todo(todo_id):
+    data = load_dashboard()
+    data["todos"] = [t for t in data["todos"] if t["id"] != todo_id]
+    save_dashboard(data)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/dashboard/reminders", methods=["GET"])
+@require_dashboard_auth
+def get_reminders():
+    return jsonify(load_dashboard().get("reminders", []))
+
+
+@app.route("/api/dashboard/reminders", methods=["POST"])
+@require_dashboard_auth
+def add_reminder():
+    data = load_dashboard()
+    body = request.json or {}
+    reminder = {
+        "id": str(uuid.uuid4())[:8],
+        "text": body.get("text", ""),
+        "link": body.get("link", ""),
+        "day": body.get("day", ""),
+        "time": body.get("time", "09:00"),
+        "recurring": body.get("recurring", True),
+        "created": datetime.now().isoformat(),
+    }
+    data["reminders"].append(reminder)
+    save_dashboard(data)
+    return jsonify(reminder)
+
+
+@app.route("/api/dashboard/reminders/<reminder_id>", methods=["DELETE"])
+@require_dashboard_auth
+def delete_reminder(reminder_id):
+    data = load_dashboard()
+    data["reminders"] = [r for r in data["reminders"] if r["id"] != reminder_id]
+    save_dashboard(data)
+    return jsonify({"ok": True})
 
 
 # ─── Boot ───
