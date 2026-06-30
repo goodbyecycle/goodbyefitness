@@ -80,13 +80,18 @@ def save_data(data):
 # ─── Static files ───
 
 @app.route("/")
-def landing():
-    return send_from_directory(".", "landing.html")
+def home():
+    return redirect("/dashboard")
 
 
-@app.route("/app")
-def index():
-    return send_from_directory(".", "index.html")
+# Fitness pages hidden for now — files kept for later
+# @app.route("/fitness")
+# def landing():
+#     return send_from_directory(".", "landing.html")
+#
+# @app.route("/app")
+# def index():
+#     return send_from_directory(".", "index.html")
 
 
 # ─── API: Notifications ───
@@ -582,7 +587,7 @@ if __name__ == "__main__":
     data = load_data()
     if data.get("profile"):
         reschedule_sms(data["profile"])
-    print("\n  Fitness Test Demo")
+    print("\n  Dashboard")
     print("  http://localhost:8090\n")
     if not all([TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM]):
         print("  ⚠  Twilio not configured. Set env vars to enable SMS:")
