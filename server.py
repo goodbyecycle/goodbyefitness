@@ -23,6 +23,7 @@ DATA_FILE = Path(__file__).parent / "user_data.json"
 DASHBOARD_FILE = Path(__file__).parent / "dashboard_data.json"
 
 DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "letmein")
+SIRI_TOKEN = os.environ.get("SIRI_TOKEN", "")
 
 # ─── Nicki config ───
 NICKI_EMAIL = os.environ.get("NICKI_EMAIL", "")
@@ -600,6 +601,58 @@ def dashboard_config():
         "nicki_configured": bool(NICKI_EMAIL or NICKI_PHONE),
         "jobber_configured": bool(JOBBER_API_TOKEN),
     })
+
+
+# ─── Siri / Shortcuts API ───
+
+def require_siri_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get("X-Siri-Token") or request.args.get("token") or ""
+        if not SIRI_TOKEN or token != SIRI_TOKEN:
+            return jsonify({"error": "unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route("/api/siri/add", methods=["POST"])
+@require_siri_token
+def siri_add():
+    body = request.json or {}
+    text = body.get("text", "").strip()
+    item_type = body.get("type", "todo")
+    link = body.get("link", "")
+    day = body.get("day", "daily")
+
+    if not text:
+        return jsonify({"error": "text required"}), 400
+
+    data = load_dashboard()
+
+    if item_type == "reminder":
+        item = {
+            "id": str(uuid.uuid4())[:8],
+            "text": text,
+            "link": link,
+            "day": day,
+            "time": "09:00",
+            "recurring": True,
+            "created": datetime.now().isoformat(),
+        }
+        data["reminders"].append(item)
+        save_dashboard(data)
+        return jsonify({"ok": True, "message": f"Reminder added: {text} ({day})"})
+    else:
+        item = {
+            "id": str(uuid.uuid4())[:8],
+            "text": text,
+            "link": link,
+            "done": False,
+            "created": datetime.now().isoformat(),
+        }
+        data["todos"].append(item)
+        save_dashboard(data)
+        return jsonify({"ok": True, "message": f"To-do added: {text}"})
 
 
 # ─── Nicki nudge (email + SMS) ───
