@@ -24,6 +24,17 @@ DASHBOARD_FILE = Path(__file__).parent / "dashboard_data.json"
 
 DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "letmein")
 
+# ─── Nicki config ───
+NICKI_EMAIL = os.environ.get("NICKI_EMAIL", "")
+NICKI_PHONE = os.environ.get("NICKI_PHONE", "")
+
+# ─── Jobber config ───
+JOBBER_API_TOKEN = os.environ.get("JOBBER_API_TOKEN", "")
+
+# ─── Google config ───
+GOOGLE_CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID", "")
+GOOGLE_REVIEW_URL = os.environ.get("GOOGLE_REVIEW_URL", "")
+
 # ─── Twilio config (set these env vars or they'll be prompted on first send) ───
 TWILIO_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
@@ -578,6 +589,160 @@ def delete_reminder(reminder_id):
     data["reminders"] = [r for r in data["reminders"] if r["id"] != reminder_id]
     save_dashboard(data)
     return jsonify({"ok": True})
+
+
+@app.route("/api/dashboard/config", methods=["GET"])
+@require_dashboard_auth
+def dashboard_config():
+    return jsonify({
+        "google_calendar_id": GOOGLE_CALENDAR_ID,
+        "google_review_url": GOOGLE_REVIEW_URL,
+        "nicki_configured": bool(NICKI_EMAIL or NICKI_PHONE),
+        "jobber_configured": bool(JOBBER_API_TOKEN),
+    })
+
+
+# ─── Nicki nudge (email + SMS) ───
+
+def _send_nicki_email(subject, body):
+    if not NICKI_EMAIL or not NOTIFY_APP_PASSWORD:
+        return
+    try:
+        msg = MIMEText(body, "html")
+        msg["Subject"] = subject
+        msg["From"] = NOTIFY_EMAIL
+        msg["To"] = NICKI_EMAIL
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+            server.login(NOTIFY_EMAIL, NOTIFY_APP_PASSWORD)
+            server.send_message(msg)
+        print(f"[NICKI-EMAIL] Sent: {subject}")
+    except Exception as e:
+        print(f"[NICKI-EMAIL] Error: {e}")
+
+
+def _send_nicki_sms(message):
+    if not NICKI_PHONE:
+        return
+    client = get_twilio_client()
+    if not client:
+        print("[NICKI-SMS] Twilio not configured")
+        return
+    try:
+        client.messages.create(body=message, from_=TWILIO_FROM, to=NICKI_PHONE)
+        print(f"[NICKI-SMS] Sent to {NICKI_PHONE}")
+    except Exception as e:
+        print(f"[NICKI-SMS] Error: {e}")
+
+
+@app.route("/api/dashboard/nudge-nicki", methods=["POST"])
+@require_dashboard_auth
+def nudge_nicki():
+    body = request.json or {}
+    nudge_type = body.get("type", "review")
+    customer = body.get("customer", "")
+
+    if not NICKI_EMAIL and not NICKI_PHONE:
+        return jsonify({"error": "Set NICKI_EMAIL or NICKI_PHONE on Render"}), 400
+
+    if nudge_type == "review":
+        review_link = GOOGLE_REVIEW_URL or "[Google Review Link]"
+        subject = f"Google Review Reminder: {customer}"
+        email_body = (
+            f"<h2>Google Review Reminder</h2>"
+            f"<p>Please send a Google review request to <b>{customer}</b>.</p>"
+            f"<p>Review link to share: <a href=\"{review_link}\">{review_link}</a></p>"
+        )
+        sms_body = (
+            f"Hey Nicki! Please send a Google review request to {customer}. "
+            f"Review link: {review_link}"
+        )
+    else:
+        subject = "Social Media Post Check"
+        email_body = (
+            "<h2>Social Media Reminder</h2>"
+            "<p>Just checking -- did the RG Seamless Gutters social media post go up? "
+            "Please confirm or get it posted today.</p>"
+        )
+        sms_body = (
+            "Hey Nicki! Just checking -- did the RG Seamless Gutters social post go up? "
+            "Please confirm or get it posted today."
+        )
+
+    threading.Thread(target=_send_nicki_email, args=(subject, email_body), daemon=True).start()
+    threading.Thread(target=_send_nicki_sms, args=(sms_body,), daemon=True).start()
+
+    return jsonify({"ok": True})
+
+
+# ─── Jobber API ───
+
+@app.route("/api/dashboard/jobber/jobs", methods=["GET"])
+@require_dashboard_auth
+def jobber_jobs():
+    if not JOBBER_API_TOKEN:
+        return jsonify({"error": "Set JOBBER_API_TOKEN on Render to connect Jobber"})
+
+    try:
+        resp = http_requests.post(
+            "https://api.getjobber.com/api/graphql",
+            headers={
+                "Authorization": f"Bearer {JOBBER_API_TOKEN}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "query": """
+                query {
+                  jobs(first: 10, sortOrder: START_AT_ASC) {
+                    nodes {
+                      title
+                      jobStatus
+                      startAt
+                      client { name }
+                    }
+                  }
+                }
+                """
+            },
+            timeout=10,
+        )
+
+        if resp.status_code != 200:
+            return jsonify({"error": f"Jobber API error ({resp.status_code})"})
+
+        data = resp.json()
+        nodes = data.get("data", {}).get("jobs", {}).get("nodes", [])
+
+        jobs = []
+        for node in nodes:
+            status_raw = node.get("jobStatus", "").lower()
+            if status_raw in ("completed", "closed"):
+                status = "completed"
+            elif status_raw in ("active", "in_progress"):
+                status = "active"
+            else:
+                status = "upcoming"
+
+            start = node.get("startAt", "")
+            if start:
+                try:
+                    dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
+                    date_str = dt.strftime("%b %d, %I:%M %p")
+                except (ValueError, TypeError):
+                    date_str = start[:10]
+            else:
+                date_str = "No date"
+
+            jobs.append({
+                "title": node.get("title", "Untitled"),
+                "client": (node.get("client") or {}).get("name", "Unknown"),
+                "date": date_str,
+                "status": status,
+            })
+
+        return jsonify(jobs)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 # ─── Boot ───

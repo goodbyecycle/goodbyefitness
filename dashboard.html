@@ -10,19 +10,22 @@
   --bg:#0a0a0a;--text:#e4e4e4;--accent:#3b82f6;
   --card:#111113;--border:#1e1e22;--muted:#888;
   --green:#22c55e;--red:#ef4444;--yellow:#eab308;
+  --orange:#f97316;
 }
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.6;
-  padding:1rem;max-width:800px;margin:0 auto;
+  padding:1rem;max-width:900px;margin:0 auto;
 }
 header{
   display:flex;align-items:center;justify-content:space-between;
   padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;
 }
 header h1{font-size:1.5rem;font-weight:700}
+.header-right{display:flex;align-items:center;gap:1rem}
 .logout{color:var(--muted);text-decoration:none;font-size:.85rem}
 .logout:hover{color:var(--text)}
+.date-display{color:var(--muted);font-size:.85rem}
 
 .section{margin-bottom:2rem}
 .section h2{
@@ -54,7 +57,41 @@ header h1{font-size:1.5rem;font-weight:700}
   color:var(--accent);text-decoration:none;font-size:.85rem;white-space:nowrap;
 }
 .reminder-link:hover{text-decoration:underline}
-.reminder-day{color:var(--muted);font-size:.8rem;text-transform:capitalize}
+
+/* Quick links grid */
+.links-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:.5rem;
+}
+.quick-link{
+  display:flex;flex-direction:column;align-items:center;gap:.4rem;
+  padding:.75rem .5rem;background:var(--card);border:1px solid var(--border);
+  border-radius:10px;text-decoration:none;color:var(--text);
+  font-size:.8rem;text-align:center;transition:border-color .2s,background .2s;
+}
+.quick-link:hover{border-color:var(--accent);background:#151518}
+.quick-link .icon{font-size:1.4rem}
+.quick-link .label{font-weight:500}
+
+/* Nicki section */
+.nicki-card{
+  background:linear-gradient(135deg,#1a1e13,#1e2a13);
+  border:1px solid #2a3e1e;border-radius:14px;
+  padding:1.25rem 1.5rem;margin-bottom:1.5rem;
+}
+.nicki-card h2{color:#86efac;margin-bottom:.75rem}
+.nicki-row{
+  display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+}
+.nicki-btn{
+  padding:.5rem 1.2rem;border:none;border-radius:8px;
+  font-size:.85rem;font-weight:600;cursor:pointer;
+  transition:opacity .2s;
+}
+.nicki-btn:hover{opacity:.85}
+.nicki-btn.review{background:var(--green);color:#fff}
+.nicki-btn.social{background:var(--orange);color:#fff}
+.nicki-status{color:var(--muted);font-size:.85rem;margin-top:.5rem}
 
 /* Cards / items */
 .card{
@@ -67,7 +104,6 @@ header h1{font-size:1.5rem;font-weight:700}
 }
 .item:last-child{border-bottom:none}
 .item.done .item-text{text-decoration:line-through;color:var(--muted)}
-
 .item input[type=checkbox]{
   width:20px;height:20px;accent-color:var(--green);cursor:pointer;flex-shrink:0;
 }
@@ -82,7 +118,6 @@ header h1{font-size:1.5rem;font-weight:700}
   padding:0 4px;
 }
 .item-delete:hover{color:var(--red)}
-
 .empty{color:var(--muted);font-size:.9rem;padding:1.5rem;text-align:center}
 
 /* Add forms */
@@ -116,9 +151,35 @@ header h1{font-size:1.5rem;font-weight:700}
   text-transform:capitalize;min-width:60px;text-align:center;
 }
 
+/* Calendar embed */
+.calendar-wrap{
+  border-radius:12px;overflow:hidden;border:1px solid var(--border);
+}
+.calendar-wrap iframe{display:block;width:100%;border:none;background:#1a1a1e}
+
+/* Jobber section */
+.jobber-jobs .job{
+  padding:.75rem 1rem;border-bottom:1px solid var(--border);
+}
+.jobber-jobs .job:last-child{border-bottom:none}
+.job-title{font-weight:600;font-size:.95rem}
+.job-detail{color:var(--muted);font-size:.85rem}
+.job-status{
+  display:inline-block;font-size:.7rem;font-weight:600;padding:2px 8px;
+  border-radius:6px;text-transform:uppercase;
+}
+.job-status.active{background:rgba(34,197,94,.15);color:var(--green)}
+.job-status.upcoming{background:rgba(59,130,246,.15);color:var(--accent)}
+.job-status.completed{background:rgba(136,136,136,.15);color:var(--muted)}
+
+/* Two-col layout for larger screens */
+.two-col{display:grid;grid-template-columns:1fr;gap:1.5rem}
+@media(min-width:640px){.two-col{grid-template-columns:1fr 1fr}}
+
 @media(max-width:500px){
   .add-form{flex-direction:column}
   .add-form input,.add-form select{width:100%}
+  .links-grid{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
@@ -126,7 +187,10 @@ header h1{font-size:1.5rem;font-weight:700}
 
 <header>
   <h1>My Dashboard</h1>
-  <a href="/dashboard/logout" class="logout">Log out</a>
+  <div class="header-right">
+    <span class="date-display" id="dateDisplay"></span>
+    <a href="/dashboard/logout" class="logout">Log out</a>
+  </div>
 </header>
 
 <!-- Today's reminders -->
@@ -135,46 +199,122 @@ header h1{font-size:1.5rem;font-weight:700}
   <div id="todayList"></div>
 </div>
 
-<!-- To-Do List -->
+<!-- Nicki - Review & Social Media -->
+<div class="nicki-card">
+  <h2>Nicki - RG Seamless Gutters</h2>
+  <div class="nicki-row">
+    <button class="nicki-btn review" onclick="nudgeNicki('review')">Send Review Reminder</button>
+    <button class="nicki-btn social" onclick="nudgeNicki('social')">Check Social Post</button>
+    <input type="text" id="nickiCustomer" placeholder="Customer name (for review)"
+      style="padding:.5rem .75rem;background:#1a1a1e;border:1px solid #2a3e1e;border-radius:8px;color:#fff;font-size:.85rem;outline:none;flex:1;min-width:150px">
+  </div>
+  <div class="nicki-status" id="nickiStatus"></div>
+</div>
+
+<!-- Quick Links -->
 <div class="section">
-  <h2>To-Do List <span class="count" id="todoCount">0</span></h2>
-  <div class="card">
-    <div id="todoList"></div>
-    <form class="add-form" id="todoForm">
-      <input name="text" placeholder="What needs doing?" required>
-      <input name="link" placeholder="Link (optional)">
-      <button type="submit">Add</button>
-    </form>
+  <h2>Quick Links</h2>
+  <div class="links-grid" id="linksGrid">
+    <a class="quick-link" href="https://mail.google.com" target="_blank">
+      <span class="icon">&#9993;</span><span class="label">Gmail</span>
+    </a>
+    <a class="quick-link" href="https://calendar.google.com" target="_blank">
+      <span class="icon">&#128197;</span><span class="label">Calendar</span>
+    </a>
+    <a class="quick-link" href="https://app.getjobber.com" target="_blank">
+      <span class="icon">&#128736;</span><span class="label">Jobber</span>
+    </a>
+    <a class="quick-link" href="https://drive.google.com" target="_blank">
+      <span class="icon">&#128193;</span><span class="label">Google Drive</span>
+    </a>
+    <a class="quick-link" href="https://www.facebook.com" target="_blank">
+      <span class="icon">&#102;</span><span class="label">Facebook</span>
+    </a>
+    <a class="quick-link" href="https://www.instagram.com" target="_blank">
+      <span class="icon">&#128247;</span><span class="label">Instagram</span>
+    </a>
+    <a class="quick-link" id="googleReviewLink" href="#" target="_blank">
+      <span class="icon">&#11088;</span><span class="label">Google Reviews</span>
+    </a>
+    <a class="quick-link" href="https://business.google.com" target="_blank">
+      <span class="icon">&#127970;</span><span class="label">Google Business</span>
+    </a>
   </div>
 </div>
 
-<!-- Recurring Reminders -->
-<div class="section">
-  <h2>Recurring Reminders <span class="count" id="reminderCount">0</span></h2>
-  <div class="card">
-    <div id="reminderList"></div>
-    <form class="add-form" id="reminderForm">
-      <input name="text" placeholder="e.g. Check Nicki's social post" required>
-      <input name="link" placeholder="Link (optional)">
-      <select name="day" required>
-        <option value="" disabled selected>Day</option>
-        <option value="monday">Monday</option>
-        <option value="tuesday">Tuesday</option>
-        <option value="wednesday">Wednesday</option>
-        <option value="thursday">Thursday</option>
-        <option value="friday">Friday</option>
-        <option value="saturday">Saturday</option>
-        <option value="sunday">Sunday</option>
-        <option value="daily">Every day</option>
-      </select>
-      <button type="submit">Add</button>
-    </form>
+<div class="two-col">
+  <div>
+    <!-- To-Do List -->
+    <div class="section">
+      <h2>To-Do List <span class="count" id="todoCount">0</span></h2>
+      <div class="card">
+        <div id="todoList"></div>
+        <form class="add-form" id="todoForm">
+          <input name="text" placeholder="What needs doing?" required>
+          <input name="link" placeholder="Link (optional)">
+          <button type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Recurring Reminders -->
+    <div class="section">
+      <h2>Recurring Reminders <span class="count" id="reminderCount">0</span></h2>
+      <div class="card">
+        <div id="reminderList"></div>
+        <form class="add-form" id="reminderForm">
+          <input name="text" placeholder="e.g. Check Nicki's social post" required>
+          <input name="link" placeholder="Link (optional)">
+          <select name="day" required>
+            <option value="" disabled selected>Day</option>
+            <option value="monday">Monday</option>
+            <option value="tuesday">Tuesday</option>
+            <option value="wednesday">Wednesday</option>
+            <option value="thursday">Thursday</option>
+            <option value="friday">Friday</option>
+            <option value="saturday">Saturday</option>
+            <option value="sunday">Sunday</option>
+            <option value="daily">Every day</option>
+          </select>
+          <button type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <!-- Google Calendar -->
+    <div class="section">
+      <h2>Calendar</h2>
+      <div class="calendar-wrap">
+        <iframe id="calendarEmbed"
+          src=""
+          height="400"
+          loading="lazy"></iframe>
+        <div class="empty" id="calendarPlaceholder">
+          Set GOOGLE_CALENDAR_ID on Render to embed your calendar
+        </div>
+      </div>
+    </div>
+
+    <!-- Jobber Upcoming Jobs -->
+    <div class="section">
+      <h2>Upcoming Jobs</h2>
+      <div class="card">
+        <div id="jobberList">
+          <div class="empty">Loading jobs...</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 const TODAY = DAYS[new Date().getDay()];
+
+document.getElementById('dateDisplay').textContent =
+  new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
@@ -184,6 +324,37 @@ async function api(path, opts = {}) {
   });
   if (res.status === 401) { location.href = '/dashboard/login'; return null; }
   return res.json();
+}
+
+// ── Nicki Nudge ──
+async function nudgeNicki(type) {
+  const status = document.getElementById('nickiStatus');
+  const customer = document.getElementById('nickiCustomer').value.trim();
+
+  if (type === 'review' && !customer) {
+    status.textContent = 'Enter a customer name first';
+    status.style.color = 'var(--yellow)';
+    return;
+  }
+
+  status.textContent = 'Sending...';
+  status.style.color = 'var(--muted)';
+
+  const res = await api('/api/dashboard/nudge-nicki', {
+    method: 'POST',
+    body: { type, customer },
+  });
+
+  if (res && res.ok) {
+    status.textContent = type === 'review'
+      ? `Sent review reminder for "${customer}"`
+      : 'Sent social media check reminder';
+    status.style.color = 'var(--green)';
+    if (type === 'review') document.getElementById('nickiCustomer').value = '';
+  } else {
+    status.textContent = res?.error || 'Failed to send';
+    status.style.color = 'var(--red)';
+  }
 }
 
 // ── To-Dos ──
@@ -298,6 +469,46 @@ async function deleteReminder(id) {
   loadReminders();
 }
 
+// ── Calendar ──
+async function loadCalendar() {
+  const res = await api('/api/dashboard/config');
+  if (res && res.google_calendar_id) {
+    const src = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(res.google_calendar_id)}&ctz=America/Detroit&mode=AGENDA&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%230a0a0a&color=%233b82f6`;
+    document.getElementById('calendarEmbed').src = src;
+    document.getElementById('calendarEmbed').style.display = 'block';
+    document.getElementById('calendarPlaceholder').style.display = 'none';
+  } else {
+    document.getElementById('calendarEmbed').style.display = 'none';
+    document.getElementById('calendarPlaceholder').style.display = 'block';
+  }
+  if (res && res.google_review_url) {
+    document.getElementById('googleReviewLink').href = res.google_review_url;
+  }
+}
+
+// ── Jobber ──
+async function loadJobber() {
+  const el = document.getElementById('jobberList');
+  const res = await api('/api/dashboard/jobber/jobs');
+  if (!res || res.error) {
+    el.innerHTML = `<div class="empty">${res?.error || 'Jobber not connected'}</div>`;
+    return;
+  }
+  if (!res.length) {
+    el.innerHTML = '<div class="empty">No upcoming jobs</div>';
+    return;
+  }
+  el.innerHTML = res.map(j => `
+    <div class="job">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="job-title">${esc(j.title)}</span>
+        <span class="job-status ${j.status}">${j.status}</span>
+      </div>
+      <div class="job-detail">${esc(j.client)} &middot; ${esc(j.date)}</div>
+    </div>
+  `).join('');
+}
+
 function esc(s) {
   const d = document.createElement('div');
   d.textContent = s || '';
@@ -307,6 +518,8 @@ function esc(s) {
 // Boot
 loadTodos();
 loadReminders();
+loadCalendar();
+loadJobber();
 </script>
 </body>
 </html>
