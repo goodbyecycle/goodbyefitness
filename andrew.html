@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Andrew's Training Dashboard</title>
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue-bg: #4F9DFF;
+  --blue-light: #6BB3FF;
+  --pink: #FF4FA3;
+  --pink-light: rgba(255, 79, 163, 0.3);
+  --black: #000000;
+  --white: #FFFFFF;
+  --muted: rgba(0, 0, 0, 0.35);
+  --today-bg: #FF4FA3;
+  --today-text: #000000;
+  --cell-hover: rgba(255, 255, 255, 0.12);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--blue-bg);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 24px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dashboard-header { text-align: center; margin-bottom: 24px; }
+.brand-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+.page-title { font-size: 1.1rem; font-weight: 500; margin-top: 4px; opacity: 0.8; }
+
+.calendar-controls { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 20px; }
+.view-selector { display: flex; gap: 8px; }
+
+.view-btn {
+  font-family: var(--font); font-size: 0.95rem; font-weight: 600;
+  padding: 10px 22px; border: 2px solid var(--pink); border-radius: 12px;
+  background: transparent; color: var(--black); cursor: pointer;
+  transition: background 0.15s, color 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.view-btn:hover { background: var(--pink-light); }
+.view-btn.active { background: var(--pink); color: var(--white); }
+
+.calendar-nav { display: flex; align-items: center; gap: 10px; }
+
+.nav-btn {
+  font-family: var(--font); font-size: 1.2rem; font-weight: 700;
+  width: 44px; height: 44px; border: 2px solid var(--pink); border-radius: 12px;
+  background: transparent; color: var(--black); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.nav-btn:hover { background: var(--pink-light); }
+.today-btn { width: auto; padding: 0 20px; font-size: 0.95rem; }
+.nav-label { font-size: 1.15rem; font-weight: 700; margin-left: 8px; white-space: nowrap; }
+
+.calendar-container { background: var(--blue-light); border: 2px solid var(--pink); border-radius: 16px; overflow: hidden; }
+
+.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); width: 100%; }
+
+.weekday-header {
+  text-align: center; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 12px 4px; border-bottom: 2px solid var(--pink);
+  border-right: 1px solid var(--pink);
+}
+.weekday-header:last-child { border-right: none; }
+
+.month-cell {
+  min-height: 100px; padding: 8px; border-bottom: 1px solid var(--pink);
+  border-right: 1px solid var(--pink); cursor: pointer; transition: background 0.12s;
+}
+.month-cell:nth-child(7n) { border-right: none; }
+.month-cell:hover { background: var(--cell-hover); }
+.month-cell.outside { opacity: 0.35; }
+
+.month-cell .date-num {
+  font-size: 0.95rem; font-weight: 600; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.month-cell.today .date-num { background: var(--today-bg); color: var(--today-text); font-weight: 800; }
+.month-cell .event-area { margin-top: 4px; min-height: 40px; }
+
+.week-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); width: 100%; overflow-x: auto; }
+.week-header-spacer { border-bottom: 2px solid var(--pink); border-right: 1px solid var(--pink); }
+
+.week-day-header {
+  text-align: center; padding: 10px 4px; border-bottom: 2px solid var(--pink);
+  border-right: 1px solid var(--pink); font-weight: 700; font-size: 0.8rem;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.week-day-header:last-child { border-right: none; }
+.week-day-header .header-date { display: block; font-size: 1.3rem; margin-top: 2px; }
+.week-day-header.today { background: var(--pink-light); }
+.week-day-header.today .header-date {
+  background: var(--today-bg); color: var(--today-text); width: 36px; height: 36px;
+  border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800;
+}
+
+.week-time-label {
+  font-size: 0.75rem; font-weight: 600; text-align: right; padding: 4px 8px 0 4px;
+  border-right: 1px solid var(--pink); border-bottom: 1px solid var(--pink); height: 60px; opacity: 0.7;
+}
+
+.week-cell {
+  border-right: 1px solid var(--pink); border-bottom: 1px solid var(--pink);
+  height: 60px; cursor: pointer; transition: background 0.12s;
+}
+.week-cell:nth-child(8n) { border-right: none; }
+.week-cell:hover { background: var(--cell-hover); }
+.week-cell.today-col { background: rgba(255, 79, 163, 0.08); }
+
+.threeday-grid { display: grid; grid-template-columns: 60px repeat(3, 1fr); width: 100%; }
+.threeday-header-spacer { border-bottom: 2px solid var(--pink); border-right: 1px solid var(--pink); }
+
+.threeday-day-header {
+  text-align: center; padding: 10px 4px; border-bottom: 2px solid var(--pink);
+  border-right: 1px solid var(--pink); font-weight: 700; font-size: 0.85rem; text-transform: uppercase;
+}
+.threeday-day-header:last-child { border-right: none; }
+.threeday-day-header .header-date { display: block; font-size: 1.3rem; margin-top: 2px; }
+.threeday-day-header.today { background: var(--pink-light); }
+.threeday-day-header.today .header-date {
+  background: var(--today-bg); color: var(--today-text); width: 36px; height: 36px;
+  border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800;
+}
+
+.threeday-time-label {
+  font-size: 0.75rem; font-weight: 600; text-align: right; padding: 4px 8px 0 4px;
+  border-right: 1px solid var(--pink); border-bottom: 1px solid var(--pink); height: 60px; opacity: 0.7;
+}
+
+.threeday-cell {
+  border-right: 1px solid var(--pink); border-bottom: 1px solid var(--pink);
+  height: 60px; cursor: pointer; transition: background 0.12s;
+}
+.threeday-cell:nth-child(4n) { border-right: none; }
+.threeday-cell:hover { background: var(--cell-hover); }
+.threeday-cell.today-col { background: rgba(255, 79, 163, 0.08); }
+
+.day-view { width: 100%; }
+.day-view-header { text-align: center; padding: 16px; border-bottom: 2px solid var(--pink); font-weight: 700; font-size: 1.1rem; }
+.day-view-header.today { background: var(--pink-light); }
+.day-view-header .header-date { font-size: 2rem; display: block; margin-top: 4px; }
+.day-view-header.today .header-date {
+  background: var(--today-bg); color: var(--today-text); width: 52px; height: 52px;
+  border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800;
+}
+
+.day-hour-row { display: grid; grid-template-columns: 70px 1fr; border-bottom: 1px solid var(--pink); min-height: 60px; }
+.day-time-label { font-size: 0.8rem; font-weight: 600; text-align: right; padding: 6px 12px 0 4px; border-right: 1px solid var(--pink); opacity: 0.7; }
+.day-hour-cell { min-height: 60px; padding: 4px 8px; }
+
+@media (max-width: 768px) {
+  #app { padding: 16px 12px 32px; }
+  .brand-title { font-size: 1.5rem; }
+  .page-title { font-size: 0.95rem; }
+  .view-selector { gap: 6px; }
+  .view-btn { padding: 8px 14px; font-size: 0.85rem; border-radius: 10px; }
+  .nav-btn { width: 40px; height: 40px; }
+  .nav-label { font-size: 1rem; }
+  .month-cell { min-height: 70px; padding: 4px; }
+  .month-cell .date-num { font-size: 0.85rem; width: 28px; height: 28px; }
+  .weekday-header { font-size: 0.65rem; padding: 8px 2px; }
+  .week-grid { min-width: 700px; }
+  .calendar-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+@media (max-width: 480px) {
+  .brand-title { font-size: 1.3rem; }
+  .view-selector { flex-wrap: wrap; justify-content: center; }
+  .view-btn { padding: 8px 12px; font-size: 0.8rem; }
+  .month-cell { min-height: 55px; }
+  .threeday-grid { display: flex; flex-direction: column; }
+  .threeday-header-spacer { display: none; }
+  .threeday-day-header { border-right: none; }
+  .threeday-time-label { width: 60px; display: inline-block; border-right: 1px solid var(--pink); }
+  .threeday-stack-day { border-bottom: 3px solid var(--pink); }
+  .threeday-stack-day:last-child { border-bottom: none; }
+  .threeday-stack-row { display: grid; grid-template-columns: 60px 1fr; border-bottom: 1px solid var(--pink); min-height: 60px; }
+  .threeday-stack-cell { min-height: 60px; }
+}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="dashboard-header">
+      <h1 class="brand-title">Goodbye Fitness</h1>
+      <h2 class="page-title">Andrew's Training Calendar</h2>
+    </header>
+
+    <div class="calendar-controls">
+      <div class="view-selector" id="viewSelector">
+        <button class="view-btn active" data-view="month">Month</button>
+        <button class="view-btn" data-view="week">Week</button>
+        <button class="view-btn" data-view="threeday">3 Day</button>
+        <button class="view-btn" data-view="day">Day</button>
+      </div>
+
+      <div class="calendar-nav">
+        <button class="nav-btn" id="prevBtn" aria-label="Previous">&#8249;</button>
+        <button class="nav-btn today-btn" id="todayBtn">Today</button>
+        <button class="nav-btn" id="nextBtn" aria-label="Next">&#8250;</button>
+        <span class="nav-label" id="navLabel"></span>
+      </div>
+    </div>
+
+    <main class="calendar-container" id="calendarContainer"></main>
+  </div>
+
+  <script>
+function localToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function toDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function addDays(d, n) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+}
+
+function startOfWeek(d) { return addDays(d, -d.getDay()); }
+function endOfWeek(d) { return addDays(d, 6 - d.getDay()); }
+
+function monthGridStart(year, month) { return startOfWeek(new Date(year, month, 1)); }
+function monthGridEnd(year, month) { return endOfWeek(new Date(year, month + 1, 0)); }
+
+function daysInRange(start, end) {
+  const days = [];
+  let cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  while (cur <= end) {
+    days.push(new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()));
+    cur = addDays(cur, 1);
+  }
+  return days;
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function formatMonthYear(d) { return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
+
+function formatWeekRange(start) {
+  const end = addDays(start, 6);
+  if (start.getMonth() === end.getMonth()) return `${MONTHS[start.getMonth()]} ${start.getDate()}–${end.getDate()}, ${start.getFullYear()}`;
+  if (start.getFullYear() === end.getFullYear()) return `${MONTHS[start.getMonth()]} ${start.getDate()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
+  return `${MONTHS[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+}
+
+function formatThreeDayRange(start) {
+  const end = addDays(start, 2);
+  if (start.getMonth() === end.getMonth()) return `${MONTHS[start.getMonth()]} ${start.getDate()}–${end.getDate()}, ${start.getFullYear()}`;
+  if (start.getFullYear() === end.getFullYear()) return `${MONTHS[start.getMonth()]} ${start.getDate()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
+  return `${MONTHS[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+}
+
+function formatDayFull(d) { return `${WEEKDAYS_FULL[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; }
+
+const events = [];
+function getEventsForDate(dateKey) { return events.filter(e => e.date === dateKey); }
+
+const state = { view: 'month', selectedDate: localToday(), today: localToday() };
+
+const container = document.getElementById('calendarContainer');
+const navLabel = document.getElementById('navLabel');
+const viewBtns = document.querySelectorAll('.view-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const todayBtn = document.getElementById('todayBtn');
+
+const HOUR_START = 6, HOUR_END = 21;
+function formatHour(h) { if (h === 0) return '12 AM'; if (h < 12) return `${h} AM`; if (h === 12) return '12 PM'; return `${h - 12} PM`; }
+
+function render() {
+  updateNavLabel();
+  updateViewButtons();
+  switch (state.view) {
+    case 'month': renderMonth(); break;
+    case 'week': renderWeek(); break;
+    case 'threeday': renderThreeDay(); break;
+    case 'day': renderDay(); break;
+  }
+}
+
+function updateNavLabel() {
+  const d = state.selectedDate;
+  switch (state.view) {
+    case 'month': navLabel.textContent = formatMonthYear(d); break;
+    case 'week': navLabel.textContent = formatWeekRange(startOfWeek(d)); break;
+    case 'threeday': navLabel.textContent = formatThreeDayRange(d); break;
+    case 'day': navLabel.textContent = formatDayFull(d); break;
+  }
+}
+
+function updateViewButtons() {
+  viewBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.view === state.view));
+}
+
+function dateClickHandler(dateStr) {
+  const parts = dateStr.split('-');
+  state.selectedDate = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  state.view = 'day';
+  render();
+}
+
+function renderMonth() {
+  const year = state.selectedDate.getFullYear(), month = state.selectedDate.getMonth();
+  const days = daysInRange(monthGridStart(year, month), monthGridEnd(year, month));
+  let html = '<div class="month-grid">';
+  WEEKDAYS.forEach(wd => { html += `<div class="weekday-header">${wd}</div>`; });
+  days.forEach(d => {
+    const isOutside = d.getMonth() !== month, isToday = isSameDay(d, state.today);
+    const cls = 'month-cell' + (isOutside ? ' outside' : '') + (isToday ? ' today' : '');
+    html += `<div class="${cls}" data-date="${toDateKey(d)}"><span class="date-num">${d.getDate()}</span><div class="event-area"></div></div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  container.querySelectorAll('.month-cell').forEach(cell => cell.addEventListener('click', () => dateClickHandler(cell.dataset.date)));
+}
+
+function renderWeek() {
+  const ws = startOfWeek(state.selectedDate);
+  const days = []; for (let i = 0; i < 7; i++) days.push(addDays(ws, i));
+  let html = '<div class="week-grid"><div class="week-header-spacer"></div>';
+  days.forEach(d => {
+    const t = isSameDay(d, state.today);
+    html += `<div class="week-day-header${t ? ' today' : ''}" data-date="${toDateKey(d)}">${WEEKDAYS[d.getDay()]}<span class="header-date">${d.getDate()}</span></div>`;
+  });
+  for (let h = HOUR_START; h <= HOUR_END; h++) {
+    html += `<div class="week-time-label">${formatHour(h)}</div>`;
+    days.forEach(d => { html += `<div class="week-cell${isSameDay(d, state.today) ? ' today-col' : ''}" data-date="${toDateKey(d)}"></div>`; });
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  container.querySelectorAll('.week-day-header, .week-cell').forEach(el => {
+    if (el.dataset.date) { el.style.cursor = 'pointer'; el.addEventListener('click', () => dateClickHandler(el.dataset.date)); }
+  });
+}
+
+function renderThreeDay() {
+  if (window.innerWidth <= 480) { renderThreeDayStacked(); return; }
+  const days = []; for (let i = 0; i < 3; i++) days.push(addDays(state.selectedDate, i));
+  let html = '<div class="threeday-grid"><div class="threeday-header-spacer"></div>';
+  days.forEach(d => {
+    const t = isSameDay(d, state.today);
+    html += `<div class="threeday-day-header${t ? ' today' : ''}" data-date="${toDateKey(d)}">${WEEKDAYS_FULL[d.getDay()]}<span class="header-date">${d.getDate()}</span></div>`;
+  });
+  for (let h = HOUR_START; h <= HOUR_END; h++) {
+    html += `<div class="threeday-time-label">${formatHour(h)}</div>`;
+    days.forEach(d => { html += `<div class="threeday-cell${isSameDay(d, state.today) ? ' today-col' : ''}" data-date="${toDateKey(d)}"></div>`; });
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  container.querySelectorAll('.threeday-day-header, .threeday-cell').forEach(el => {
+    if (el.dataset.date) { el.style.cursor = 'pointer'; el.addEventListener('click', () => dateClickHandler(el.dataset.date)); }
+  });
+}
+
+function renderThreeDayStacked() {
+  const days = []; for (let i = 0; i < 3; i++) days.push(addDays(state.selectedDate, i));
+  let html = '';
+  days.forEach(d => {
+    const t = isSameDay(d, state.today);
+    html += `<div class="threeday-stack-day"><div class="threeday-day-header${t ? ' today' : ''}" data-date="${toDateKey(d)}" style="border-right:none">${WEEKDAYS_FULL[d.getDay()]}<span class="header-date">${d.getDate()}</span></div>`;
+    for (let h = HOUR_START; h <= HOUR_END; h++) {
+      html += `<div class="threeday-stack-row"><div class="threeday-time-label">${formatHour(h)}</div><div class="threeday-stack-cell${t ? ' today-col' : ''}" data-date="${toDateKey(d)}"></div></div>`;
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('[data-date]').forEach(el => { el.style.cursor = 'pointer'; el.addEventListener('click', () => dateClickHandler(el.dataset.date)); });
+}
+
+function renderDay() {
+  const d = state.selectedDate, t = isSameDay(d, state.today);
+  let html = `<div class="day-view"><div class="day-view-header${t ? ' today' : ''}">${WEEKDAYS_FULL[d.getDay()]}<span class="header-date">${d.getDate()}</span></div>`;
+  for (let h = HOUR_START; h <= HOUR_END; h++) {
+    html += `<div class="day-hour-row"><div class="day-time-label">${formatHour(h)}</div><div class="day-hour-cell"></div></div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function navigatePrev() {
+  const d = state.selectedDate;
+  switch (state.view) {
+    case 'month': state.selectedDate = new Date(d.getFullYear(), d.getMonth() - 1, 1); break;
+    case 'week': state.selectedDate = addDays(d, -7); break;
+    case 'threeday': state.selectedDate = addDays(d, -3); break;
+    case 'day': state.selectedDate = addDays(d, -1); break;
+  }
+  render();
+}
+
+function navigateNext() {
+  const d = state.selectedDate;
+  switch (state.view) {
+    case 'month': state.selectedDate = new Date(d.getFullYear(), d.getMonth() + 1, 1); break;
+    case 'week': state.selectedDate = addDays(d, 7); break;
+    case 'threeday': state.selectedDate = addDays(d, 3); break;
+    case 'day': state.selectedDate = addDays(d, 1); break;
+  }
+  render();
+}
+
+function navigateToday() { state.today = localToday(); state.selectedDate = localToday(); render(); }
+
+viewBtns.forEach(btn => btn.addEventListener('click', () => { state.view = btn.dataset.view; render(); }));
+prevBtn.addEventListener('click', navigatePrev);
+nextBtn.addEventListener('click', navigateNext);
+todayBtn.addEventListener('click', navigateToday);
+window.addEventListener('resize', () => { if (state.view === 'threeday') render(); });
+
+render();
+  </script>
+</body>
+</html>

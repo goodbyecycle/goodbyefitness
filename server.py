@@ -80,6 +80,11 @@ def index():
     return send_from_directory(".", "index.html")
 
 
+@app.route("/andrew")
+def andrew_dashboard():
+    return send_from_directory(".", "andrew.html")
+
+
 # ─── API: Notifications ───
 
 @app.route("/api/notify/signup", methods=["POST"])
