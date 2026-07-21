@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Goodbye Fitness Calendar Workout",
+  "type": "object",
+  "required": [
+    "date",
+    "type",
+    "title",
+    "objective",
+    "durationMinutes",
+    "intensity",
+    "instructions",
+    "explanation",
+    "backup",
+    "dataQuality"
+  ],
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "type": {
+      "enum": [
+        "mtb_ride",
+        "indoor_cardio",
+        "strength",
+        "mobility",
+        "recovery",
+        "rest",
+        "assessment"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "durationMinutes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "targetMiles": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "targetElevationFeet": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "intensity": {
+      "type": "object",
+      "required": [
+        "method",
+        "target"
+      ],
+      "properties": {
+        "method": {
+          "enum": [
+            "rpe",
+            "heart_rate",
+            "power",
+            "mixed"
+          ]
+        },
+        "target": {
+          "type": "string"
+        }
+      }
+    },
+    "instructions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trailRecommendation": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "route": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "confirmed_open",
+            "confirmed_closed",
+            "unknown"
+          ]
+        },
+        "trailforksUrl": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "backup": {
+      "type": "object",
+      "required": [
+        "title",
+        "instructions"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "instructions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "recoveryWarning": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "dataQuality": {
+      "type": "object",
+      "required": [
+        "inputsUsed",
+        "unknowns"
+      ],
+      "properties": {
+        "inputsUsed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknowns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "locked": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

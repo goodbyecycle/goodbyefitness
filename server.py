@@ -438,6 +438,120 @@ def generate_message():
     return jsonify({"message": message})
 
 
+# ─── Coach API ───
+
+from coach.profile import load_profile as load_athlete_profile, update_profile, get_unknowns
+from coach.readiness import save_checkin, get_checkin, get_recent_checkins, compute_readiness_score
+from coach.history import get_provider as get_history_provider
+from coach.trails import get_all_trails, get_trail, update_trail_status, search_trails
+from coach.engine import recommend_workout
+
+
+@app.route("/api/coach/profile", methods=["GET"])
+def coach_profile():
+    return jsonify(load_athlete_profile())
+
+
+@app.route("/api/coach/profile", methods=["POST"])
+def coach_profile_update():
+    updates = request.json or {}
+    return jsonify(update_profile(updates))
+
+
+@app.route("/api/coach/profile/unknowns", methods=["GET"])
+def coach_unknowns():
+    return jsonify({"unknowns": get_unknowns()})
+
+
+@app.route("/api/coach/checkin", methods=["POST"])
+def coach_checkin():
+    body = request.json or {}
+    try:
+        record = save_checkin(body)
+        score, label = compute_readiness_score(record)
+        return jsonify({"checkin": record, "readiness": {"score": score, "label": label}})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/coach/checkin/<checkin_date>", methods=["GET"])
+def coach_checkin_get(checkin_date):
+    checkin = get_checkin(checkin_date)
+    if not checkin:
+        return jsonify({"error": "No check-in for this date"}), 404
+    score, label = compute_readiness_score(checkin)
+    return jsonify({"checkin": checkin, "readiness": {"score": score, "label": label}})
+
+
+@app.route("/api/coach/checkins/recent", methods=["GET"])
+def coach_checkins_recent():
+    days = int(request.args.get("days", 7))
+    return jsonify(get_recent_checkins(days))
+
+
+@app.route("/api/coach/history", methods=["GET"])
+def coach_history():
+    source = request.args.get("source", "mock")
+    days = int(request.args.get("days", 42))
+    try:
+        provider = get_history_provider(source)
+        return jsonify({"activities": provider.get_activities(days)})
+    except (ValueError, NotImplementedError) as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/coach/history/weekly", methods=["GET"])
+def coach_history_weekly():
+    source = request.args.get("source", "mock")
+    weeks = int(request.args.get("weeks", 6))
+    try:
+        provider = get_history_provider(source)
+        return jsonify({"summaries": provider.get_weekly_summary(weeks)})
+    except (ValueError, NotImplementedError) as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/coach/recommend", methods=["GET"])
+def coach_recommend():
+    from datetime import date as dt_date
+    date_str = request.args.get("date")
+    if date_str:
+        parts = date_str.split("-")
+        target = dt_date(int(parts[0]), int(parts[1]), int(parts[2]))
+    else:
+        target = dt_date.today()
+    result = recommend_workout(target_date=target)
+    return jsonify(result)
+
+
+@app.route("/api/coach/trails", methods=["GET"])
+def coach_trails():
+    return jsonify({"trails": get_all_trails()})
+
+
+@app.route("/api/coach/trails/<trail_id>", methods=["GET"])
+def coach_trail(trail_id):
+    trail = get_trail(trail_id)
+    if not trail:
+        return jsonify({"error": "Trail not found"}), 404
+    return jsonify(trail)
+
+
+@app.route("/api/coach/trails/<trail_id>/status", methods=["POST"])
+def coach_trail_status(trail_id):
+    body = request.json or {}
+    try:
+        trail = update_trail_status(
+            trail_id,
+            body.get("status", "unknown"),
+            body.get("source", "manual"),
+            body.get("checkedAt"),
+        )
+        return jsonify(trail)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
 # ─── Boot ───
 
 if __name__ == "__main__":
