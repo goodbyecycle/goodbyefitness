@@ -612,6 +612,95 @@ def test_strava_coaching_uses_strava_history():
         _cleanup_checkins()
 
 
+## ── Workout Card Click Tests ──
+
+def test_card_html_has_data_attributes():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        assert 'data-eidx=' in html or 'workoutCardHTML' in html, \
+            "Dashboard must include workoutCardHTML with data-eidx support"
+        assert 'attachCardClickHandlers' in html, \
+            "Dashboard must call attachCardClickHandlers after rendering"
+        assert 'showDetailsModal' in html, \
+            "Dashboard must define showDetailsModal function"
+    print("PASS: Card HTML includes data attributes and click handler wiring")
+
+
+def test_card_details_modal_fields():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        for field in ['detailClose', 'detailEdit', 'detailDelete']:
+            assert field in html, f"Details modal must reference {field}"
+        assert 'modal-instructions' in html, "Details modal must support instructions display"
+        assert 'modal-source' in html, "Details modal must show source label"
+    print("PASS: Details modal has all required fields")
+
+
+def test_card_strava_readonly():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        assert "isStrava" in html or "source === 'strava'" in html, \
+            "Details modal must check for Strava source to set read-only"
+        assert "isReadOnly" in html or "isStrava" in html, \
+            "Strava cards must be flagged as read-only"
+    print("PASS: Strava activities are read-only in details modal")
+
+
+def test_card_click_stops_propagation():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        assert "stopPropagation" in html, \
+            "Card click handler must stopPropagation to prevent cell navigation"
+        assert "closest('[data-eidx]')" in html or "closest(\\\"[data-eidx]\\\")" in html or \
+               'closest(\'[data-eidx]\')' in html, \
+            "Cell click handlers must check for card click before navigating"
+    print("PASS: Card clicks stop propagation and don't trigger navigation")
+
+
+def test_card_escape_closes_modal():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        assert "Escape" in html, "Must handle Escape key to close modal"
+        assert "keydown" in html, "Must listen for keydown events"
+    print("PASS: Escape key closes the details modal")
+
+
+def test_card_edit_and_delete_buttons():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        assert "editWorkout" in html, "Dashboard must define editWorkout function"
+        assert "deleteWorkout" in html, "Dashboard must define deleteWorkout function"
+        assert "edit_title" in html, "Edit form must include title field"
+        assert "Save Changes" in html, "Edit form must have Save Changes button"
+    print("PASS: Edit and Delete buttons are wired for non-Strava workouts")
+
+
+def test_card_all_views_attach_handlers():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/andrew")
+        html = resp.data.decode()
+        render_fns = ['renderMonth', 'renderWeek', 'renderThreeDay', 'renderDay']
+        for fn in render_fns:
+            assert fn in html, f"Dashboard must define {fn}"
+        handler_calls = html.count('attachCardClickHandlers()')
+        assert handler_calls >= 4, \
+            f"attachCardClickHandlers must be called in all view renders, found {handler_calls} calls"
+    print("PASS: All four calendar views attach card click handlers")
+
+
 if __name__ == "__main__":
     test_schema_validates_good_workout()
     test_schema_rejects_invalid_workout()
@@ -648,4 +737,11 @@ if __name__ == "__main__":
     test_strava_repeated_imports_no_duplicates()
     test_strava_fallback_to_mock()
     test_strava_coaching_uses_strava_history()
-    print("\n=== ALL 35 TESTS PASSED ===")
+    test_card_html_has_data_attributes()
+    test_card_details_modal_fields()
+    test_card_strava_readonly()
+    test_card_click_stops_propagation()
+    test_card_escape_closes_modal()
+    test_card_edit_and_delete_buttons()
+    test_card_all_views_attach_handlers()
+    print("\n=== ALL 42 TESTS PASSED ===")
