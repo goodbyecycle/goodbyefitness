@@ -196,6 +196,107 @@ html, body {
   .threeday-stack-row { display: grid; grid-template-columns: 60px 1fr; border-bottom: 1px solid var(--pink); min-height: 60px; }
   .threeday-stack-cell { min-height: 60px; }
 }
+
+/* ── Recommend Button ── */
+.recommend-bar { text-align: center; margin-bottom: 16px; }
+.recommend-btn {
+  font-family: var(--font); font-size: 1rem; font-weight: 700;
+  padding: 12px 28px; border: 2px solid var(--pink); border-radius: 12px;
+  background: var(--pink); color: var(--white); cursor: pointer;
+  transition: opacity 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.recommend-btn:hover { opacity: 0.85; }
+.recommend-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 1000; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--blue-light); border: 2px solid var(--pink); border-radius: 16px;
+  padding: 24px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto;
+}
+.modal h3 { font-size: 1.2rem; margin-bottom: 12px; }
+.modal-row { margin-bottom: 8px; font-size: 0.9rem; }
+.modal-row strong { display: inline-block; min-width: 80px; }
+.modal-trail { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 0.85rem; }
+.modal-trail .trail-status { font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+.modal-trail .trail-status.open { color: #0a8a0a; }
+.modal-trail .trail-status.unknown { color: #b8860b; }
+.modal-explanation { margin-top: 10px; font-size: 0.85rem; font-style: italic; opacity: 0.8; }
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.modal-actions button {
+  flex: 1; font-family: var(--font); font-size: 0.95rem; font-weight: 600;
+  padding: 10px 16px; border: 2px solid var(--pink); border-radius: 10px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-accept { background: var(--pink); color: var(--white); }
+.modal-cancel { background: transparent; color: var(--black); }
+.modal-error { color: #c00; font-weight: 600; text-align: center; padding: 16px; }
+
+/* ── Workout Card ── */
+.workout-card {
+  background: var(--pink); color: var(--white); border-radius: 6px;
+  padding: 3px 5px; font-size: 0.7rem; line-height: 1.3; margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.workout-card .wc-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workout-card .wc-meta { opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.day-workout-card {
+  background: var(--pink); color: var(--white); border-radius: 8px;
+  padding: 10px 14px; margin: 8px; font-size: 0.85rem;
+}
+.day-workout-card .wc-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+.day-workout-card .wc-meta { opacity: 0.9; }
+
+.week-workout-card, .threeday-workout-card {
+  background: var(--pink); color: var(--white); border-radius: 5px;
+  padding: 2px 4px; font-size: 0.65rem; line-height: 1.25; margin: 1px 2px;
+  overflow: hidden;
+}
+.week-workout-card .wc-title, .threeday-workout-card .wc-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Check-In Form ── */
+.checkin-btn {
+  font-family: var(--font); font-size: 1rem; font-weight: 700;
+  padding: 12px 28px; border: 2px solid var(--pink); border-radius: 12px;
+  background: transparent; color: var(--black); cursor: pointer;
+  transition: background 0.15s, opacity 0.15s; -webkit-tap-highlight-color: transparent;
+  margin-right: 10px;
+}
+.checkin-btn:hover { background: var(--pink-light); }
+.checkin-btn.done { background: rgba(10,138,10,0.15); border-color: #0a8a0a; color: #0a8a0a; cursor: default; }
+
+.checkin-form label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; margin-top: 12px; }
+.checkin-form label:first-child { margin-top: 0; }
+.checkin-form input[type="range"] { width: 100%; accent-color: var(--pink); }
+.checkin-form .range-row { display: flex; align-items: center; gap: 8px; }
+.checkin-form .range-val { font-weight: 700; min-width: 24px; text-align: center; }
+.checkin-form .range-labels { display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: -2px; }
+.checkin-form input[type="number"], .checkin-form input[type="text"], .checkin-form select, .checkin-form textarea {
+  width: 100%; font-family: var(--font); font-size: 0.9rem; padding: 8px 10px;
+  border: 2px solid var(--pink); border-radius: 8px; background: rgba(255,255,255,0.2);
+  color: var(--black); outline: none;
+}
+.checkin-form textarea { resize: vertical; min-height: 50px; }
+.checkin-form .field-error { color: #c00; font-size: 0.75rem; font-weight: 600; margin-top: 2px; display: none; }
+.checkin-form .field-error.visible { display: block; }
+
+/* ── Readiness Summary ── */
+.readiness-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+.readiness-summary {
+  background: rgba(255,255,255,0.2); border: 2px solid var(--pink); border-radius: 12px;
+  padding: 10px 18px; font-size: 0.85rem; text-align: center; max-width: 420px;
+}
+.readiness-summary .rs-score { font-size: 1.5rem; font-weight: 800; }
+.readiness-summary .rs-label { font-weight: 600; margin-left: 6px; }
+.readiness-summary .rs-date { font-size: 0.75rem; opacity: 0.6; margin-top: 2px; }
+.readiness-summary .rs-warning { font-size: 0.8rem; color: #c00; font-weight: 600; margin-top: 4px; }
+
+.checkin-gate { text-align: center; font-size: 0.85rem; font-weight: 600; color: #555; padding: 6px 0; }
   </style>
 </head>
 <body>
@@ -221,7 +322,18 @@ html, body {
       </div>
     </div>
 
+    <div class="readiness-bar">
+      <button class="checkin-btn" id="checkinBtn">Morning Check-In</button>
+      <button class="recommend-btn" id="recommendBtn">Get Today's Recommendation</button>
+    </div>
+    <div id="readinessSummary"></div>
+    <div class="checkin-gate" id="checkinGate" style="display:none"></div>
+
     <main class="calendar-container" id="calendarContainer"></main>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
   </div>
 
   <script>
@@ -283,7 +395,10 @@ function formatThreeDayRange(start) {
 
 function formatDayFull(d) { return `${WEEKDAYS_FULL[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; }
 
-const events = [];
+const STORAGE_KEY = 'andrew_workouts';
+function loadEvents() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+function saveEvents(evts) { localStorage.setItem(STORAGE_KEY, JSON.stringify(evts)); }
+let events = loadEvents();
 function getEventsForDate(dateKey) { return events.filter(e => e.date === dateKey); }
 
 const state = { view: 'month', selectedDate: localToday(), today: localToday() };
@@ -342,7 +457,11 @@ function renderMonth() {
   });
   html += '</div>';
   container.innerHTML = html;
-  container.querySelectorAll('.month-cell').forEach(cell => cell.addEventListener('click', () => dateClickHandler(cell.dataset.date)));
+  container.querySelectorAll('.month-cell').forEach(cell => {
+    cell.addEventListener('click', () => dateClickHandler(cell.dataset.date));
+    const dk = cell.dataset.date, area = cell.querySelector('.event-area');
+    getEventsForDate(dk).forEach(ev => { area.innerHTML += workoutCardHTML(ev, 'workout-card'); });
+  });
 }
 
 function renderWeek() {
@@ -362,6 +481,7 @@ function renderWeek() {
   container.querySelectorAll('.week-day-header, .week-cell').forEach(el => {
     if (el.dataset.date) { el.style.cursor = 'pointer'; el.addEventListener('click', () => dateClickHandler(el.dataset.date)); }
   });
+  injectCardsIntoFirstCell(container, '.week-cell', 'week-workout-card');
 }
 
 function renderThreeDay() {
@@ -381,6 +501,7 @@ function renderThreeDay() {
   container.querySelectorAll('.threeday-day-header, .threeday-cell').forEach(el => {
     if (el.dataset.date) { el.style.cursor = 'pointer'; el.addEventListener('click', () => dateClickHandler(el.dataset.date)); }
   });
+  injectCardsIntoFirstCell(container, '.threeday-cell', 'threeday-workout-card');
 }
 
 function renderThreeDayStacked() {
@@ -396,6 +517,7 @@ function renderThreeDayStacked() {
   });
   container.innerHTML = html;
   container.querySelectorAll('[data-date]').forEach(el => { el.style.cursor = 'pointer'; el.addEventListener('click', () => dateClickHandler(el.dataset.date)); });
+  injectCardsIntoFirstCell(container, '.threeday-stack-cell', 'threeday-workout-card');
 }
 
 function renderDay() {
@@ -406,6 +528,11 @@ function renderDay() {
   }
   html += '</div>';
   container.innerHTML = html;
+  const dk = toDateKey(d);
+  getEventsForDate(dk).forEach(ev => {
+    const dayView = container.querySelector('.day-view');
+    dayView.insertAdjacentHTML('afterbegin', `<div class="day-workout-card"><div class="wc-title">${esc(ev.title)}</div><div class="wc-meta">${ev.durationMinutes}min${ev.targetMiles ? ' · ' + ev.targetMiles + 'mi' : ''} · ${esc(ev.intensity)}</div></div>`);
+  });
 }
 
 function navigatePrev() {
@@ -438,6 +565,307 @@ nextBtn.addEventListener('click', navigateNext);
 todayBtn.addEventListener('click', navigateToday);
 window.addEventListener('resize', () => { if (state.view === 'threeday') render(); });
 
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function workoutCardHTML(ev, cls) {
+  return `<div class="${cls}"><div class="wc-title">${esc(ev.title)}</div><div class="wc-meta">${ev.durationMinutes}min${ev.targetMiles ? ' · ' + ev.targetMiles + 'mi' : ''} · ${esc(ev.intensity)}</div></div>`;
+}
+
+function injectCardsIntoFirstCell(root, cellSelector, cardClass) {
+  const seen = {};
+  root.querySelectorAll(cellSelector).forEach(cell => {
+    const dk = cell.dataset.date;
+    if (!dk || seen[dk]) return;
+    seen[dk] = true;
+    getEventsForDate(dk).forEach(ev => { cell.innerHTML += workoutCardHTML(ev, cardClass); });
+  });
+}
+
+const recommendBtn = document.getElementById('recommendBtn');
+const checkinBtn = document.getElementById('checkinBtn');
+const modalOverlay = document.getElementById('modalOverlay');
+const modalContent = document.getElementById('modalContent');
+const readinessSummaryEl = document.getElementById('readinessSummary');
+const checkinGateEl = document.getElementById('checkinGate');
+let pendingWorkout = null;
+let todayReadiness = null;
+
+function showModal(rec) {
+  pendingWorkout = rec;
+  const trail = rec.trailRecommendation || rec.trail || null;
+  let trailHTML = '';
+  if (trail) {
+    const statusCls = trail.status === 'confirmed_open' ? 'open' : 'unknown';
+    trailHTML = `<div class="modal-trail"><strong>Trail:</strong> ${esc(trail.name)}<br><span class="trail-status ${statusCls}">${esc(trail.status)}</span></div>`;
+  }
+  modalContent.innerHTML = `
+    <h3>${esc(rec.title)}</h3>
+    <div class="modal-row"><strong>Type:</strong> ${esc(rec.type)}</div>
+    <div class="modal-row"><strong>Duration:</strong> ${rec.durationMinutes} min</div>
+    ${rec.targetMiles ? `<div class="modal-row"><strong>Mileage:</strong> ${rec.targetMiles} mi</div>` : ''}
+    <div class="modal-row"><strong>Intensity:</strong> ${esc(rec.intensity && rec.intensity.target ? rec.intensity.target : JSON.stringify(rec.intensity))}</div>
+    ${trailHTML}
+    <div class="modal-explanation">${esc(rec.explanation)}</div>
+    <div class="modal-actions">
+      <button class="modal-accept" id="modalAccept">Accept and Add to Calendar</button>
+      <button class="modal-cancel" id="modalCancel">Cancel</button>
+    </div>`;
+  modalOverlay.classList.add('open');
+  document.getElementById('modalAccept').addEventListener('click', () => acceptWorkout());
+  document.getElementById('modalCancel').addEventListener('click', () => hideModal());
+}
+
+function hideModal() {
+  modalOverlay.classList.remove('open');
+  pendingWorkout = null;
+}
+
+function acceptWorkout() {
+  if (!pendingWorkout) return;
+  const rec = pendingWorkout;
+  const workout = {
+    date: rec.date,
+    title: rec.title,
+    type: rec.type,
+    durationMinutes: rec.durationMinutes,
+    targetMiles: rec.targetMiles || null,
+    intensity: rec.intensity && rec.intensity.target ? rec.intensity.target : String(rec.intensity),
+  };
+  events.push(workout);
+  saveEvents(events);
+  hideModal();
+  render();
+}
+
+async function fetchRecommendation() {
+  if (!todayReadiness) {
+    checkinGateEl.textContent = "Complete today's Morning Check-In before generating a personalized recommendation.";
+    checkinGateEl.style.display = 'block';
+    return;
+  }
+  recommendBtn.disabled = true;
+  recommendBtn.textContent = 'Loading…';
+  try {
+    const dateKey = toDateKey(state.today);
+    const resp = await fetch('/api/coach/recommend?date=' + dateKey);
+    if (!resp.ok) throw new Error('Server error ' + resp.status);
+    const data = await resp.json();
+    if (data.error) {
+      showError(data.error + (data.details ? ': ' + data.details : ''));
+      return;
+    }
+    const rec = data.recommendation;
+    if (!rec) { showError('No recommendation returned'); return; }
+    showModal(rec);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    recommendBtn.disabled = false;
+    recommendBtn.textContent = "Get Today’s Recommendation";
+  }
+}
+
+function showError(msg) {
+  modalContent.innerHTML = `<div class="modal-error">${esc(msg)}</div><div class="modal-actions"><button class="modal-cancel" id="modalCancel">Close</button></div>`;
+  modalOverlay.classList.add('open');
+  document.getElementById('modalCancel').addEventListener('click', () => hideModal());
+}
+
+// ── Check-In Form ──
+
+function showCheckinForm() {
+  const painVal = 0;
+  modalContent.innerHTML = `
+    <h3>Morning Check-In</h3>
+    <div class="checkin-form" id="checkinForm">
+      <label>Sleep Quality</label>
+      <div class="range-row"><input type="range" id="ci_sleep" min="1" max="5" value="3"><span class="range-val" id="ci_sleep_val">3</span></div>
+      <div class="range-labels"><span>Poor</span><span>Great</span></div>
+
+      <label>Energy</label>
+      <div class="range-row"><input type="range" id="ci_energy" min="1" max="5" value="3"><span class="range-val" id="ci_energy_val">3</span></div>
+      <div class="range-labels"><span>Low</span><span>High</span></div>
+
+      <label>Muscle Soreness</label>
+      <div class="range-row"><input type="range" id="ci_soreness" min="0" max="10" value="3"><span class="range-val" id="ci_soreness_val">3</span></div>
+      <div class="range-labels"><span>None</span><span>Severe</span></div>
+
+      <label>Pain</label>
+      <div class="range-row"><input type="range" id="ci_pain" min="0" max="10" value="0"><span class="range-val" id="ci_pain_val">0</span></div>
+      <div class="range-labels"><span>None</span><span>Severe</span></div>
+
+      <div id="painLocWrap" style="display:none">
+        <label>Pain Location <span style="color:#c00">*</span></label>
+        <input type="text" id="ci_painLoc" placeholder="e.g. left knee, lower back">
+        <div class="field-error" id="err_painLoc">Pain location is required when pain &gt; 0</div>
+      </div>
+
+      <label>Stress</label>
+      <div class="range-row"><input type="range" id="ci_stress" min="1" max="5" value="3"><span class="range-val" id="ci_stress_val">3</span></div>
+      <div class="range-labels"><span>Low</span><span>High</span></div>
+
+      <label>Available Training Time (minutes)</label>
+      <input type="number" id="ci_time" min="0" value="60" step="5">
+      <div class="field-error" id="err_time">Must be 0 or greater</div>
+
+      <label>Indoor or Outdoor</label>
+      <select id="ci_indoor">
+        <option value="no_preference">No Preference</option>
+        <option value="outdoor">Outdoor</option>
+        <option value="indoor">Indoor</option>
+      </select>
+
+      <label>Current Location</label>
+      <input type="text" id="ci_location" placeholder="e.g. Southeast Michigan">
+
+      <label>Notes (optional)</label>
+      <textarea id="ci_notes" placeholder="Anything else the coach should know..."></textarea>
+
+      <div class="field-error" id="err_general" style="margin-top:10px"></div>
+
+      <div class="modal-actions">
+        <button class="modal-accept" id="ciSubmit">Save Check-In</button>
+        <button class="modal-cancel" id="ciCancel">Cancel</button>
+      </div>
+    </div>`;
+  modalOverlay.classList.add('open');
+
+  ['sleep','energy','soreness','pain','stress'].forEach(k => {
+    const slider = document.getElementById('ci_' + k);
+    const valEl = document.getElementById('ci_' + k + '_val');
+    slider.addEventListener('input', () => {
+      valEl.textContent = slider.value;
+      if (k === 'pain') {
+        document.getElementById('painLocWrap').style.display = +slider.value > 0 ? 'block' : 'none';
+        if (+slider.value === 0) document.getElementById('err_painLoc').classList.remove('visible');
+      }
+    });
+  });
+
+  document.getElementById('ciSubmit').addEventListener('click', submitCheckin);
+  document.getElementById('ciCancel').addEventListener('click', () => hideModal());
+}
+
+async function submitCheckin() {
+  let valid = true;
+
+  const pain = +document.getElementById('ci_pain').value;
+  const painLoc = document.getElementById('ci_painLoc').value.trim();
+  const timeMin = +document.getElementById('ci_time').value;
+
+  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+
+  if (pain > 0 && !painLoc) {
+    document.getElementById('err_painLoc').classList.add('visible');
+    valid = false;
+  }
+  if (isNaN(timeMin) || timeMin < 0) {
+    document.getElementById('err_time').classList.add('visible');
+    valid = false;
+  }
+  if (!valid) return;
+
+  const dateKey = toDateKey(state.today);
+  const payload = {
+    date: dateKey,
+    sleepQuality: +document.getElementById('ci_sleep').value,
+    energy: +document.getElementById('ci_energy').value,
+    soreness: +document.getElementById('ci_soreness').value,
+    pain: pain,
+    stress: +document.getElementById('ci_stress').value,
+    timeAvailableMinutes: timeMin,
+    indoorOutdoor: document.getElementById('ci_indoor').value,
+    currentLocation: document.getElementById('ci_location').value.trim() || null,
+    notes: document.getElementById('ci_notes').value.trim() || null,
+  };
+  if (pain > 0) payload.painLocation = painLoc;
+
+  const submitBtn = document.getElementById('ciSubmit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Saving…';
+
+  try {
+    const resp = await fetch('/api/coach/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      const errEl = document.getElementById('err_general');
+      errEl.textContent = data.error || 'Save failed';
+      errEl.classList.add('visible');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Check-In';
+      return;
+    }
+    todayReadiness = data;
+    renderReadinessSummary();
+    updateCheckinButton();
+    hideModal();
+  } catch (err) {
+    const errEl = document.getElementById('err_general');
+    errEl.textContent = err.message;
+    errEl.classList.add('visible');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Check-In';
+  }
+}
+
+function renderReadinessSummary() {
+  if (!todayReadiness) {
+    readinessSummaryEl.innerHTML = '';
+    return;
+  }
+  const r = todayReadiness.readiness;
+  const c = todayReadiness.checkin;
+  let warningHTML = '';
+  if (r.score < 30) warningHTML = `<div class="rs-warning">Rest recommended — very low readiness</div>`;
+  else if (r.score < 50) warningHTML = `<div class="rs-warning">Reduce intensity today</div>`;
+  if (c.pain && c.pain >= 7) warningHTML = `<div class="rs-warning">Significant pain reported — rest or seek evaluation</div>`;
+  readinessSummaryEl.innerHTML = `
+    <div class="readiness-summary">
+      <span class="rs-score">${r.score}/100</span>
+      <span class="rs-label">${esc(r.label)}</span>
+      ${warningHTML}
+      <div class="rs-date">Check-in: ${esc(c.date)}</div>
+    </div>`;
+  checkinGateEl.style.display = 'none';
+}
+
+function updateCheckinButton() {
+  if (todayReadiness) {
+    checkinBtn.classList.add('done');
+    checkinBtn.textContent = '✓ Checked In';
+  } else {
+    checkinBtn.classList.remove('done');
+    checkinBtn.textContent = 'Morning Check-In';
+  }
+}
+
+async function loadTodayReadiness() {
+  const dateKey = toDateKey(localToday());
+  try {
+    const resp = await fetch('/api/coach/checkin/' + dateKey);
+    if (resp.ok) {
+      todayReadiness = await resp.json();
+      renderReadinessSummary();
+      updateCheckinButton();
+    } else {
+      todayReadiness = null;
+      updateCheckinButton();
+    }
+  } catch { todayReadiness = null; }
+}
+
+checkinBtn.addEventListener('click', () => {
+  if (todayReadiness) return;
+  showCheckinForm();
+});
+recommendBtn.addEventListener('click', fetchRecommendation);
+modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) hideModal(); });
+
+loadTodayReadiness();
 render();
   </script>
 </body>

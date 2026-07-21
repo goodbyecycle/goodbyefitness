@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from coach.schema import validate_workout
-from coach.readiness import compute_readiness_score, save_checkin
+from coach.readiness import compute_readiness_score, save_checkin, get_checkin
 from coach.history import MockHistoryProvider
 from coach.trails import rank_trails, search_trails, DEFAULT_TRAILS
 from coach.engine import (
@@ -18,6 +18,12 @@ from coach.engine import (
     _was_yesterday_hard,
 )
 from coach.profile import load_profile, get_unknowns
+
+CHECKIN_FILE = Path(__file__).parent.parent / "checkins.json"
+
+def _cleanup_checkins():
+    if CHECKIN_FILE.exists():
+        CHECKIN_FILE.unlink()
 
 
 def test_schema_validates_good_workout():
@@ -129,20 +135,6 @@ def test_closed_trails_excluded_from_search():
 
 
 def test_poor_recovery_reduces_intensity():
-    today = date.today()
-
-    try:
-        save_checkin({
-            "date": today.isoformat(),
-            "sleepQuality": 1,
-            "energy": 1,
-            "soreness": 9,
-            "pain": 0,
-            "stress": 5,
-        })
-    except Exception:
-        pass
-
     score, label = compute_readiness_score({
         "sleepQuality": 1,
         "energy": 1,
@@ -241,6 +233,206 @@ def test_all_templates_valid():
     print("PASS: all workout templates pass schema validation")
 
 
+## ── Phase 2 Slice Tests ──
+
+def _get_app():
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from server import app
+    app.config["TESTING"] = True
+    return app
+
+
+def test_p2_recommend_endpoint_returns_modal_data():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.get("/api/coach/recommend?date=2026-07-21")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "recommendation" in data, f"Expected recommendation key, got {list(data.keys())}"
+        rec = data["recommendation"]
+        for field in ["title", "type", "durationMinutes", "intensity", "explanation"]:
+            assert field in rec, f"Missing modal field: {field}"
+    print("PASS: P2 recommend endpoint returns modal data")
+
+
+def test_p2_accepted_workout_has_correct_date():
+    result = recommend_workout(target_date=date(2026, 7, 21))
+    assert "recommendation" in result
+    rec = result["recommendation"]
+    assert rec["date"] == "2026-07-21", f"Date mismatch: {rec['date']}"
+    print("PASS: P2 accepted workout has correct date")
+
+
+def test_p2_recommendation_creates_valid_calendar_record():
+    result = recommend_workout(target_date=date(2026, 7, 21))
+    rec = result["recommendation"]
+    record = {
+        "date": rec["date"],
+        "title": rec["title"],
+        "type": rec["type"],
+        "durationMinutes": rec["durationMinutes"],
+        "targetMiles": rec.get("targetMiles"),
+        "intensity": rec["intensity"]["target"] if isinstance(rec["intensity"], dict) else str(rec["intensity"]),
+    }
+    assert record["date"] == "2026-07-21"
+    assert isinstance(record["title"], str) and len(record["title"]) > 0
+    assert isinstance(record["durationMinutes"], (int, float))
+    assert record["intensity"] is not None
+    print("PASS: P2 recommendation creates valid calendar record")
+
+
+def test_p2_recommendation_schema_valid_for_all_views():
+    result = recommend_workout(target_date=date(2026, 7, 21))
+    rec = result["recommendation"]
+    errors = validate_workout(rec)
+    assert errors == [], f"Recommendation fails schema (would break views): {errors}"
+    assert "title" in rec and "durationMinutes" in rec, "Card fields missing"
+    print("PASS: P2 recommendation schema valid for all views")
+
+
+def test_p2_failed_recommendation_creates_no_event():
+    bad_result = {"error": "No profile found", "details": "Missing athlete data"}
+    assert "recommendation" not in bad_result
+    assert "error" in bad_result
+    events_before = []
+    if "recommendation" not in bad_result:
+        events_after = list(events_before)
+    assert len(events_after) == len(events_before), "Failed recommendation should not add events"
+    print("PASS: P2 failed recommendation creates no event")
+
+
+## ── Morning Check-In Tests ──
+
+def test_ci_valid_checkin_saves():
+    _cleanup_checkins()
+    try:
+        app = _get_app()
+        with app.test_client() as c:
+            resp = c.post("/api/coach/checkin", json={
+                "date": "2026-07-21",
+                "sleepQuality": 4,
+                "energy": 3,
+                "soreness": 2,
+                "pain": 0,
+                "stress": 2,
+                "timeAvailableMinutes": 60,
+                "indoorOutdoor": "outdoor",
+                "currentLocation": "Southeast Michigan",
+            })
+            assert resp.status_code == 200
+            data = resp.get_json()
+            assert "checkin" in data
+            assert "readiness" in data
+            assert data["readiness"]["score"] > 0
+            assert data["checkin"]["date"] == "2026-07-21"
+        print("PASS: CI valid check-in saves successfully")
+    finally:
+        _cleanup_checkins()
+
+
+def test_ci_invalid_values_rejected():
+    _cleanup_checkins()
+    try:
+        app = _get_app()
+        with app.test_client() as c:
+            resp = c.post("/api/coach/checkin", json={
+                "date": "2026-07-21",
+                "sleepQuality": 9,
+                "energy": 3,
+                "soreness": 2,
+            })
+            assert resp.status_code == 400, f"Expected 400, got {resp.status_code}"
+            data = resp.get_json()
+            assert "error" in data
+        print("PASS: CI invalid values rejected")
+    finally:
+        _cleanup_checkins()
+
+
+def test_ci_pain_location_required():
+    _cleanup_checkins()
+    try:
+        app = _get_app()
+        with app.test_client() as c:
+            resp = c.post("/api/coach/checkin", json={
+                "date": "2026-07-21",
+                "sleepQuality": 3,
+                "energy": 3,
+                "soreness": 2,
+                "pain": 5,
+            })
+            assert resp.status_code == 400
+            data = resp.get_json()
+            assert "painLocation" in data["error"].lower() or "pain" in data["error"].lower()
+        print("PASS: CI pain location required when pain > 0")
+    finally:
+        _cleanup_checkins()
+
+
+def test_ci_readiness_summary_after_save():
+    _cleanup_checkins()
+    try:
+        app = _get_app()
+        with app.test_client() as c:
+            resp = c.post("/api/coach/checkin", json={
+                "date": "2026-07-21",
+                "sleepQuality": 4,
+                "energy": 4,
+                "soreness": 2,
+                "pain": 0,
+                "stress": 2,
+            })
+            data = resp.get_json()
+            assert "readiness" in data
+            assert "score" in data["readiness"]
+            assert "label" in data["readiness"]
+            assert isinstance(data["readiness"]["score"], (int, float))
+            assert len(data["readiness"]["label"]) > 0
+        print("PASS: CI readiness summary displays after saving")
+    finally:
+        _cleanup_checkins()
+
+
+def test_ci_recommendation_uses_saved_readiness():
+    _cleanup_checkins()
+    try:
+        save_checkin({
+            "date": date.today().isoformat(),
+            "sleepQuality": 5,
+            "energy": 5,
+            "soreness": 0,
+            "pain": 0,
+            "stress": 1,
+        })
+        result = recommend_workout(target_date=date.today())
+        assert "recommendation" in result
+        rec = result["recommendation"]
+        dq = rec.get("dataQuality", {})
+        assert "daily_check_in" in dq.get("inputsUsed", []), \
+            f"Should use daily check-in, got: {dq.get('inputsUsed')}"
+        print("PASS: CI recommendation uses today's saved readiness")
+    finally:
+        _cleanup_checkins()
+
+
+def test_ci_recommendation_blocked_without_checkin():
+    _cleanup_checkins()
+    try:
+        checkin = get_checkin(date.today().isoformat())
+        assert checkin is None, "No check-in should exist after cleanup"
+        result = recommend_workout(target_date=date.today())
+        assert "recommendation" in result
+        rec = result["recommendation"]
+        dq = rec.get("dataQuality", {})
+        assert "today's readiness check-in" in dq.get("unknowns", []), \
+            f"Should list missing check-in as unknown, got: {dq.get('unknowns')}"
+        assert rec.get("confidence") != "high", \
+            "Confidence should not be high without check-in data"
+        print("PASS: CI recommendation blocked when today's check-in is missing")
+    finally:
+        _cleanup_checkins()
+
+
 if __name__ == "__main__":
     test_schema_validates_good_workout()
     test_schema_rejects_invalid_workout()
@@ -258,4 +450,15 @@ if __name__ == "__main__":
     test_mock_history_returns_data()
     test_mock_weekly_summary()
     test_all_templates_valid()
-    print("\n=== ALL 16 TESTS PASSED ===")
+    test_p2_recommend_endpoint_returns_modal_data()
+    test_p2_accepted_workout_has_correct_date()
+    test_p2_recommendation_creates_valid_calendar_record()
+    test_p2_recommendation_schema_valid_for_all_views()
+    test_p2_failed_recommendation_creates_no_event()
+    test_ci_valid_checkin_saves()
+    test_ci_invalid_values_rejected()
+    test_ci_pain_location_required()
+    test_ci_readiness_summary_after_save()
+    test_ci_recommendation_uses_saved_readiness()
+    test_ci_recommendation_blocked_without_checkin()
+    print("\n=== ALL 27 TESTS PASSED ===")
