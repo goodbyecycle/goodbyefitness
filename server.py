@@ -23,9 +23,9 @@ TWILIO_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_FROM = os.environ.get("TWILIO_PHONE_NUMBER", "")
 
 # ─── Strava config ───
-STRAVA_CLIENT_ID = "258611"
-STRAVA_CLIENT_SECRET = "cd3f35375e91200db7a98ea1a289c062b0a780ae"
-STRAVA_REDIRECT_URI = "http://localhost:8090/callback/strava"
+STRAVA_CLIENT_ID = os.environ.get("STRAVA_CLIENT_ID", "")
+STRAVA_CLIENT_SECRET = os.environ.get("STRAVA_CLIENT_SECRET", "")
+STRAVA_REDIRECT_URI = os.environ.get("STRAVA_REDIRECT_URI", "https://goodbyefitness.com/callback/strava")
 
 # ─── Email notifications ───
 NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL", "goodbyefitness@gmail.com")

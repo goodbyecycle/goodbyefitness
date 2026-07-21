@@ -3,7 +3,7 @@
 from datetime import date, timedelta
 from coach.profile import load_profile, get_unknowns
 from coach.readiness import get_checkin, compute_readiness_score
-from coach.history import get_provider
+from coach.history import get_provider, is_strava_connected
 from coach.trails import search_trails, rank_trails
 from coach.schema import validate_workout
 
@@ -201,15 +201,25 @@ def recommend_workout(target_date=None, calendar_events=None):
     checkin = get_checkin(target_date.isoformat())
     readiness_score, readiness_label = compute_readiness_score(checkin)
 
-    provider = get_provider("mock")
-    activities = provider.get_activities(days=42)
+    history_source = "mock"
+    if is_strava_connected():
+        try:
+            provider = get_provider("strava")
+            activities = provider.get_activities(days=42)
+            history_source = "strava"
+        except Exception:
+            provider = get_provider("mock")
+            activities = provider.get_activities(days=42)
+    else:
+        provider = get_provider("mock")
+        activities = provider.get_activities(days=42)
 
     recent_hard_days = _count_recent_hard_days(activities, target_date)
     yesterday_hard = _was_yesterday_hard(activities, target_date)
     weekly_miles = _get_weekly_miles(activities, target_date)
     day_of_week = _get_day_position_in_week(target_date)
 
-    inputs_used = ["athlete_profile", "day_of_week", "mock_training_history"]
+    inputs_used = ["athlete_profile", "day_of_week", f"{history_source}_training_history"]
     unknowns = list(get_unknowns())
 
     if checkin:

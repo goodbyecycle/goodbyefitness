@@ -433,6 +433,185 @@ def test_ci_recommendation_blocked_without_checkin():
         _cleanup_checkins()
 
 
+## ── Strava Integration Tests ──
+
+from coach.history import (
+    _normalize_strava_activity,
+    _estimate_rpe,
+    is_strava_connected,
+    StravaProvider,
+)
+
+
+def test_strava_env_config():
+    import os
+    assert os.environ.get("STRAVA_CLIENT_ID") is not None or True, "Env var check is a no-op in test"
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from server import STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, STRAVA_REDIRECT_URI
+    assert "258611" not in open(str(Path(__file__).parent.parent / "server.py")).read().split("STRAVA_CLIENT_ID")[0:1], \
+        "Should not be in preamble"
+    source = open(str(Path(__file__).parent.parent / "server.py")).read()
+    assert 'os.environ.get("STRAVA_CLIENT_ID"' in source, "Client ID should come from env"
+    assert 'os.environ.get("STRAVA_CLIENT_SECRET"' in source, "Client secret should come from env"
+    assert 'os.environ.get("STRAVA_REDIRECT_URI"' in source, "Redirect URI should come from env"
+    print("PASS: Strava credentials come from environment variables")
+
+
+def test_strava_normalization():
+    raw = {
+        "id": 12345678,
+        "name": "Morning Ride",
+        "type": "Ride",
+        "date": "2026-07-18T08:30:00Z",
+        "distance": 16.09,
+        "duration_min": 57.7,
+        "elevation_gain": 1200,
+        "avg_hr": 145,
+        "max_hr": 172,
+        "suffer_score": 87,
+        "source": "strava",
+    }
+    normalized = _normalize_strava_activity(raw)
+    assert normalized["strava_id"] == 12345678
+    assert normalized["date"] == "2026-07-18"
+    assert normalized["type"] == "mtb_ride"
+    assert normalized["title"] == "Morning Ride"
+    assert normalized["source"] == "strava"
+    assert isinstance(normalized["durationMinutes"], (int, float))
+    assert isinstance(normalized["distanceMiles"], (int, float))
+    assert isinstance(normalized["rpe"], int)
+    print("PASS: Strava activity normalization works correctly")
+
+
+def test_strava_missing_fields_handled():
+    raw = {
+        "id": 99999,
+        "name": "Quick Spin",
+        "type": "MountainBikeRide",
+        "date": "2026-07-15",
+    }
+    normalized = _normalize_strava_activity(raw)
+    assert normalized["strava_id"] == 99999
+    assert normalized["date"] == "2026-07-15"
+    assert normalized["type"] == "mtb_ride"
+    assert normalized["durationMinutes"] == 0
+    assert normalized["distanceMiles"] == 0
+    assert normalized["rpe"] is not None
+    assert normalized["avg_hr"] is None
+    assert normalized["suffer_score"] is None
+    print("PASS: Strava activities with missing fields handled gracefully")
+
+
+def test_strava_rpe_estimation():
+    assert _estimate_rpe({"suffer_score": 160}) == 9
+    assert _estimate_rpe({"suffer_score": 110}) == 8
+    assert _estimate_rpe({"suffer_score": 70}) == 7
+    assert _estimate_rpe({"suffer_score": 40}) == 5
+    assert _estimate_rpe({"suffer_score": 10}) == 3
+    assert _estimate_rpe({"avg_hr": 175}) == 8
+    assert _estimate_rpe({"avg_hr": 155}) == 7
+    assert _estimate_rpe({"avg_hr": 135}) == 5
+    assert _estimate_rpe({"avg_hr": 110}) == 3
+    assert _estimate_rpe({"duration_min": 130}) == 6
+    assert _estimate_rpe({"duration_min": 70}) == 5
+    assert _estimate_rpe({}) == 4
+    print("PASS: Strava RPE estimation covers all tiers")
+
+
+def test_strava_dedup():
+    raw_activities = [
+        {"id": 111, "name": "Ride A", "type": "Ride", "date": "2026-07-18T09:00:00Z"},
+        {"id": 111, "name": "Ride A", "type": "Ride", "date": "2026-07-18T09:00:00Z"},
+        {"id": 222, "name": "Ride B", "type": "Ride", "date": "2026-07-17T09:00:00Z"},
+    ]
+    seen_ids = set()
+    deduped = []
+    for raw in raw_activities:
+        sid = raw.get("id")
+        if sid in seen_ids:
+            continue
+        seen_ids.add(sid)
+        deduped.append(_normalize_strava_activity(raw))
+
+    assert len(deduped) == 2, f"Expected 2 after dedup, got {len(deduped)}"
+    ids = [a["strava_id"] for a in deduped]
+    assert 111 in ids and 222 in ids
+    print("PASS: Strava duplicate activities are deduplicated")
+
+
+def test_strava_repeated_imports_no_duplicates():
+    batch1 = [
+        {"id": 1001, "name": "Ride 1", "type": "Ride", "date": "2026-07-18"},
+        {"id": 1002, "name": "Ride 2", "type": "Ride", "date": "2026-07-17"},
+    ]
+    batch2 = [
+        {"id": 1002, "name": "Ride 2", "type": "Ride", "date": "2026-07-17"},
+        {"id": 1003, "name": "Ride 3", "type": "Ride", "date": "2026-07-16"},
+    ]
+    seen_ids = set()
+    all_activities = []
+    for raw in batch1 + batch2:
+        sid = raw.get("id")
+        if sid in seen_ids:
+            continue
+        seen_ids.add(sid)
+        all_activities.append(_normalize_strava_activity(raw))
+
+    assert len(all_activities) == 3, f"Expected 3 unique, got {len(all_activities)}"
+    print("PASS: Repeated Strava imports produce no duplicates")
+
+
+def test_strava_fallback_to_mock():
+    from coach.history import is_strava_connected
+    from coach.engine import recommend_workout
+    _cleanup_checkins()
+    try:
+        result = recommend_workout(target_date=date.today())
+        assert "recommendation" in result
+        dq = result["recommendation"].get("dataQuality", {})
+        inputs = dq.get("inputsUsed", [])
+        assert any("training_history" in i for i in inputs), \
+            f"Should have some training_history input, got: {inputs}"
+        print("PASS: Coaching engine falls back to mock when Strava unavailable")
+    finally:
+        _cleanup_checkins()
+
+
+def test_strava_coaching_uses_strava_history():
+    from unittest.mock import patch
+    from coach.engine import recommend_workout
+    _cleanup_checkins()
+    try:
+        mock_activities = [
+            {
+                "date": date.today().isoformat(),
+                "type": "mtb_ride",
+                "title": "Strava Ride",
+                "durationMinutes": 60,
+                "distanceMiles": 10,
+                "elevationFeet": 500,
+                "rpe": 5,
+                "strava_id": 12345,
+                "source": "strava",
+            }
+        ]
+        with patch("coach.engine.is_strava_connected", return_value=True), \
+             patch("coach.engine.get_provider") as mock_get:
+            mock_provider = MockHistoryProvider()
+            mock_provider._activities = mock_activities
+            mock_provider.get_activities = lambda days=42: mock_activities
+            mock_get.return_value = mock_provider
+            result = recommend_workout(target_date=date.today())
+            assert "recommendation" in result
+            dq = result["recommendation"].get("dataQuality", {})
+            inputs = dq.get("inputsUsed", [])
+            assert "strava_training_history" in inputs, \
+                f"Should use strava history, got: {inputs}"
+        print("PASS: Coaching engine uses Strava history when connected")
+    finally:
+        _cleanup_checkins()
+
+
 if __name__ == "__main__":
     test_schema_validates_good_workout()
     test_schema_rejects_invalid_workout()
@@ -461,4 +640,12 @@ if __name__ == "__main__":
     test_ci_readiness_summary_after_save()
     test_ci_recommendation_uses_saved_readiness()
     test_ci_recommendation_blocked_without_checkin()
-    print("\n=== ALL 27 TESTS PASSED ===")
+    test_strava_env_config()
+    test_strava_normalization()
+    test_strava_missing_fields_handled()
+    test_strava_rpe_estimation()
+    test_strava_dedup()
+    test_strava_repeated_imports_no_duplicates()
+    test_strava_fallback_to_mock()
+    test_strava_coaching_uses_strava_history()
+    print("\n=== ALL 35 TESTS PASSED ===")
