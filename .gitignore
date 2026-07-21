@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+checkins.json
+athlete_profile.json
+trails.json
+user_data.json
+.gstack/
