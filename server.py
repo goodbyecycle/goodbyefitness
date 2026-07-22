@@ -16,6 +16,8 @@ from flask import Flask, jsonify, redirect, request, send_from_directory
 app = Flask(__name__, static_folder=".", static_url_path="")
 
 DATA_FILE = Path(__file__).parent / "user_data.json"
+UPLOADS_DIR = Path(__file__).parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 # ─── Twilio config (set these env vars or they'll be prompted on first send) ───
 TWILIO_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
@@ -442,6 +444,7 @@ def generate_message():
 
 from coach.profile import load_profile as load_athlete_profile, update_profile, get_unknowns
 from coach.readiness import save_checkin, get_checkin, get_recent_checkins, compute_readiness_score
+from coach.health import save_health_score, get_health_score, get_yesterday_exertion, compute_health_readiness
 from coach.history import get_provider as get_history_provider
 from coach.trails import get_all_trails, get_trail, update_trail_status, search_trails
 from coach.engine import recommend_workout
@@ -487,6 +490,47 @@ def coach_checkin_get(checkin_date):
 def coach_checkins_recent():
     days = int(request.args.get("days", 7))
     return jsonify(get_recent_checkins(days))
+
+
+@app.route("/api/coach/health", methods=["POST"])
+def coach_health_save():
+    body = request.json or {}
+    try:
+        record = save_health_score(body)
+        yesterday_ex = get_yesterday_exertion(record["date"])
+        score, label = compute_health_readiness(record, yesterday_ex)
+        return jsonify({"health": record, "readiness": {"score": score, "label": label}})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/coach/health/<health_date>", methods=["GET"])
+def coach_health_get(health_date):
+    health = get_health_score(health_date)
+    if not health:
+        return jsonify({"error": "No health score for this date"}), 404
+    yesterday_ex = get_yesterday_exertion(health_date)
+    score, label = compute_health_readiness(health, yesterday_ex)
+    return jsonify({"health": health, "readiness": {"score": score, "label": label}})
+
+
+@app.route("/api/coach/health/upload", methods=["POST"])
+def coach_health_upload():
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"error": "Empty filename"}), 400
+    ext = Path(f.filename).suffix.lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".heic"):
+        return jsonify({"error": "Unsupported file type"}), 400
+    health_date = request.form.get("date", "")
+    if not health_date:
+        return jsonify({"error": "Missing date"}), 400
+    safe_name = health_date + ext
+    dest = UPLOADS_DIR / safe_name
+    f.save(str(dest))
+    return jsonify({"filename": safe_name, "date": health_date})
 
 
 @app.route("/api/coach/history", methods=["GET"])

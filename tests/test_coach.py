@@ -701,6 +701,147 @@ def test_card_all_views_attach_handlers():
     print("PASS: All four calendar views attach card click handlers")
 
 
+# ── Phase 4: Health Score Tests ──
+
+from coach.health import save_health_score, get_health_score, get_yesterday_exertion, compute_health_readiness
+
+HEALTH_FILE = Path(__file__).parent.parent / "health_scores.json"
+
+def _cleanup_health():
+    if HEALTH_FILE.exists():
+        HEALTH_FILE.unlink()
+
+
+def test_hs_save_and_get():
+    _cleanup_health()
+    try:
+        app = _get_app()
+        with app.test_client() as c:
+            resp = c.post("/api/coach/health", json={
+                "date": "2026-07-22",
+                "recovery": 63,
+                "sleep": 73,
+                "exertion": 0.0,
+            })
+            assert resp.status_code == 200
+            data = resp.get_json()
+            assert data["health"]["recovery"] == 63
+            assert data["health"]["sleep"] == 73
+            assert data["health"]["exertion"] == 0.0
+            assert "readiness" in data
+            assert data["readiness"]["score"] == 68
+
+            resp2 = c.get("/api/coach/health/2026-07-22")
+            assert resp2.status_code == 200
+            data2 = resp2.get_json()
+            assert data2["health"]["recovery"] == 63
+
+            resp3 = c.get("/api/coach/health/2026-01-01")
+            assert resp3.status_code == 404
+        print("PASS: Health score save and get")
+    finally:
+        _cleanup_health()
+
+
+def test_hs_invalid_values_rejected():
+    _cleanup_health()
+    try:
+        app = _get_app()
+        with app.test_client() as c:
+            resp = c.post("/api/coach/health", json={
+                "date": "2026-07-22", "recovery": 150, "sleep": 73, "exertion": 0,
+            })
+            assert resp.status_code == 400
+
+            resp = c.post("/api/coach/health", json={
+                "date": "2026-07-22", "recovery": 63, "sleep": 73, "exertion": 15,
+            })
+            assert resp.status_code == 400
+
+            resp = c.post("/api/coach/health", json={
+                "recovery": 63, "sleep": 73, "exertion": 0,
+            })
+            assert resp.status_code == 400
+        print("PASS: Health score invalid values rejected")
+    finally:
+        _cleanup_health()
+
+
+def test_hs_readiness_computation():
+    score, label = compute_health_readiness({"recovery": 80, "sleep": 90}, None)
+    assert score == 85
+    assert "good" in label
+
+    score, label = compute_health_readiness({"recovery": 40, "sleep": 50}, None)
+    assert score == 45
+    assert "low" in label
+
+    score, label = compute_health_readiness(None, None)
+    assert score is None
+    print("PASS: Health readiness computation")
+
+
+def test_hs_yesterday_exertion_penalty():
+    score, _ = compute_health_readiness({"recovery": 80, "sleep": 80}, 8.0)
+    assert score == 70
+    print("PASS: Yesterday exertion penalty applied")
+
+
+def test_hs_blended_readiness():
+    _cleanup_health()
+    _cleanup_checkins()
+    try:
+        save_health_score({"date": "2026-07-22", "recovery": 80, "sleep": 80, "exertion": 0})
+        save_checkin({
+            "date": "2026-07-22", "sleepQuality": 5, "energy": 5,
+            "soreness": 0, "pain": 0, "stress": 1,
+        })
+        result = recommend_workout(date(2026, 7, 22))
+        inputs = result["recommendation"]["dataQuality"]["inputsUsed"]
+        assert "athlytic_health_score" in inputs
+        assert "daily_check_in" in inputs
+        print("PASS: Blended readiness uses both health and check-in")
+    finally:
+        _cleanup_health()
+        _cleanup_checkins()
+
+
+def test_hs_upload_endpoint():
+    app = _get_app()
+    with app.test_client() as c:
+        resp = c.post("/api/coach/health/upload", data={})
+        assert resp.status_code == 400
+
+        from io import BytesIO
+        data = {
+            "file": (BytesIO(b"fake image data"), "test.jpg"),
+            "date": "2026-07-22",
+        }
+        resp = c.post("/api/coach/health/upload", data=data, content_type="multipart/form-data")
+        assert resp.status_code == 200
+        result = resp.get_json()
+        assert result["filename"] == "2026-07-22.jpg"
+
+        upload_path = Path(__file__).parent.parent / "uploads" / "2026-07-22.jpg"
+        assert upload_path.exists()
+        upload_path.unlink()
+    print("PASS: Health screenshot upload endpoint")
+
+
+def test_hs_recommendation_uses_health():
+    _cleanup_health()
+    _cleanup_checkins()
+    try:
+        save_health_score({"date": "2026-07-22", "recovery": 10, "sleep": 10, "exertion": 0})
+        result = recommend_workout(date(2026, 7, 22))
+        rec = result["recommendation"]
+        assert rec["type"] in ["rest", "recovery"], f"Low health score should trigger rest/recovery, got {rec['type']}"
+        print("PASS: Recommendation uses health score for readiness")
+    finally:
+        _cleanup_health()
+        _cleanup_checkins()
+
+
 if __name__ == "__main__":
     test_schema_validates_good_workout()
     test_schema_rejects_invalid_workout()
@@ -744,4 +885,13 @@ if __name__ == "__main__":
     test_card_escape_closes_modal()
     test_card_edit_and_delete_buttons()
     test_card_all_views_attach_handlers()
-    print("\n=== ALL 42 TESTS PASSED ===")
+
+    # Health score tests
+    test_hs_save_and_get()
+    test_hs_invalid_values_rejected()
+    test_hs_readiness_computation()
+    test_hs_yesterday_exertion_penalty()
+    test_hs_blended_readiness()
+    test_hs_upload_endpoint()
+    test_hs_recommendation_uses_health()
+    print("\n=== ALL 49 TESTS PASSED ===")

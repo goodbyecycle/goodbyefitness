@@ -1,7 +1,9 @@
 __pycache__/
 *.pyc
 checkins.json
+health_scores.json
 athlete_profile.json
 trails.json
 user_data.json
+uploads/
 .gstack/

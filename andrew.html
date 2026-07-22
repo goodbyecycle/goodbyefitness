@@ -304,6 +304,36 @@ html, body {
 .readiness-summary .rs-warning { font-size: 0.8rem; color: #c00; font-weight: 600; margin-top: 4px; }
 
 .checkin-gate { text-align: center; font-size: 0.85rem; font-weight: 600; color: #555; padding: 6px 0; }
+
+/* ── Health Score Button ── */
+.health-score-btn {
+  font-family: var(--font); font-size: 0.9rem; font-weight: 700;
+  padding: 10px 20px; border: 2px solid var(--pink); border-radius: 12px;
+  background: var(--pink); color: var(--white); cursor: pointer;
+  transition: opacity 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.health-score-btn:hover { opacity: 0.85; }
+.health-score-btn.done { background: rgba(10,138,10,0.15); border-color: #0a8a0a; color: #0a8a0a; cursor: pointer; }
+
+/* ── Athlytic Health Summary ── */
+.health-summary {
+  background: rgba(255,255,255,0.15); border: 1px solid var(--pink); border-radius: 10px;
+  padding: 8px 16px; font-size: 0.85rem; text-align: center; max-width: 420px; margin-top: 4px; cursor: pointer;
+}
+.health-summary:hover { background: rgba(255,255,255,0.25); }
+.health-summary .hs-label { font-weight: 700; }
+.health-summary .hs-date { font-size: 0.75rem; opacity: 0.6; margin-top: 2px; }
+
+/* ── Health Form Fields ── */
+.health-form label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; margin-top: 12px; }
+.health-form label:first-child { margin-top: 0; }
+.health-form input[type="number"], .health-form input[type="date"], .health-form input[type="file"] {
+  width: 100%; font-family: var(--font); font-size: 0.9rem; padding: 8px 10px;
+  border: 2px solid var(--pink); border-radius: 8px; background: rgba(255,255,255,0.2);
+  color: var(--black); outline: none;
+}
+.health-form .field-error { color: #c00; font-size: 0.75rem; font-weight: 600; margin-top: 2px; display: none; }
+.health-form .field-error.visible { display: block; }
   </style>
 </head>
 <body>
@@ -328,6 +358,11 @@ html, body {
         <span class="nav-label" id="navLabel"></span>
       </div>
     </div>
+
+    <div style="text-align:left; max-width:1200px; margin-bottom:8px;">
+      <button class="health-score-btn" id="healthBtn">Enter Health Score</button>
+    </div>
+    <div id="healthSummary"></div>
 
     <div class="readiness-bar">
       <button class="checkin-btn" id="checkinBtn">Morning Check-In</button>
@@ -654,8 +689,8 @@ function acceptWorkout() {
 }
 
 async function fetchRecommendation() {
-  if (!todayReadiness) {
-    checkinGateEl.textContent = "Complete today's Morning Check-In before generating a personalized recommendation.";
+  if (!todayReadiness && !todayHealth) {
+    checkinGateEl.textContent = "Complete a Morning Check-In or enter a Health Score before generating a personalized recommendation.";
     checkinGateEl.style.display = 'block';
     return;
   }
@@ -995,6 +1030,182 @@ checkinBtn.addEventListener('click', () => {
 recommendBtn.addEventListener('click', fetchRecommendation);
 modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) hideModal(); });
 
+// ── Health Score ──
+
+const healthBtn = document.getElementById('healthBtn');
+const healthSummaryEl = document.getElementById('healthSummary');
+let todayHealth = null;
+
+function showHealthForm(prefill) {
+  const today = toDateKey(localToday());
+  const rec = prefill || {};
+  modalContent.innerHTML = `
+    <h3>Today's Athlytic Health Score</h3>
+    <div class="health-form" id="healthForm">
+      <label>Recovery % (0–100)</label>
+      <input type="number" id="hs_recovery" min="0" max="100" step="1" value="${rec.recovery != null ? rec.recovery : ''}">
+      <div class="field-error" id="err_recovery">Recovery must be 0–100</div>
+
+      <label>Sleep % (0–100)</label>
+      <input type="number" id="hs_sleep" min="0" max="100" step="1" value="${rec.sleep != null ? rec.sleep : ''}">
+      <div class="field-error" id="err_sleep">Sleep must be 0–100</div>
+
+      <label>Exertion (0–10)</label>
+      <input type="number" id="hs_exertion" min="0" max="10" step="0.1" value="${rec.exertion != null ? rec.exertion : ''}">
+      <div class="field-error" id="err_exertion">Exertion must be 0–10</div>
+
+      <label>Screenshot (optional — JPG, PNG, HEIC)</label>
+      <input type="file" id="hs_screenshot" accept=".jpg,.jpeg,.png,.heic">
+
+      <label>Date</label>
+      <input type="date" id="hs_date" value="${rec.date || today}">
+
+      <div class="field-error" id="err_hs_general" style="margin-top:10px"></div>
+
+      <div class="modal-actions">
+        <button class="modal-accept" id="hsSubmit">Save Health Score</button>
+        <button class="modal-cancel" id="hsCancel">Cancel</button>
+      </div>
+    </div>`;
+  modalOverlay.classList.add('open');
+  document.getElementById('hsSubmit').addEventListener('click', submitHealthScore);
+  document.getElementById('hsCancel').addEventListener('click', hideModal);
+}
+
+async function submitHealthScore() {
+  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+  let valid = true;
+
+  const recovery = parseFloat(document.getElementById('hs_recovery').value);
+  const sleep = parseFloat(document.getElementById('hs_sleep').value);
+  const exertion = parseFloat(document.getElementById('hs_exertion').value);
+  const hsDate = document.getElementById('hs_date').value;
+  const fileInput = document.getElementById('hs_screenshot');
+
+  if (isNaN(recovery) || recovery < 0 || recovery > 100) {
+    document.getElementById('err_recovery').classList.add('visible'); valid = false;
+  }
+  if (isNaN(sleep) || sleep < 0 || sleep > 100) {
+    document.getElementById('err_sleep').classList.add('visible'); valid = false;
+  }
+  if (isNaN(exertion) || exertion < 0 || exertion > 10) {
+    document.getElementById('err_exertion').classList.add('visible'); valid = false;
+  }
+  if (!valid) return;
+
+  const submitBtn = document.getElementById('hsSubmit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Saving…';
+
+  try {
+    let hasScreenshot = false;
+    if (fileInput.files.length > 0) {
+      const form = new FormData();
+      form.append('file', fileInput.files[0]);
+      form.append('date', hsDate);
+      const upResp = await fetch('/api/coach/health/upload', { method: 'POST', body: form });
+      if (upResp.ok) hasScreenshot = true;
+    }
+
+    const payload = { date: hsDate, recovery, sleep, exertion, hasScreenshot };
+    const resp = await fetch('/api/coach/health', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      const errEl = document.getElementById('err_hs_general');
+      errEl.textContent = data.error || 'Save failed';
+      errEl.classList.add('visible');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Health Score';
+      return;
+    }
+
+    todayHealth = data;
+    renderHealthSummary();
+    updateHealthButton();
+    updateReadinessWithHealth();
+    hideModal();
+  } catch (err) {
+    const errEl = document.getElementById('err_hs_general');
+    errEl.textContent = err.message;
+    errEl.classList.add('visible');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Health Score';
+  }
+}
+
+function renderHealthSummary() {
+  if (!todayHealth || !todayHealth.health) {
+    healthSummaryEl.innerHTML = '';
+    return;
+  }
+  const h = todayHealth.health;
+  healthSummaryEl.innerHTML = `
+    <div class="health-summary" id="healthSummaryCard">
+      <span class="hs-label">Athlytic: Recovery ${h.recovery}% &bull; Sleep ${h.sleep}% &bull; Exertion ${h.exertion.toFixed(1)}</span>
+      <div class="hs-date">${esc(h.date)}</div>
+    </div>`;
+  document.getElementById('healthSummaryCard').addEventListener('click', () => {
+    showHealthForm(todayHealth.health);
+  });
+}
+
+function updateHealthButton() {
+  if (todayHealth) {
+    healthBtn.classList.add('done');
+    healthBtn.textContent = '✓ Health Score';
+  } else {
+    healthBtn.classList.remove('done');
+    healthBtn.textContent = 'Enter Health Score';
+  }
+}
+
+function updateReadinessWithHealth() {
+  if (!todayHealth) return;
+  const hr = todayHealth.readiness;
+  if (hr && hr.score != null) {
+    checkinGateEl.style.display = 'none';
+
+    if (todayReadiness) {
+      const blended = Math.round(hr.score * 0.6 + todayReadiness.readiness.score * 0.4);
+      todayReadiness.readiness.score = blended;
+      todayReadiness.readiness.label = hr.label;
+      renderReadinessSummary();
+    } else {
+      readinessSummaryEl.innerHTML = `
+        <div class="readiness-summary">
+          <span class="rs-score">${hr.score}/100</span>
+          <span class="rs-label">${esc(hr.label)}</span>
+          <div class="rs-date">Source: Athlytic Health Score</div>
+        </div>`;
+    }
+  }
+}
+
+async function loadTodayHealth() {
+  const dateKey = toDateKey(localToday());
+  try {
+    const resp = await fetch('/api/coach/health/' + dateKey);
+    if (resp.ok) {
+      todayHealth = await resp.json();
+      renderHealthSummary();
+      updateHealthButton();
+      updateReadinessWithHealth();
+    } else {
+      todayHealth = null;
+      updateHealthButton();
+    }
+  } catch { todayHealth = null; }
+}
+
+healthBtn.addEventListener('click', () => {
+  showHealthForm(todayHealth ? todayHealth.health : null);
+});
+
+loadTodayHealth();
 loadTodayReadiness();
 render();
   </script>
