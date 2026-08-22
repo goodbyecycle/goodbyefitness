@@ -20,7 +20,7 @@ METRICS = [
     ("Instagram — Followers",         0.25,  "per new follower",       3120, 3305),
     ("Facebook — Followers",          0.25,  "per new follower",        870,  902),
     ("Google — Positive Reviews",     1.50,  "per new positive review",  46,   53),
-    ("YouTube — Hours Watched",       1.00,  "per additional hour",    2150, 2480),
+    ("YouTube — Hours Watched",       0.50,  "per additional hour",    2150, 2480),
 ]
 FIRST = 5                       # first data row (same on both sheets)
 LAST = FIRST + len(METRICS) - 1
@@ -90,7 +90,7 @@ notes = [
     ("3. Bonus rates live on the 'Bonus Summary' tab, column C. Change a rate there and both tabs update.", False),
     ("", False),
     ("Bonus rates in force: YouTube subscribers $0.50 · Instagram $0.25 · Facebook $0.25 ·", False),
-    ("Google positive reviews $1.50 · YouTube hours watched $1.00 per hour.", False),
+    ("Google positive reviews $1.50 · YouTube hours watched $0.50 per hour.", False),
     ("", False),
     ("Assumptions (change if wrong):", True),
     ("• Every row is paid on the GAIN over last month, including YouTube hours watched and Google reviews —", False),
@@ -183,7 +183,7 @@ notes2 = [
     ("• Column C is the only place bonus rates are set — the Monthly Tracker tab reads them from here.", False),
     ("• Everything else on this tab is pulled from the Monthly Tracker; enter data there, not here.", False),
     ("• Bonus rates in force: YouTube subs $0.50, Instagram $0.25, Facebook $0.25,", False),
-    ("  Google positive reviews $1.50, YouTube hours watched $1.00 per hour.", False),
+    ("  Google positive reviews $1.50, YouTube hours watched $0.50 per hour.", False),
     ("• Bonus is paid on the month-over-month gain and is floored at $0 for any row that declines.", False),
 ]
 for i, (text, bold) in enumerate(notes2):

@@ -60,7 +60,7 @@ METRICS = [
         "unit": "per additional hour",
         "group": "watch",
         "decimals": 1,
-        "defaultRate": 1.00,
+        "defaultRate": 0.50,
     },
 ]
 

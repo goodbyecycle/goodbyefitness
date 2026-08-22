@@ -14,15 +14,15 @@ logins see the same numbers.
 | YouTube | Subscribers and hours watched pulled straight from the channel |
 
 Rates as configured: YouTube subscribers $0.50, Instagram $0.25, Facebook
-$0.25, Google positive reviews $1.50, YouTube hours watched $1.00 per hour.
+$0.25, Google positive reviews $1.50, YouTube hours watched $0.50 per hour.
 Bonus is paid on the **gain over the previous month** and is floored at $0
 when a metric declines. Previous-month figures carry forward automatically,
 so each number is typed once.
 
 Any row can instead be set to pay on **the month's own total** — pick it under
 "Paid on" in the rates panel. The difference matters most for hours watched:
-on *gain*, 2,150 hours last month and 2,480 this month pays $330; on *total*,
-it pays $2,480.
+on *gain*, 2,150 hours last month and 2,480 this month pays $165; on *total*,
+it pays $1,240.
 
 ## Connecting YouTube
 

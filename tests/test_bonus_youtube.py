@@ -97,16 +97,16 @@ def test_sync_records_when_it_last_ran():
 def test_hours_can_be_paid_on_the_months_own_total():
     youtube.sync_month("2026-08", report=report(hours=330.0))
     on_gain = next(r for r in store.compute_month("2026-08")["rows"] if r["key"] == "youtube_hours")
-    assert on_gain["bonus"] == 330.00      # no previous month, so gain == total here
+    assert on_gain["bonus"] == 165.00      # no previous month, so gain == total here
 
     store.save_month("2026-09", {}, source="manual")
     youtube.sync_month("2026-09", report=report(hours=400.0, month="2026-09", through="2026-09-30"))
     gain_row = next(r for r in store.compute_month("2026-09")["rows"] if r["key"] == "youtube_hours")
-    assert gain_row["bonus"] == 70.00      # paid on the 70-hour increase
+    assert gain_row["bonus"] == 35.00      # paid on the 70-hour increase
 
     store.set_bases({"youtube_hours": "total"})
     total_row = next(r for r in store.compute_month("2026-09")["rows"] if r["key"] == "youtube_hours")
-    assert total_row["bonus"] == 400.00    # paid on all 400 hours
+    assert total_row["bonus"] == 200.00    # paid on all 400 hours
     assert total_row["basis"] == "total"
 
 

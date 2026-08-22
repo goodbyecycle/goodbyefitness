@@ -30,7 +30,7 @@ def test_defaults_match_the_agreed_rates():
     assert rates["instagram_followers"] == 0.25
     assert rates["facebook_followers"] == 0.25
     assert rates["google_reviews"] == 1.50
-    assert rates["youtube_hours"] == 1.00
+    assert rates["youtube_hours"] == 0.50
 
 
 def test_gain_and_bonus_are_computed_per_metric():
@@ -47,8 +47,8 @@ def test_gain_and_bonus_are_computed_per_metric():
     assert rows["instagram_followers"]["bonus"] == 46.25
     assert rows["facebook_followers"]["bonus"] == 8.00
     assert rows["google_reviews"]["bonus"] == 10.50
-    assert rows["youtube_hours"]["bonus"] == 330.00
-    assert view["totalBonus"] == 468.75
+    assert rows["youtube_hours"]["bonus"] == 165.00
+    assert view["totalBonus"] == 303.75
 
 
 def test_summary_splits_bonus_by_group():
@@ -62,7 +62,7 @@ def test_summary_splits_bonus_by_group():
     summary = store.compute_month("2026-08")["summary"]
     assert summary["audienceGain"] == 365
     assert summary["audienceBonus"] == 128.25
-    assert summary["watchBonus"] == 330.00
+    assert summary["watchBonus"] == 165.00
     assert summary["reviewsBonus"] == 10.50
 
 
