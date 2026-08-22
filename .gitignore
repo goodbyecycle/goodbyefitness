@@ -7,3 +7,6 @@ trails.json
 user_data.json
 uploads/
 .gstack/
+bonus_data.json
+bonus_users.json
+bonus_secret.key

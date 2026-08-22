@@ -3,17 +3,32 @@
 import json
 import os
 import random
+import secrets
 import smtplib
 import time
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
+from functools import wraps
 from pathlib import Path
 
 import requests as http_requests
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, jsonify, redirect, request, send_from_directory, session
+
+from bonus import auth as bonus_auth
+from bonus import store as bonus_store
 
 app = Flask(__name__, static_folder=".", static_url_path="")
+
+# Sessions back the bonus tracker logins. Cookies are marked Secure unless
+# BONUS_DEV=1, which is the escape hatch for running over http on localhost.
+app.secret_key = bonus_auth.get_secret_key()
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("BONUS_DEV", "") != "1",
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+)
 
 DATA_FILE = Path(__file__).parent / "user_data.json"
 UPLOADS_DIR = Path(__file__).parent / "uploads"
@@ -594,6 +609,151 @@ def coach_trail_status(trail_id):
         return jsonify(trail)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+# ─── Bonus tracker (social media growth → bonus owed) ───
+
+def _csrf_token():
+    token = session.get("bonus_csrf")
+    if not token:
+        token = secrets.token_urlsafe(24)
+        session["bonus_csrf"] = token
+    return token
+
+
+def _current_user():
+    return session.get("bonus_user")
+
+
+def require_login(view):
+    """Logged-in only. Writes must also carry the CSRF token from /api/bonus/me."""
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "login required"}), 401
+        if request.method != "GET":
+            sent = request.headers.get("X-CSRF-Token", "")
+            if not sent or not secrets.compare_digest(sent, session.get("bonus_csrf", "")):
+                return jsonify({"error": "bad or missing CSRF token"}), 403
+        return view(*args, **kwargs)
+    return wrapper
+
+
+def require_admin(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        user = _current_user()
+        if not user or user.get("role") != "admin":
+            return jsonify({"error": "admins only"}), 403
+        return view(*args, **kwargs)
+    return wrapper
+
+
+@app.route("/bonus")
+def bonus_page():
+    return send_from_directory(".", "bonus.html")
+
+
+@app.route("/api/bonus/login", methods=["POST"])
+def bonus_login():
+    body = request.json or {}
+    try:
+        user = bonus_auth.verify(body.get("username"), body.get("password"))
+    except PermissionError as locked:
+        minutes = max(1, int(locked.args[0]) // 60)
+        return jsonify({"error": "Too many attempts. Try again in %d minutes." % minutes}), 429
+    if not user:
+        return jsonify({"error": "Wrong username or password."}), 401
+    session.clear()
+    session.permanent = True
+    session["bonus_user"] = user
+    return jsonify({"user": user, "csrfToken": _csrf_token()})
+
+
+@app.route("/api/bonus/logout", methods=["POST"])
+def bonus_logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/bonus/me")
+def bonus_me():
+    user = _current_user()
+    if not user:
+        return jsonify({"user": None, "hasAccounts": bool(bonus_auth.load_users())}), 401
+    return jsonify({"user": user, "csrfToken": _csrf_token(), "metrics": bonus_store.METRICS})
+
+
+@app.route("/api/bonus/months")
+@require_login
+def bonus_months():
+    return jsonify({"months": bonus_store.list_months()})
+
+
+@app.route("/api/bonus/rates")
+@require_login
+def bonus_rates():
+    return jsonify({"rates": bonus_store.get_rates()})
+
+
+@app.route("/api/bonus/rates", methods=["POST"])
+@require_login
+@require_admin
+def bonus_rates_update():
+    try:
+        rates = bonus_store.set_rates((request.json or {}).get("rates"))
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"rates": rates})
+
+
+@app.route("/api/bonus/month/<month>")
+@require_login
+def bonus_month(month):
+    try:
+        return jsonify(bonus_store.compute_month(month))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/bonus/month/<month>", methods=["POST"])
+@require_login
+def bonus_month_save(month):
+    body = request.json or {}
+    try:
+        view = bonus_store.save_month(month, body.get("values"), _current_user()["displayName"])
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(view)
+
+
+@app.route("/api/bonus/month/<month>/paid", methods=["POST"])
+@require_login
+@require_admin
+def bonus_month_paid(month):
+    body = request.json or {}
+    paid = bool(body.get("paid"))
+    paid_on = body.get("paidOn") or datetime.now().strftime("%Y-%m-%d")
+    try:
+        view = bonus_store.set_paid(month, paid, paid_on, _current_user()["displayName"])
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(view)
+
+
+@app.route("/api/bonus/month/<month>/csv")
+@require_login
+def bonus_month_csv(month):
+    try:
+        csv_text = bonus_store.month_csv(month)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return Response(
+        csv_text,
+        mimetype="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="bonus-%s.csv"' % month},
+    )
 
 
 # ─── Boot ───

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonus Tracker — Goodbye Fitness</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--text:#e4e4e4;--accent:#3b82f6;
+  --accent-glow:rgba(59,130,246,.35);
+  --card-bg:#111113;--card-border:#1e1e22;
+  --muted:#888;--good:#34d399;--warn:#fbbf24;--bad:#f87171;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+a{color:var(--accent)}
+.wrap{max-width:1040px;margin:0 auto;padding:2rem 1.25rem 4rem}
+.hidden{display:none!important}
+
+/* ── login ─────────────────────────────────── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.login-card{width:100%;max-width:380px;background:var(--card-bg);border:1px solid var(--card-border);
+  border-radius:16px;padding:2rem;box-shadow:0 0 40px rgba(0,0,0,.6)}
+.login-card h1{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.login-card .sub{color:var(--muted);font-size:.95rem;margin-bottom:1.5rem}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.35rem}
+input[type=text],input[type=password],input[type=number],input[type=date]{
+  width:100%;padding:.7rem .85rem;background:#0d0d10;color:var(--text);
+  border:1px solid var(--card-border);border-radius:10px;font-family:var(--font);font-size:1rem}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+.field{margin-bottom:1rem}
+button{font-family:var(--font);font-size:.95rem;font-weight:600;cursor:pointer;
+  border-radius:10px;border:1px solid var(--card-border);background:#17171b;color:var(--text);
+  padding:.6rem 1.1rem;transition:background .15s,border-color .15s,opacity .15s}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:100%;padding:.75rem}
+button.primary:hover:not(:disabled){box-shadow:0 0 24px var(--accent-glow)}
+.error{color:var(--bad);font-size:.9rem;min-height:1.4rem;margin-top:.6rem}
+.hint{color:var(--muted);font-size:.85rem;margin-top:1rem;line-height:1.5}
+code{background:#0d0d10;border:1px solid var(--card-border);border-radius:6px;padding:.1rem .35rem;font-size:.85em}
+
+/* ── header ────────────────────────────────── */
+header.bar{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;justify-content:space-between;margin-bottom:1.5rem}
+.brand{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.brand span{color:var(--muted);font-weight:500;font-size:.95rem;display:block;letter-spacing:0}
+.who{display:flex;align-items:center;gap:.75rem;font-size:.9rem;color:var(--muted)}
+.month-nav{display:flex;align-items:center;gap:.5rem;margin-bottom:1.25rem}
+.month-nav .label{font-size:1.1rem;font-weight:700;min-width:11rem;text-align:center}
+.nav-btn{width:2.4rem;height:2.4rem;display:flex;align-items:center;justify-content:center;padding:0}
+
+/* ── cards / table ─────────────────────────── */
+.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.25rem;margin-bottom:1.25rem}
+.card h2{font-size:1rem;font-weight:700;margin-bottom:.9rem;letter-spacing:.01em}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:right;padding:.6rem .5rem;border-bottom:1px solid var(--card-border);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+td input{width:7.5rem;text-align:right;padding:.45rem .55rem}
+td input.carried{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.gain.up{color:var(--good)}
+.gain.down{color:var(--bad)}
+tr.total td{border-bottom:none;font-weight:800;font-size:1.05rem;padding-top:.9rem}
+tr.total td:last-child{color:var(--accent)}
+.rate-note{font-size:.75rem;color:var(--muted);display:block;font-weight:400}
+
+/* ── summary ───────────────────────────────── */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}
+.stat{background:#0d0d10;border:1px solid var(--card-border);border-radius:12px;padding:.85rem 1rem}
+.stat .k{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stat .v{font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums;margin-top:.15rem}
+.stat.big .v{color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+.status{font-size:.85rem;color:var(--muted);min-height:1.2rem}
+.status.ok{color:var(--good)}
+.status.err{color:var(--bad)}
+.badge{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:.2rem .55rem;border-radius:999px;border:1px solid currentColor}
+.badge.paid{color:var(--good)}
+.badge.unpaid{color:var(--warn)}
+.history{list-style:none;display:grid;gap:.4rem}
+.history li{display:flex;justify-content:space-between;gap:1rem;padding:.5rem .75rem;border-radius:10px;
+  background:#0d0d10;border:1px solid var(--card-border);cursor:pointer;font-variant-numeric:tabular-nums}
+.history li:hover{border-color:var(--accent)}
+.history li.active{border-color:var(--accent)}
+.notes{font-size:.85rem;color:var(--muted);line-height:1.6}
+.notes li{margin-left:1.1rem}
+@media(max-width:560px){.wrap{padding:1.25rem .85rem 3rem}.month-nav .label{min-width:8rem;font-size:1rem}}
+</style>
+</head>
+<body>
+
+<!-- ── login ─────────────────────────────────── -->
+<div id="login" class="login-wrap hidden">
+  <form class="login-card" id="login-form" autocomplete="on">
+    <h1>Goodbye Fitness</h1>
+    <p class="sub">Social media bonus tracker</p>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" required>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="primary" type="submit" id="login-btn">Sign in</button>
+    <p class="error" id="login-error"></p>
+    <p class="hint hidden" id="no-accounts">
+      No logins exist yet. On the server, run<br>
+      <code>python tools/bonus_user.py add andy --role admin</code>
+    </p>
+  </form>
+</div>
+
+<!-- ── tracker ───────────────────────────────── -->
+<div id="app" class="wrap hidden">
+  <header class="bar">
+    <div class="brand">Social Media Bonus<span>Goodbye Fitness</span></div>
+    <div class="who"><span id="who-name"></span><button id="logout">Sign out</button></div>
+  </header>
+
+  <div class="month-nav">
+    <button class="nav-btn" id="prev-month" aria-label="Previous month">‹</button>
+    <div class="label" id="month-label">—</div>
+    <button class="nav-btn" id="next-month" aria-label="Next month">›</button>
+    <span id="paid-badge" class="badge unpaid hidden">Unpaid</span>
+  </div>
+
+  <section class="card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Account / Metric</th><th>Previous month</th><th>Current month</th><th>Gain</th><th>Bonus</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tfoot>
+          <tr class="total"><td>Total bonus</td><td></td><td></td><td></td><td class="num" id="total-bonus">$0.00</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="actions">
+      <button class="primary" style="width:auto" id="save">Save month</button>
+      <button id="download">Download CSV</button>
+      <span class="status" id="save-status"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Bonus payout summary</h2>
+    <div class="summary-grid">
+      <div class="stat"><div class="k">Follower / subscriber gain</div><div class="v num" id="s-audience-gain">0</div></div>
+      <div class="stat"><div class="k">Bonus — followers & subs</div><div class="v num" id="s-audience-bonus">$0.00</div></div>
+      <div class="stat"><div class="k">Bonus — hours watched</div><div class="v num" id="s-watch">$0.00</div></div>
+      <div class="stat"><div class="k">Bonus — Google reviews</div><div class="v num" id="s-reviews">$0.00</div></div>
+      <div class="stat big"><div class="k">Total owed</div><div class="v num" id="s-total">$0.00</div></div>
+    </div>
+    <div class="actions" id="paid-controls">
+      <button id="toggle-paid">Mark as paid</button>
+      <span class="status" id="paid-status"></span>
+    </div>
+  </section>
+
+  <section class="card hidden" id="rates-card">
+    <h2>Bonus rates</h2>
+    <div class="table-scroll">
+      <table style="min-width:420px">
+        <thead><tr><th>Metric</th><th>Rate</th><th>Unit</th></tr></thead>
+        <tbody id="rate-rows"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="save-rates">Save rates</button>
+      <span class="status" id="rates-status"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Months on record</h2>
+    <ul class="history" id="history"></ul>
+  </section>
+
+  <section class="card">
+    <h2>How this pays out</h2>
+    <ul class="notes">
+      <li>Bonus is paid on the <strong>gain over the previous month</strong> — this month's figure minus last month's.</li>
+      <li>A month that goes backwards pays $0, never a negative bonus.</li>
+      <li>Google reviews counts <strong>positive reviews only</strong>.</li>
+      <li>Previous-month figures carry forward automatically once a month is saved.</li>
+      <li id="admin-note" class="hidden">Only an admin login can change rates or mark a month paid.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const money = (n) => "$" + (Number(n) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+let state = {user: null, csrf: null, metrics: [], month: null, view: null, rates: {}};
+
+function monthLabel(ym) {
+  return MONTH_NAMES[Number(ym.slice(5)) - 1] + " " + ym.slice(0, 4);
+}
+function shiftMonth(ym, delta) {
+  const index = Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5)) - 1 + delta;
+  return String(Math.floor(index / 12)).padStart(4, "0") + "-" + String(index % 12 + 1).padStart(2, "0");
+}
+function thisMonth() {
+  const now = new Date();
+  return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+}
+
+async function api(path, options) {
+  const opts = Object.assign({headers: {}}, options || {});
+  if (opts.body) {
+    opts.headers["Content-Type"] = "application/json";
+    opts.headers["X-CSRF-Token"] = state.csrf || "";
+    opts.body = JSON.stringify(opts.body);
+    opts.method = opts.method || "POST";
+  }
+  const res = await fetch(path, opts);
+  if (res.status === 401 && state.user) { showLogin(); throw new Error("Session expired — sign in again."); }
+  const data = (res.headers.get("content-type") || "").includes("json") ? await res.json() : {};
+  if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
+  return data;
+}
+
+/* ── login ─────────────────────────────────── */
+function showLogin(hasAccounts) {
+  state.user = null;
+  $("login").classList.remove("hidden");
+  $("app").classList.add("hidden");
+  $("no-accounts").classList.toggle("hidden", hasAccounts !== false);
+}
+
+$("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("login-error").textContent = "";
+  $("login-btn").disabled = true;
+  try {
+    const data = await api("/api/bonus/login", {body: {username: $("username").value, password: $("password").value}});
+    state.user = data.user;
+    state.csrf = data.csrfToken;
+    $("password").value = "";
+    await start();
+  } catch (err) {
+    $("login-error").textContent = err.message;
+  } finally {
+    $("login-btn").disabled = false;
+  }
+});
+
+$("logout").addEventListener("click", async () => {
+  await fetch("/api/bonus/logout", {method: "POST", headers: {"X-CSRF-Token": state.csrf || ""}});
+  location.reload();
+});
+
+/* ── rendering ─────────────────────────────── */
+function readInputs() {
+  const values = {};
+  state.view.rows.forEach((row) => {
+    const prev = $("prev-" + row.key).value;
+    const curr = $("curr-" + row.key).value;
+    values[row.key] = {prev: prev === "" ? null : Number(prev), curr: curr === "" ? null : Number(curr)};
+  });
+  return values;
+}
+
+function recompute() {
+  let total = 0, audienceGain = 0, audienceBonus = 0, watch = 0, reviews = 0;
+  state.view.rows.forEach((row) => {
+    const prev = Number($("prev-" + row.key).value || 0);
+    const curr = Number($("curr-" + row.key).value || 0);
+    const gain = Math.round((curr - prev) * 10) / 10;
+    const rate = Number(state.rates[row.key] || 0);
+    const bonus = Math.round(Math.max(0, gain) * rate * 100) / 100;
+    const gainCell = $("gain-" + row.key);
+    gainCell.textContent = (gain > 0 ? "+" : "") + gain.toLocaleString();
+    gainCell.className = "num gain " + (gain > 0 ? "up" : gain < 0 ? "down" : "");
+    $("bonus-" + row.key).textContent = money(bonus);
+    total += bonus;
+    if (row.group === "audience") { audienceGain += gain; audienceBonus += bonus; }
+    if (row.group === "watch") watch += bonus;
+    if (row.group === "reviews") reviews += bonus;
+  });
+  $("total-bonus").textContent = money(total);
+  $("s-audience-gain").textContent = (audienceGain > 0 ? "+" : "") + audienceGain.toLocaleString();
+  $("s-audience-bonus").textContent = money(audienceBonus);
+  $("s-watch").textContent = money(watch);
+  $("s-reviews").textContent = money(reviews);
+  $("s-total").textContent = money(total);
+}
+
+function renderMonth(view) {
+  state.view = view;
+  state.month = view.month;
+  $("month-label").textContent = monthLabel(view.month);
+  $("rows").innerHTML = view.rows.map((row) => `
+    <tr>
+      <td>${row.label}<span class="rate-note">${money(row.rate)} ${row.unit}</span></td>
+      <td><input type="number" inputmode="decimal" min="0" step="${row.decimals ? 0.1 : 1}"
+                 id="prev-${row.key}" class="${row.carriedPrev ? "carried" : ""}"
+                 title="${row.carriedPrev ? "Carried forward from last month" : ""}"
+                 value="${row.prev === null ? "" : row.prev}"></td>
+      <td><input type="number" inputmode="decimal" min="0" step="${row.decimals ? 0.1 : 1}"
+                 id="curr-${row.key}" value="${row.curr === null ? "" : row.curr}"></td>
+      <td class="num gain" id="gain-${row.key}">0</td>
+      <td class="num" id="bonus-${row.key}">$0.00</td>
+    </tr>`).join("");
+  $("rows").querySelectorAll("input").forEach((input) => input.addEventListener("input", recompute));
+  const badge = $("paid-badge");
+  badge.classList.remove("hidden", "paid", "unpaid");
+  badge.classList.add(view.paid ? "paid" : "unpaid");
+  badge.textContent = view.paid ? "Paid" + (view.paidOn ? " " + view.paidOn : "") : "Unpaid";
+  $("toggle-paid").textContent = view.paid ? "Mark as unpaid" : "Mark as paid";
+  $("paid-status").textContent = view.updatedBy ? "Last edited by " + view.updatedBy : "";
+  recompute();
+}
+
+function renderHistory(months) {
+  $("history").innerHTML = months.length ? months.map((m) => `
+    <li data-month="${m.month}" class="${m.month === state.month ? "active" : ""}">
+      <span>${monthLabel(m.month)} ${m.paid ? "· paid" : ""}</span><span>${money(m.totalBonus)}</span>
+    </li>`).join("") : '<li style="cursor:default;color:var(--muted)">Nothing saved yet.</li>';
+  $("history").querySelectorAll("li[data-month]").forEach((li) => {
+    li.addEventListener("click", () => loadMonth(li.dataset.month));
+  });
+}
+
+function renderRates() {
+  if (state.user.role !== "admin") return;
+  $("rates-card").classList.remove("hidden");
+  $("rate-rows").innerHTML = state.metrics.map((m) => `
+    <tr>
+      <td>${m.label}</td>
+      <td><input type="number" min="0" step="0.05" id="rate-${m.key}" value="${state.rates[m.key]}"></td>
+      <td style="text-align:left;color:var(--muted)">${m.unit}</td>
+    </tr>`).join("");
+}
+
+/* ── actions ───────────────────────────────── */
+async function loadMonth(month) {
+  const view = await api("/api/bonus/month/" + month);
+  renderMonth(view);
+  const {months} = await api("/api/bonus/months");
+  renderHistory(months);
+}
+
+$("prev-month").addEventListener("click", () => loadMonth(shiftMonth(state.month, -1)));
+$("next-month").addEventListener("click", () => loadMonth(shiftMonth(state.month, 1)));
+
+$("save").addEventListener("click", async () => {
+  const status = $("save-status");
+  status.className = "status";
+  status.textContent = "Saving…";
+  try {
+    const view = await api("/api/bonus/month/" + state.month, {body: {values: readInputs()}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+    status.className = "status ok";
+    status.textContent = "Saved.";
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
+$("download").addEventListener("click", () => {
+  window.location = "/api/bonus/month/" + state.month + "/csv";
+});
+
+$("toggle-paid").addEventListener("click", async () => {
+  const status = $("paid-status");
+  status.className = "status";
+  try {
+    const view = await api("/api/bonus/month/" + state.month + "/paid", {body: {paid: !state.view.paid}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
+$("save-rates").addEventListener("click", async () => {
+  const status = $("rates-status");
+  status.className = "status";
+  status.textContent = "Saving…";
+  const rates = {};
+  state.metrics.forEach((m) => { rates[m.key] = Number($("rate-" + m.key).value); });
+  try {
+    const data = await api("/api/bonus/rates", {body: {rates}});
+    state.rates = data.rates;
+    renderMonth(await api("/api/bonus/month/" + state.month));
+    status.className = "status ok";
+    status.textContent = "Rates updated.";
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
+/* ── boot ──────────────────────────────────── */
+async function start() {
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("who-name").textContent = state.user.displayName + (state.user.role === "admin" ? " · admin" : "");
+  $("paid-controls").classList.toggle("hidden", state.user.role !== "admin");
+  $("admin-note").classList.toggle("hidden", state.user.role === "admin");
+  const {metrics} = await api("/api/bonus/me").catch(() => ({metrics: state.metrics}));
+  if (metrics) state.metrics = metrics;
+  state.rates = (await api("/api/bonus/rates")).rates;
+  renderRates();
+  await loadMonth(thisMonth());
+}
+
+(async function () {
+  try {
+    const res = await fetch("/api/bonus/me");
+    const data = await res.json();
+    if (res.ok && data.user) {
+      state.user = data.user;
+      state.csrf = data.csrfToken;
+      state.metrics = data.metrics || [];
+      await start();
+    } else {
+      showLogin(data.hasAccounts);
+    }
+  } catch (err) {
+    showLogin();
+  }
+})();
+</script>
+</body>
+</html>
