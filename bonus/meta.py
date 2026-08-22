@@ -43,6 +43,11 @@ SCOPES = [
 INSTAGRAM_METRIC = "instagram_followers"
 FACEBOOK_METRIC = "facebook_followers"
 
+# Instagram and Facebook are tracked separately everywhere except the sign-in
+# itself, which Meta only grants for both together (Instagram's API works
+# through the linked Page).
+NETWORKS = {"instagram": INSTAGRAM_METRIC, "facebook": FACEBOOK_METRIC}
+
 TIMEOUT = 20
 KEEP_DAYS = 400
 
@@ -223,10 +228,17 @@ def closing_count(month, network, state=None):
     return None
 
 
-def sync_month(month, force=False, today=None, counts=None):
-    """Fill the Instagram and Facebook rows from the recorded snapshots."""
+def sync_month(month, force=False, today=None, counts=None, networks=None):
+    """Fill the Instagram and/or Facebook row from the recorded snapshots.
+
+    `networks` limits the sync to one of them; by default both are done.
+    """
     if not store.valid_month(month):
         raise ValueError("month must look like 2026-08")
+    networks = list(networks or NETWORKS)
+    for network in networks:
+        if network not in NETWORKS:
+            raise ValueError("unknown network: %s" % network)
     this_month = (today or date.today().isoformat())[:7]
     if month == this_month:
         snapshot(today, counts)      # take a fresh one for the running month
@@ -237,7 +249,8 @@ def sync_month(month, force=False, today=None, counts=None):
     previous = store.shift_month(month, -1)
 
     values, skipped, missing = {}, [], []
-    for metric, network in ((INSTAGRAM_METRIC, "instagram"), (FACEBOOK_METRIC, "facebook")):
+    for network in networks:
+        metric = NETWORKS[network]
         row = rows[metric]
         closing = closing_count(month, network, state)
         if closing is None:
@@ -256,6 +269,7 @@ def sync_month(month, force=False, today=None, counts=None):
 
     result = store.compute_month(month)
     result["sync"] = {
+        "networks": networks,
         "instagram": closing_count(month, "instagram", state),
         "facebook": closing_count(month, "facebook", state),
         "skipped": skipped,
@@ -263,6 +277,15 @@ def sync_month(month, force=False, today=None, counts=None):
         "days": len([d for d in state["days"] if d.startswith(month)]),
     }
     return result
+
+
+def _latest(state, network):
+    """The most recent snapshot of one network, or None."""
+    for day in sorted(state.get("days", {}), reverse=True):
+        value = state["days"][day].get(network)
+        if value is not None:
+            return {"date": day, "count": value}
+    return None
 
 
 def status():
@@ -276,6 +299,14 @@ def status():
         "otherPages": (state.get("page") or {}).get("otherPages") or [],
         "instagram": (state.get("instagram") or {}).get("username"),
         "daysRecorded": len(state.get("days", {})),
+        "networks": {
+            network: {
+                "daysRecorded": sum(1 for day in state.get("days", {}).values()
+                                    if day.get(network) is not None),
+                "latest": _latest(state, network),
+            }
+            for network in NETWORKS
+        },
         "expiresAt": expires_at,
         "expiresInDays": int(math.ceil((expires_at - time.time()) / 86400)) if expires_at else None,
         "redirectUri": REDIRECT_URI,

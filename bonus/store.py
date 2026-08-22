@@ -263,6 +263,7 @@ def compute_month(month, data=None):
         "rows": rows,
         "totalBonus": round(sum(r["bonus"] for r in rows), 2),
         "summary": {
+            "byMetric": {row["key"]: row["bonus"] for row in rows},
             "audienceGain": round(sum(r["gain"] for r in rows if r["group"] == "audience"), 1),
             "audienceBonus": bonus_for("audience"),
             "watchBonus": bonus_for("watch"),

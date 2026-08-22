@@ -177,14 +177,34 @@ tr.total td:last-child{color:var(--accent)}
     <div class="status" id="yt-status"></div>
     <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
       <div class="left">
-        <span class="dot" id="meta-dot"></span>
+        <span class="dot" id="ig-dot"></span>
         <div>
-          <div><strong>Instagram &amp; Facebook</strong> — followers</div>
-          <div class="detail" id="meta-detail">Checking…</div>
+          <div><strong>Instagram</strong> — followers</div>
+          <div class="detail" id="ig-detail">Checking…</div>
         </div>
       </div>
       <div class="left">
-        <button id="meta-sync">Sync this month</button>
+        <button id="ig-sync">Sync this month</button>
+      </div>
+    </div>
+    <div class="status" id="ig-status"></div>
+
+    <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
+      <div class="left">
+        <span class="dot" id="fb-dot"></span>
+        <div>
+          <div><strong>Facebook</strong> — followers</div>
+          <div class="detail" id="fb-detail">Checking…</div>
+        </div>
+      </div>
+      <div class="left">
+        <button id="fb-sync">Sync this month</button>
+      </div>
+    </div>
+    <div class="status" id="fb-status"></div>
+    <div class="conn" style="margin-top:.5rem">
+      <div class="detail" id="meta-detail">Checking…</div>
+      <div class="left">
         <button id="meta-connect" class="hidden">Connect</button>
         <button id="meta-disconnect" class="hidden">Disconnect</button>
       </div>
@@ -220,8 +240,9 @@ tr.total td:last-child{color:var(--accent)}
   <section class="card">
     <h2>Bonus payout summary</h2>
     <div class="summary-grid">
-      <div class="stat"><div class="k">Follower / subscriber gain</div><div class="v num" id="s-audience-gain">0</div></div>
-      <div class="stat"><div class="k">Bonus — followers & subs</div><div class="v num" id="s-audience-bonus">$0.00</div></div>
+      <div class="stat"><div class="k">Bonus — YouTube subs</div><div class="v num" id="s-youtube-subs">$0.00</div></div>
+      <div class="stat"><div class="k">Bonus — Instagram</div><div class="v num" id="s-instagram">$0.00</div></div>
+      <div class="stat"><div class="k">Bonus — Facebook</div><div class="v num" id="s-facebook">$0.00</div></div>
       <div class="stat"><div class="k">Bonus — hours watched</div><div class="v num" id="s-watch">$0.00</div></div>
       <div class="stat"><div class="k">Bonus — Google reviews</div><div class="v num" id="s-reviews">$0.00</div></div>
       <div class="stat"><div class="k">Bonus — website visitors</div><div class="v num" id="s-website">$0.00</div></div>
@@ -259,7 +280,7 @@ tr.total td:last-child{color:var(--accent)}
       <li>A month that goes backwards pays $0, never a negative bonus.</li>
       <li>Google reviews counts <strong>positive reviews only</strong>.</li>
       <li>Previous-month figures carry forward automatically once a month is saved.</li>
-      <li>Rows tagged <strong>auto</strong> come straight from YouTube. A sync doesn't overwrite anything typed in by hand.</li>
+      <li>Rows tagged <strong>auto</strong> were filled in by a sync, not by hand. A sync never overwrites anything typed in.</li>
       <li>A row set to pay on <strong>the month's own total</strong> ignores the gain and pays the rate on this month's figure.</li>
       <li>Instagram and Facebook follower counts are snapshotted nightly — a month closes on its last snapshot, so history starts the day you connect.</li>
       <li>Website visitors are counted by the site itself — unique per day, bots excluded, no tracking cookie. The row pays nothing until a rate is set.</li>
@@ -344,7 +365,8 @@ function readInputs() {
 }
 
 function recompute() {
-  let total = 0, audienceGain = 0, audienceBonus = 0, watch = 0, reviews = 0, website = 0;
+  let total = 0, watch = 0, reviews = 0, website = 0;
+  const byMetric = {};
   state.view.rows.forEach((row) => {
     const prev = Number($("prev-" + row.key).value || 0);
     const curr = Number($("curr-" + row.key).value || 0);
@@ -357,14 +379,15 @@ function recompute() {
     gainCell.className = "num gain " + (gain > 0 ? "up" : gain < 0 ? "down" : "");
     $("bonus-" + row.key).textContent = money(bonus);
     total += bonus;
-    if (row.group === "audience") { audienceGain += gain; audienceBonus += bonus; }
+    byMetric[row.key] = bonus;
     if (row.group === "watch") watch += bonus;
     if (row.group === "reviews") reviews += bonus;
     if (row.group === "website") website += bonus;
   });
   $("total-bonus").textContent = money(total);
-  $("s-audience-gain").textContent = (audienceGain > 0 ? "+" : "") + audienceGain.toLocaleString();
-  $("s-audience-bonus").textContent = money(audienceBonus);
+  $("s-youtube-subs").textContent = money(byMetric.youtube_subs || 0);
+  $("s-instagram").textContent = money(byMetric.instagram_followers || 0);
+  $("s-facebook").textContent = money(byMetric.facebook_followers || 0);
   $("s-watch").textContent = money(watch);
   $("s-reviews").textContent = money(reviews);
   $("s-website").textContent = money(website);
@@ -551,27 +574,68 @@ $("yt-sync").addEventListener("click", async () => {
 
 /* ── Instagram & Facebook ────────────────────── */
 function renderMeta(info) {
-  const detail = $("meta-detail");
-  $("meta-dot").classList.toggle("on", !!info.connected);
+  const connected = !!info.connected;
+  const networks = info.networks || {};
+
+  const instagram = networks.instagram || {};
+  $("ig-dot").classList.toggle("on", connected && !!info.instagram);
+  $("ig-sync").disabled = !(connected && info.instagram);
+  $("ig-detail").textContent = !info.configured
+    ? "Not set up on the server yet."
+    : !connected ? "Not connected."
+    : !info.instagram ? "No Instagram Business account linked to the Page."
+    : "@" + info.instagram + " · " + (instagram.latest ? instagram.latest.count + " followers on " + instagram.latest.date : "no snapshot yet") +
+      " · " + instagram.daysRecorded + (instagram.daysRecorded === 1 ? " day" : " days") + " of history";
+
+  const facebook = networks.facebook || {};
+  $("fb-dot").classList.toggle("on", connected);
+  $("fb-sync").disabled = !connected;
+  $("fb-detail").textContent = !info.configured
+    ? "Not set up on the server yet."
+    : !connected ? "Not connected."
+    : (info.page || "Page") + " · " + (facebook.latest ? facebook.latest.count + " followers on " + facebook.latest.date : "no snapshot yet") +
+      " · " + facebook.daysRecorded + (facebook.daysRecorded === 1 ? " day" : " days") + " of history";
+
   $("meta-connect").classList.toggle("hidden", !(state.user.role === "admin" && info.configured));
-  $("meta-disconnect").classList.toggle("hidden", !(state.user.role === "admin" && info.connected));
-  $("meta-sync").disabled = !info.connected;
+  $("meta-disconnect").classList.toggle("hidden", !(state.user.role === "admin" && connected));
   $("meta-setup").classList.toggle("hidden", info.configured);
   $("meta-redirect").textContent = info.redirectUri || "";
-  if (!info.configured) {
-    detail.textContent = "Not set up on the server yet.";
-  } else if (!info.connected) {
-    detail.textContent = "Not connected — sign in with the account that manages the Page.";
-  } else {
-    let text = (info.page || "Facebook Page") + (info.instagram ? " · @" + info.instagram : " · no Instagram account linked");
-    text += " · " + info.daysRecorded + (info.daysRecorded === 1 ? " day" : " days") + " of follower history";
-    if (info.expiresInDays !== null && info.expiresInDays <= 10) {
-      text += " · sign-in expires in " + info.expiresInDays + " days, reconnect";
-    }
-    detail.textContent = text;
+  let shared = "One Meta sign-in covers both — Instagram's API only works through the linked Page.";
+  if (connected) {
     $("meta-connect").textContent = "Reconnect";
+    if (info.expiresInDays !== null && info.expiresInDays <= 10) {
+      shared += " Sign-in expires in " + info.expiresInDays + " days — reconnect.";
+    }
+    if (info.otherPages && info.otherPages.length) {
+      shared += " Other Pages on this account: " + info.otherPages.join(", ") + ".";
+    }
+  }
+  $("meta-detail").textContent = info.configured ? shared : "";
+}
+
+async function syncNetwork(network, target) {
+  const status = $(target);
+  status.className = "status";
+  status.textContent = "Asking Meta…";
+  try {
+    const view = await api("/api/bonus/meta/sync", {body: {month: state.month, network}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+    const s = view.sync;
+    const count = s[network];
+    let message = count === null ? "No snapshot for this month yet." : count + " followers recorded.";
+    if (s.skipped && s.skipped.length) message += " Left your typed-in row alone.";
+    status.className = "status ok";
+    status.textContent = message;
+    await loadMeta();
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
   }
 }
+
+$("ig-sync").addEventListener("click", () => syncNetwork("instagram", "ig-status"));
+$("fb-sync").addEventListener("click", () => syncNetwork("facebook", "fb-status"));
 
 async function loadMeta() {
   try { renderMeta(await api("/api/bonus/meta/status")); } catch (err) { /* not fatal */ }
@@ -586,35 +650,14 @@ $("meta-disconnect").addEventListener("click", async () => {
   $("meta-status").textContent = "Disconnected. The follower history is kept.";
 });
 
-$("meta-sync").addEventListener("click", async () => {
-  const status = $("meta-status");
-  status.className = "status";
-  status.textContent = "Asking Meta…";
-  try {
-    const view = await api("/api/bonus/meta/sync", {body: {month: state.month}});
-    renderMonth(view);
-    renderHistory((await api("/api/bonus/months")).months);
-    const s = view.sync;
-    let message = "Instagram " + (s.instagram === null ? "—" : s.instagram) +
-                  " · Facebook " + (s.facebook === null ? "—" : s.facebook) + " followers.";
-    if (s.missing && s.missing.length) message += " No snapshot for that month yet.";
-    if (s.skipped && s.skipped.length) message += " Left your typed-in rows alone.";
-    status.className = "status ok";
-    status.textContent = message;
-    await loadMeta();
-  } catch (err) {
-    status.className = "status err";
-    status.textContent = err.message;
-  }
-});
-
 /* ── website traffic + nightly sync ──────────── */
 async function loadWebsite() {
   try {
     const info = await api("/api/bonus/website/status?month=" + state.month);
     const totals = info.thisMonth || {};
     $("web-detail").textContent = info.countingSince
-      ? totals.visitors + " visitors this month (" + totals.views + " page views) · counting since " + info.countingSince
+      ? totals.visitors + (totals.visitors === 1 ? " visitor" : " visitors") + " this month (" +
+        totals.views + (totals.views === 1 ? " page view" : " page views") + ") · counting since " + info.countingSince
       : "No visits counted yet.";
   } catch (err) { /* not fatal */ }
   try {

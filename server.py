@@ -878,8 +878,10 @@ def bonus_meta_callback():
 def bonus_meta_sync():
     body = request.json or {}
     month = body.get("month") or datetime.now().strftime("%Y-%m")
+    network = body.get("network")
     try:
-        return jsonify(bonus_meta.sync_month(month, force=bool(body.get("force"))))
+        return jsonify(bonus_meta.sync_month(month, force=bool(body.get("force")),
+                                             networks=[network] if network else None))
     except bonus_meta.NotConnected as e:
         return jsonify({"error": str(e)}), 409
     except bonus_meta.NotConfigured as e:

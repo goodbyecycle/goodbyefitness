@@ -12,7 +12,8 @@ logins see the same numbers.
 | Summary | Gain and bonus split by group, total owed, paid / unpaid |
 | History | Every saved month with its total, newest first |
 | YouTube | Subscribers and hours watched pulled straight from the channel |
-| Instagram & Facebook | Follower counts, snapshotted nightly |
+| Instagram | Follower count, snapshotted nightly |
+| Facebook | Follower count, snapshotted nightly |
 | Website | Visitors to goodbyefitness.com, counted by the site itself |
 | Nightly | Everything re-syncs on its own at 03:15, unattended |
 
@@ -27,7 +28,13 @@ Any row can instead be set to pay on **the month's own total** — pick it under
 on *gain*, 2,150 hours last month and 2,480 this month pays $165; on *total*,
 it pays $1,240.
 
-## Connecting Instagram & Facebook
+## Connecting Instagram and Facebook
+
+The two are tracked as separate accounts throughout — separate rows, separate
+sync buttons, separate bonus figures, and either can be synced without the
+other. The one thing they share is the sign-in: Meta only grants Instagram
+access through the linked Facebook Page, so connecting is a single
+authorisation covering both.
 
 One Meta app covers both. The Facebook Page's follower count comes from the
 Page itself; Instagram's comes through the Instagram Business account linked

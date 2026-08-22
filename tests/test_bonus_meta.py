@@ -262,3 +262,62 @@ def test_the_nightly_sync_includes_meta_when_connected(monkeypatch):
     monkeypatch.setattr(server.bonus_meta, "sync_month", lambda month: None)
     results = server.run_nightly_sync(today=datetime(2026, 8, 22, 3, 15))
     assert "meta 2026-08 ok" in results
+
+
+# ─── kept separate ───
+
+def test_only_instagram_can_be_synced():
+    meta.snapshot(today="2026-07-31", counts={"instagram": 3120, "facebook": 870})
+    meta.snapshot(today="2026-08-31", counts={"instagram": 3305, "facebook": 902})
+    view = meta.sync_month("2026-08", today="2026-09-01", networks=["instagram"])
+    rows = {r["key"]: r for r in view["rows"]}
+    assert rows["instagram_followers"]["curr"] == 3305
+    assert rows["facebook_followers"]["curr"] is None
+    assert view["sync"]["networks"] == ["instagram"]
+
+
+def test_only_facebook_can_be_synced():
+    meta.snapshot(today="2026-08-31", counts={"instagram": 3305, "facebook": 902})
+    view = meta.sync_month("2026-08", today="2026-09-01", networks=["facebook"])
+    rows = {r["key"]: r for r in view["rows"]}
+    assert rows["facebook_followers"]["curr"] == 902
+    assert rows["instagram_followers"]["curr"] is None
+
+
+def test_an_unknown_network_is_refused():
+    with pytest.raises(ValueError):
+        meta.sync_month("2026-08", networks=["tiktok"])
+
+
+def test_status_counts_history_per_network():
+    meta.snapshot(today="2026-08-20", counts={"facebook": 870})
+    meta.snapshot(today="2026-08-21", counts={"instagram": 3120, "facebook": 880})
+    networks = meta.status()["networks"]
+    assert networks["facebook"]["daysRecorded"] == 2
+    assert networks["instagram"]["daysRecorded"] == 1
+    assert networks["instagram"]["latest"] == {"date": "2026-08-21", "count": 3120}
+
+
+def test_the_route_can_sync_one_network(client, monkeypatch):
+    import server
+    meta.snapshot(today="2026-08-31", counts={"instagram": 3305, "facebook": 902})
+    monkeypatch.setattr(server.bonus_meta, "snapshot", lambda *a, **k: None)
+    csrf = sign_in(client)
+    res = client.post("/api/bonus/meta/sync",
+                      json={"month": "2026-08", "network": "facebook"},
+                      headers={"X-CSRF-Token": csrf})
+    assert res.status_code == 200
+    body = res.get_json()
+    assert body["sync"]["networks"] == ["facebook"]
+    rows = {r["key"]: r for r in body["rows"]}
+    assert rows["facebook_followers"]["curr"] == 902
+    assert rows["instagram_followers"]["curr"] is None
+
+
+def test_the_summary_reports_each_metric_separately():
+    meta.snapshot(today="2026-07-31", counts={"instagram": 3120, "facebook": 870})
+    meta.snapshot(today="2026-08-31", counts={"instagram": 3305, "facebook": 902})
+    view = meta.sync_month("2026-08", today="2026-09-01")
+    by_metric = view["summary"]["byMetric"]
+    assert by_metric["instagram_followers"] == 46.25
+    assert by_metric["facebook_followers"] == 8.00
