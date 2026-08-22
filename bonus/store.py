@@ -18,6 +18,9 @@ _LOCK = Lock()
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 # group: "audience" = followers/subscribers, "reviews", "watch"
+# basis: "gain" pays on the increase over last month, "total" pays on the
+# month's own figure. Everything defaults to "gain"; hours watched is the one
+# that might reasonably be paid on the month's total instead.
 METRICS = [
     {
         "key": "youtube_subs",
@@ -64,8 +67,15 @@ METRICS = [
 METRICS_BY_KEY = {m["key"]: m for m in METRICS}
 
 
+BASES = ("gain", "total")
+
+
 def default_rates():
     return {m["key"]: m["defaultRate"] for m in METRICS}
+
+
+def default_bases():
+    return {m["key"]: "gain" for m in METRICS}
 
 
 def load_data():
@@ -74,9 +84,12 @@ def load_data():
     else:
         data = {}
     data.setdefault("rates", {})
+    data.setdefault("bases", {})
     data.setdefault("months", {})
     for key, rate in default_rates().items():
         data["rates"].setdefault(key, rate)
+    for key, basis in default_bases().items():
+        data["bases"].setdefault(key, basis)
     return data
 
 
@@ -108,6 +121,24 @@ def get_rates():
     return load_data()["rates"]
 
 
+def get_bases():
+    return load_data()["bases"]
+
+
+def set_bases(new_bases):
+    """Switch a metric between paying on the gain and paying on the month's total."""
+    with _LOCK:
+        data = load_data()
+        for key, value in (new_bases or {}).items():
+            if key not in METRICS_BY_KEY:
+                raise ValueError("unknown metric: %s" % key)
+            if value not in BASES:
+                raise ValueError("basis must be one of: %s" % ", ".join(BASES))
+            data["bases"][key] = value
+        save_data(data)
+        return data["bases"]
+
+
 def set_rates(new_rates):
     """Set bonus rates. Unknown keys are rejected; missing keys keep their value."""
     with _LOCK:
@@ -123,8 +154,12 @@ def set_rates(new_rates):
         return data["rates"]
 
 
-def save_month(month, values, editor=None):
-    """Store the counts for one month. `values` is {metric_key: {prev, curr}}."""
+def save_month(month, values, editor=None, source="manual"):
+    """Store the counts for one month. `values` is {metric_key: {prev, curr}}.
+
+    `source` records who filled the row in — "manual" when someone typed it,
+    or the name of the integration that synced it.
+    """
     if not valid_month(month):
         raise ValueError("month must look like 2026-08")
     with _LOCK:
@@ -139,6 +174,7 @@ def save_month(month, values, editor=None):
             for field in ("prev", "curr"):
                 if field in (entry or {}):
                     slot[field] = _coerce_count(entry[field], metric["decimals"])
+            slot["source"] = source
             stored[key] = slot
         record["values"] = stored
         if editor:
@@ -173,6 +209,7 @@ def compute_month(month, data=None):
         raise ValueError("month must look like 2026-08")
     data = data or load_data()
     rates = data["rates"]
+    bases = data["bases"]
     record = data["months"].get(month, {})
     values = record.get("values", {})
     carried = data["months"].get(shift_month(month, -1), {}).get("values", {})
@@ -190,6 +227,8 @@ def compute_month(month, data=None):
         curr_number = curr or 0
         gain = round(curr_number - prev_number, 1)
         rate = rates.get(metric["key"], metric["defaultRate"])
+        basis = bases.get(metric["key"], "gain")
+        payable = max(0.0, curr_number) if basis == "total" else max(0.0, gain)
         rows.append({
             "key": metric["key"],
             "label": metric["label"],
@@ -201,7 +240,9 @@ def compute_month(month, data=None):
             "carriedPrev": carried_prev,
             "gain": gain,
             "rate": rate,
-            "bonus": round(max(0.0, gain) * rate, 2),
+            "basis": basis,
+            "bonus": round(payable * rate, 2),
+            "source": entry.get("source", "manual"),
         })
 
     def bonus_for(group):

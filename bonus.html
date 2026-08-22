@@ -25,7 +25,7 @@ a{color:var(--accent)}
 .login-card h1{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
 .login-card .sub{color:var(--muted);font-size:.95rem;margin-bottom:1.5rem}
 label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.35rem}
-input[type=text],input[type=password],input[type=number],input[type=date]{
+input[type=text],input[type=password],input[type=number],input[type=date],select{
   width:100%;padding:.7rem .85rem;background:#0d0d10;color:var(--text);
   border:1px solid var(--card-border);border-radius:10px;font-family:var(--font);font-size:1rem}
 input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
@@ -66,6 +66,15 @@ td input.carried{color:var(--muted)}
 tr.total td{border-bottom:none;font-weight:800;font-size:1.05rem;padding-top:.9rem}
 tr.total td:last-child{color:var(--accent)}
 .rate-note{font-size:.75rem;color:var(--muted);display:block;font-weight:400}
+.tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:.05rem .4rem;border-radius:999px;border:1px solid var(--accent);color:var(--accent);margin-left:.4rem;vertical-align:middle}
+.conn{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;justify-content:space-between}
+.conn .left{display:flex;align-items:center;gap:.75rem}
+.dot{width:.6rem;height:.6rem;border-radius:50%;background:var(--muted);flex:none}
+.dot.on{background:var(--good)}
+.conn .detail{font-size:.85rem;color:var(--muted)}
+.setup{font-size:.85rem;color:var(--muted);margin-top:.75rem;line-height:1.7}
+.setup ol{margin-left:1.1rem}
 
 /* ── summary ───────────────────────────────── */
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}
@@ -150,6 +159,31 @@ tr.total td:last-child{color:var(--accent)}
   </section>
 
   <section class="card">
+    <h2>Connected accounts</h2>
+    <div class="conn">
+      <div class="left">
+        <span class="dot" id="yt-dot"></span>
+        <div>
+          <div><strong>YouTube</strong> — subscribers &amp; hours watched</div>
+          <div class="detail" id="yt-detail">Checking…</div>
+        </div>
+      </div>
+      <div class="left">
+        <button id="yt-sync">Sync this month</button>
+        <button id="yt-connect" class="hidden">Connect YouTube</button>
+        <button id="yt-disconnect" class="hidden">Disconnect</button>
+      </div>
+    </div>
+    <div class="status" id="yt-status"></div>
+    <div class="setup hidden" id="yt-setup">
+      To switch this on, in Google Cloud: create a project, enable the
+      <em>YouTube Analytics API</em> and <em>YouTube Data API v3</em>, make an OAuth
+      client with redirect <code id="yt-redirect"></code>, then set
+      <code>YOUTUBE_CLIENT_ID</code> and <code>YOUTUBE_CLIENT_SECRET</code> on the server.
+    </div>
+  </section>
+
+  <section class="card">
     <h2>Bonus payout summary</h2>
     <div class="summary-grid">
       <div class="stat"><div class="k">Follower / subscriber gain</div><div class="v num" id="s-audience-gain">0</div></div>
@@ -168,7 +202,7 @@ tr.total td:last-child{color:var(--accent)}
     <h2>Bonus rates</h2>
     <div class="table-scroll">
       <table style="min-width:420px">
-        <thead><tr><th>Metric</th><th>Rate</th><th>Unit</th></tr></thead>
+        <thead><tr><th>Metric</th><th>Rate</th><th>Unit</th><th>Paid on</th></tr></thead>
         <tbody id="rate-rows"></tbody>
       </table>
     </div>
@@ -190,6 +224,8 @@ tr.total td:last-child{color:var(--accent)}
       <li>A month that goes backwards pays $0, never a negative bonus.</li>
       <li>Google reviews counts <strong>positive reviews only</strong>.</li>
       <li>Previous-month figures carry forward automatically once a month is saved.</li>
+      <li>Rows tagged <strong>auto</strong> come straight from YouTube. A sync doesn't overwrite anything typed in by hand.</li>
+      <li>A row set to pay on <strong>the month's own total</strong> ignores the gain and pays the rate on this month's figure.</li>
       <li id="admin-note" class="hidden">Only an admin login can change rates or mark a month paid.</li>
     </ul>
   </section>
@@ -200,7 +236,7 @@ const $ = (id) => document.getElementById(id);
 const money = (n) => "$" + (Number(n) || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-let state = {user: null, csrf: null, metrics: [], month: null, view: null, rates: {}};
+let state = {user: null, csrf: null, metrics: [], month: null, view: null, rates: {}, bases: {}, youtube: null};
 
 function monthLabel(ym) {
   return MONTH_NAMES[Number(ym.slice(5)) - 1] + " " + ym.slice(0, 4);
@@ -277,7 +313,8 @@ function recompute() {
     const curr = Number($("curr-" + row.key).value || 0);
     const gain = Math.round((curr - prev) * 10) / 10;
     const rate = Number(state.rates[row.key] || 0);
-    const bonus = Math.round(Math.max(0, gain) * rate * 100) / 100;
+    const payable = state.bases[row.key] === "total" ? Math.max(0, curr) : Math.max(0, gain);
+    const bonus = Math.round(payable * rate * 100) / 100;
     const gainCell = $("gain-" + row.key);
     gainCell.textContent = (gain > 0 ? "+" : "") + gain.toLocaleString();
     gainCell.className = "num gain " + (gain > 0 ? "up" : gain < 0 ? "down" : "");
@@ -301,7 +338,8 @@ function renderMonth(view) {
   $("month-label").textContent = monthLabel(view.month);
   $("rows").innerHTML = view.rows.map((row) => `
     <tr>
-      <td>${row.label}<span class="rate-note">${money(row.rate)} ${row.unit}</span></td>
+      <td>${row.label}${row.source === "youtube" ? '<span class="tag">auto</span>' : ""}
+          <span class="rate-note">${money(row.rate)} ${row.unit}${row.basis === "total" ? " · on the month's total" : ""}</span></td>
       <td><input type="number" inputmode="decimal" min="0" step="${row.decimals ? 0.1 : 1}"
                  id="prev-${row.key}" class="${row.carriedPrev ? "carried" : ""}"
                  title="${row.carriedPrev ? "Carried forward from last month" : ""}"
@@ -339,6 +377,12 @@ function renderRates() {
       <td>${m.label}</td>
       <td><input type="number" min="0" step="0.05" id="rate-${m.key}" value="${state.rates[m.key]}"></td>
       <td style="text-align:left;color:var(--muted)">${m.unit}</td>
+      <td>
+        <select id="basis-${m.key}">
+          <option value="gain" ${state.bases[m.key] === "gain" ? "selected" : ""}>Gain over last month</option>
+          <option value="total" ${state.bases[m.key] === "total" ? "selected" : ""}>The month's own total</option>
+        </select>
+      </td>
     </tr>`).join("");
 }
 
@@ -386,14 +430,79 @@ $("save-rates").addEventListener("click", async () => {
   const status = $("rates-status");
   status.className = "status";
   status.textContent = "Saving…";
-  const rates = {};
-  state.metrics.forEach((m) => { rates[m.key] = Number($("rate-" + m.key).value); });
+  const rates = {}, bases = {};
+  state.metrics.forEach((m) => {
+    rates[m.key] = Number($("rate-" + m.key).value);
+    bases[m.key] = $("basis-" + m.key).value;
+  });
   try {
     const data = await api("/api/bonus/rates", {body: {rates}});
     state.rates = data.rates;
+    state.bases = (await api("/api/bonus/bases", {body: {bases}})).bases;
     renderMonth(await api("/api/bonus/month/" + state.month));
+    renderHistory((await api("/api/bonus/months")).months);
     status.className = "status ok";
     status.textContent = "Rates updated.";
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
+
+/* ── YouTube connection ──────────────────────── */
+function renderYouTube(info) {
+  state.youtube = info;
+  const detail = $("yt-detail");
+  $("yt-dot").classList.toggle("on", !!info.connected);
+  $("yt-connect").classList.toggle("hidden", !(state.user.role === "admin" && info.configured));
+  $("yt-disconnect").classList.toggle("hidden", !(state.user.role === "admin" && info.connected));
+  $("yt-sync").disabled = !info.connected;
+  $("yt-setup").classList.toggle("hidden", info.configured);
+  $("yt-redirect").textContent = info.redirectUri || "";
+  if (!info.configured) {
+    detail.textContent = "Not set up on the server yet.";
+  } else if (!info.connected) {
+    detail.textContent = "Not connected — sign in with the channel's Google account.";
+  } else {
+    const last = info.lastSync;
+    detail.textContent = (info.channel ? info.channel.title : "Connected") +
+      (last ? " · last synced through " + last.through : " · not synced yet");
+  }
+  if (state.user.role === "admin" && info.connected) $("yt-connect").textContent = "Reconnect";
+}
+
+async function loadYouTube() {
+  try { renderYouTube(await api("/api/bonus/youtube/status")); } catch (err) { /* not fatal */ }
+}
+
+$("yt-connect").addEventListener("click", () => { window.location = "/api/bonus/youtube/connect"; });
+
+$("yt-disconnect").addEventListener("click", async () => {
+  await api("/api/bonus/youtube/disconnect", {body: {}});
+  await loadYouTube();
+  $("yt-status").className = "status";
+  $("yt-status").textContent = "Disconnected.";
+});
+
+$("yt-sync").addEventListener("click", async () => {
+  const status = $("yt-status");
+  status.className = "status";
+  status.textContent = "Asking YouTube…";
+  try {
+    const view = await api("/api/bonus/youtube/sync", {body: {month: state.month}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+    const s = view.sync;
+    let message = "Synced through " + s.through + ": " + (s.netSubscribers >= 0 ? "+" : "") +
+      s.netSubscribers + " subscribers, " + s.hoursWatched + " hours watched.";
+    if (s.skipped && s.skipped.length) message += " Left your typed-in rows alone.";
+    if (s.anchoredFrom === "rounded public count") {
+      message += " First sync — the subscriber total is anchored on YouTube's rounded public count, so set it exactly if you know it.";
+    }
+    status.className = "status ok";
+    status.textContent = message;
+    await loadYouTube();
   } catch (err) {
     status.className = "status err";
     status.textContent = err.message;
@@ -409,9 +518,24 @@ async function start() {
   $("admin-note").classList.toggle("hidden", state.user.role === "admin");
   const {metrics} = await api("/api/bonus/me").catch(() => ({metrics: state.metrics}));
   if (metrics) state.metrics = metrics;
-  state.rates = (await api("/api/bonus/rates")).rates;
+  const config = await api("/api/bonus/rates");
+  state.rates = config.rates;
+  state.bases = config.bases || {};
   renderRates();
   await loadMonth(thisMonth());
+  await loadYouTube();
+  const flag = new URLSearchParams(location.search).get("youtube");
+  if (flag) {
+    const messages = {
+      connected: ["ok", "YouTube connected. Hit “Sync this month”."],
+      denied: ["err", "YouTube sign-in was cancelled."],
+      failed: ["err", "YouTube sign-in failed — check the server log."],
+      state_mismatch: ["err", "YouTube sign-in didn't match this session. Try again."],
+    };
+    const [kind, text] = messages[flag] || ["", ""];
+    if (text) { $("yt-status").className = "status " + kind; $("yt-status").textContent = text; }
+    history.replaceState({}, "", location.pathname);
+  }
 }
 
 (async function () {

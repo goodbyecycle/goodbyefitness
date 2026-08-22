@@ -17,6 +17,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, sessio
 
 from bonus import auth as bonus_auth
 from bonus import store as bonus_store
+from bonus import youtube as bonus_youtube
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 
@@ -694,7 +695,18 @@ def bonus_months():
 @app.route("/api/bonus/rates")
 @require_login
 def bonus_rates():
-    return jsonify({"rates": bonus_store.get_rates()})
+    return jsonify({"rates": bonus_store.get_rates(), "bases": bonus_store.get_bases()})
+
+
+@app.route("/api/bonus/bases", methods=["POST"])
+@require_login
+@require_admin
+def bonus_bases_update():
+    try:
+        bases = bonus_store.set_bases((request.json or {}).get("bases"))
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"bases": bases})
 
 
 @app.route("/api/bonus/rates", methods=["POST"])
@@ -740,6 +752,70 @@ def bonus_month_paid(month):
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify(view)
+
+
+# ─── Bonus tracker: YouTube connection ───
+
+@app.route("/api/bonus/youtube/status")
+@require_login
+def bonus_youtube_status():
+    return jsonify(bonus_youtube.status())
+
+
+@app.route("/api/bonus/youtube/connect")
+@require_login
+@require_admin
+def bonus_youtube_connect():
+    """Send the channel owner to Google to authorise read-only analytics."""
+    try:
+        state = secrets.token_urlsafe(16)
+        session["youtube_oauth_state"] = state
+        return redirect(bonus_youtube.auth_url(state))
+    except bonus_youtube.NotConfigured as e:
+        return jsonify({"error": str(e)}), 503
+
+
+@app.route("/callback/youtube")
+def bonus_youtube_callback():
+    user = _current_user()
+    if not user or user.get("role") != "admin":
+        return redirect("/bonus")
+    expected = session.pop("youtube_oauth_state", None)
+    if not expected or request.args.get("state") != expected:
+        return redirect("/bonus?youtube=state_mismatch")
+    if request.args.get("error") or not request.args.get("code"):
+        return redirect("/bonus?youtube=denied")
+    try:
+        bonus_youtube.exchange_code(request.args["code"])
+    except Exception as e:
+        print("[YOUTUBE] %s" % e)
+        return redirect("/bonus?youtube=failed")
+    return redirect("/bonus?youtube=connected")
+
+
+@app.route("/api/bonus/youtube/sync", methods=["POST"])
+@require_login
+def bonus_youtube_sync():
+    body = request.json or {}
+    month = body.get("month") or datetime.now().strftime("%Y-%m")
+    try:
+        return jsonify(bonus_youtube.sync_month(month, force=bool(body.get("force"))))
+    except bonus_youtube.NotConnected as e:
+        return jsonify({"error": str(e)}), 409
+    except bonus_youtube.NotConfigured as e:
+        return jsonify({"error": str(e)}), 503
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/bonus/youtube/disconnect", methods=["POST"])
+@require_login
+@require_admin
+def bonus_youtube_disconnect():
+    bonus_youtube.disconnect()
+    return jsonify({"ok": True})
 
 
 # ─── Boot ───
