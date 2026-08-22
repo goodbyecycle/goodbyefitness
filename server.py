@@ -16,6 +16,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
 
 from bonus import auth as bonus_auth
+from bonus import meta as bonus_meta
 from bonus import store as bonus_store
 from bonus import traffic as bonus_traffic
 from bonus import youtube as bonus_youtube
@@ -820,6 +821,8 @@ def bonus_youtube_sync():
         return jsonify({"error": str(e)}), 503
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except http_requests.RequestException:
+        return jsonify({"error": "Couldn't reach the service — check the server's connection."}), 502
     except Exception as e:
         return jsonify({"error": str(e)}), 502
 
@@ -829,6 +832,71 @@ def bonus_youtube_sync():
 @require_admin
 def bonus_youtube_disconnect():
     bonus_youtube.disconnect()
+    return jsonify({"ok": True})
+
+
+# ─── Bonus tracker: Instagram & Facebook ───
+
+@app.route("/api/bonus/meta/status")
+@require_login
+def bonus_meta_status():
+    return jsonify(bonus_meta.status())
+
+
+@app.route("/api/bonus/meta/connect")
+@require_login
+@require_admin
+def bonus_meta_connect():
+    try:
+        state = secrets.token_urlsafe(16)
+        session["meta_oauth_state"] = state
+        return redirect(bonus_meta.auth_url(state))
+    except bonus_meta.NotConfigured as e:
+        return jsonify({"error": str(e)}), 503
+
+
+@app.route("/callback/meta")
+def bonus_meta_callback():
+    user = _current_user()
+    if not user or user.get("role") != "admin":
+        return redirect("/bonus")
+    expected = session.pop("meta_oauth_state", None)
+    if not expected or request.args.get("state") != expected:
+        return redirect("/bonus?meta=state_mismatch")
+    if request.args.get("error") or not request.args.get("code"):
+        return redirect("/bonus?meta=denied")
+    try:
+        bonus_meta.exchange_code(request.args["code"])
+    except Exception as e:
+        print("[META] %s" % e)
+        return redirect("/bonus?meta=failed")
+    return redirect("/bonus?meta=connected")
+
+
+@app.route("/api/bonus/meta/sync", methods=["POST"])
+@require_login
+def bonus_meta_sync():
+    body = request.json or {}
+    month = body.get("month") or datetime.now().strftime("%Y-%m")
+    try:
+        return jsonify(bonus_meta.sync_month(month, force=bool(body.get("force"))))
+    except bonus_meta.NotConnected as e:
+        return jsonify({"error": str(e)}), 409
+    except bonus_meta.NotConfigured as e:
+        return jsonify({"error": str(e)}), 503
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except http_requests.RequestException:
+        return jsonify({"error": "Couldn't reach the service — check the server's connection."}), 502
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/bonus/meta/disconnect", methods=["POST"])
+@require_login
+@require_admin
+def bonus_meta_disconnect():
+    bonus_meta.disconnect()
     return jsonify({"ok": True})
 
 
@@ -897,6 +965,12 @@ def run_nightly_sync(today=None):
                 results.append("youtube %s ok" % month)
             except Exception as e:
                 results.append("youtube %s failed: %s" % (month, e))
+        if bonus_meta.status()["connected"]:
+            try:
+                bonus_meta.sync_month(month)
+                results.append("meta %s ok" % month)
+            except Exception as e:
+                results.append("meta %s failed: %s" % (month, e))
     bonus_store.record_autosync(today.isoformat(timespec="seconds"), results)
     print("[BONUS] Nightly sync: %s" % "; ".join(results))
     return results

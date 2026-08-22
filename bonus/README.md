@@ -12,6 +12,7 @@ logins see the same numbers.
 | Summary | Gain and bonus split by group, total owed, paid / unpaid |
 | History | Every saved month with its total, newest first |
 | YouTube | Subscribers and hours watched pulled straight from the channel |
+| Instagram & Facebook | Follower counts, snapshotted nightly |
 | Website | Visitors to goodbyefitness.com, counted by the site itself |
 | Nightly | Everything re-syncs on its own at 03:15, unattended |
 
@@ -25,6 +26,48 @@ Any row can instead be set to pay on **the month's own total** — pick it under
 "Paid on" in the rates panel. The difference matters most for hours watched:
 on *gain*, 2,150 hours last month and 2,480 this month pays $165; on *total*,
 it pays $1,240.
+
+## Connecting Instagram & Facebook
+
+One Meta app covers both. The Facebook Page's follower count comes from the
+Page itself; Instagram's comes through the Instagram Business account linked
+to that Page.
+
+Meta reports only what the counts are **right now** — there's no dependable
+historical follower series — so the server snapshots both counts every night
+and a month closes on its last snapshot. Follower history therefore starts the
+day you connect, not before. Until a month has a snapshot, the sync says so and
+leaves the row empty rather than guessing.
+
+Requirements:
+
+- The Instagram account must be a **Professional** (Business or Creator)
+  account, linked to the Facebook Page.
+- You must be an admin of the Page.
+
+At [developers.facebook.com](https://developers.facebook.com/):
+
+1. Create an app (type: Business).
+2. Add the **Facebook Login** product, with redirect URI
+   `https://goodbyefitness.com/callback/meta`.
+3. Keep the app in Development mode — as its admin you can use
+   `pages_read_engagement` and `instagram_basic` without Meta's App Review.
+4. Set the credentials on the server and restart:
+
+```
+export META_APP_ID=...
+export META_APP_SECRET=...
+export META_REDIRECT_URI=https://goodbyefitness.com/callback/meta   # optional
+export META_API_VERSION=v21.0                                      # optional
+```
+
+Then sign in as admin and hit **Connect**. If the account manages more than one
+Page, the one with an Instagram account attached is chosen and the others are
+listed on the page.
+
+**The sign-in expires after about 60 days.** The page warns when there are ten
+days or fewer left — hit Reconnect. If it lapses, the sync fails loudly and the
+rows can still be typed in.
 
 ## Website visitors
 
@@ -42,8 +85,8 @@ without paying anything. Set a rate in the rates panel when you agree one.
 
 ## Nightly sync
 
-At 03:15 every night the server syncs the current month from YouTube and from
-the site's own visitor counts. For the first five days of a month it refreshes
+At 03:15 every night the server syncs the current month from YouTube, from
+Instagram and Facebook, and from the site's own visitor counts. For the first five days of a month it refreshes
 the previous month too, because YouTube's analytics lag a day or two and a
 month isn't final on the 1st. Failures are logged and swallowed — a broken
 sync never takes the page down, and everything can still be entered by hand.
@@ -129,6 +172,8 @@ Optional environment variables:
 | `bonus/store.py` | Rates, months, and all bonus arithmetic |
 | `bonus/auth.py` | Password hashing, lockout after 5 failed attempts, session key |
 | `bonus/youtube.py` | Google OAuth, the Analytics query, and the month sync |
+| `bonus/meta.py` | Meta OAuth, nightly follower snapshots, and the month sync |
+| `bonus_meta.json` | Meta tokens and daily follower counts (gitignored, mode 600) |
 | `bonus/traffic.py` | Website visitor counting and its month sync |
 | `bonus_traffic.json` | Daily views and visitors (gitignored) |
 | `bonus_youtube.json` | OAuth tokens (gitignored, mode 600) |
@@ -138,6 +183,7 @@ Optional environment variables:
 | `tests/test_bonus.py` | Store, auth, and API tests |
 | `tests/test_bonus_youtube.py` | Sync mapping, overwrite rules, OAuth routes |
 | `tests/test_bonus_traffic.py` | Visitor counting, bot filtering, nightly sync |
+| `tests/test_bonus_meta.py` | Page selection, snapshots, month close, OAuth routes |
 
 ## Security notes
 
@@ -150,3 +196,5 @@ Optional environment variables:
 - YouTube is authorised read-only (`yt-analytics.readonly`, `youtube.readonly`)
   and the OAuth callback checks a `state` value tied to the session.
 - Visitor counting stores no raw IP addresses and sets no cookies.
+- Meta is authorised read-only (`pages_read_engagement`, `instagram_basic`) and
+  its callback checks a `state` value tied to the session.

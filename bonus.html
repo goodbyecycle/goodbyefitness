@@ -177,6 +177,28 @@ tr.total td:last-child{color:var(--accent)}
     <div class="status" id="yt-status"></div>
     <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
       <div class="left">
+        <span class="dot" id="meta-dot"></span>
+        <div>
+          <div><strong>Instagram &amp; Facebook</strong> — followers</div>
+          <div class="detail" id="meta-detail">Checking…</div>
+        </div>
+      </div>
+      <div class="left">
+        <button id="meta-sync">Sync this month</button>
+        <button id="meta-connect" class="hidden">Connect</button>
+        <button id="meta-disconnect" class="hidden">Disconnect</button>
+      </div>
+    </div>
+    <div class="status" id="meta-status"></div>
+    <div class="setup hidden" id="meta-setup">
+      To switch this on: create an app at developers.facebook.com, add
+      <em>Facebook Login</em> with redirect <code id="meta-redirect"></code>, make sure the
+      Instagram account is a Professional account linked to the Facebook Page, then set
+      <code>META_APP_ID</code> and <code>META_APP_SECRET</code> on the server.
+    </div>
+
+    <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
+      <div class="left">
         <span class="dot on"></span>
         <div>
           <div><strong>Website</strong> — visitors to goodbyefitness.com</div>
@@ -239,6 +261,7 @@ tr.total td:last-child{color:var(--accent)}
       <li>Previous-month figures carry forward automatically once a month is saved.</li>
       <li>Rows tagged <strong>auto</strong> come straight from YouTube. A sync doesn't overwrite anything typed in by hand.</li>
       <li>A row set to pay on <strong>the month's own total</strong> ignores the gain and pays the rate on this month's figure.</li>
+      <li>Instagram and Facebook follower counts are snapshotted nightly — a month closes on its last snapshot, so history starts the day you connect.</li>
       <li>Website visitors are counted by the site itself — unique per day, bots excluded, no tracking cookie. The row pays nothing until a rate is set.</li>
       <li id="admin-note" class="hidden">Only an admin login can change rates or mark a month paid.</li>
     </ul>
@@ -354,7 +377,7 @@ function renderMonth(view) {
   $("month-label").textContent = monthLabel(view.month);
   $("rows").innerHTML = view.rows.map((row) => `
     <tr>
-      <td>${row.label}${row.source === "youtube" ? '<span class="tag">auto</span>' : ""}
+      <td>${row.label}${row.source !== "manual" ? '<span class="tag" title="Filled in by the ' + row.source + ' sync">auto</span>' : ""}
           <span class="rate-note">${money(row.rate)} ${row.unit}${row.basis === "total" ? " · on the month's total" : ""}</span></td>
       <td><input type="number" inputmode="decimal" min="0" step="${row.decimals ? 0.1 : 1}"
                  id="prev-${row.key}" class="${row.carriedPrev ? "carried" : ""}"
@@ -526,6 +549,65 @@ $("yt-sync").addEventListener("click", async () => {
   }
 });
 
+/* ── Instagram & Facebook ────────────────────── */
+function renderMeta(info) {
+  const detail = $("meta-detail");
+  $("meta-dot").classList.toggle("on", !!info.connected);
+  $("meta-connect").classList.toggle("hidden", !(state.user.role === "admin" && info.configured));
+  $("meta-disconnect").classList.toggle("hidden", !(state.user.role === "admin" && info.connected));
+  $("meta-sync").disabled = !info.connected;
+  $("meta-setup").classList.toggle("hidden", info.configured);
+  $("meta-redirect").textContent = info.redirectUri || "";
+  if (!info.configured) {
+    detail.textContent = "Not set up on the server yet.";
+  } else if (!info.connected) {
+    detail.textContent = "Not connected — sign in with the account that manages the Page.";
+  } else {
+    let text = (info.page || "Facebook Page") + (info.instagram ? " · @" + info.instagram : " · no Instagram account linked");
+    text += " · " + info.daysRecorded + (info.daysRecorded === 1 ? " day" : " days") + " of follower history";
+    if (info.expiresInDays !== null && info.expiresInDays <= 10) {
+      text += " · sign-in expires in " + info.expiresInDays + " days, reconnect";
+    }
+    detail.textContent = text;
+    $("meta-connect").textContent = "Reconnect";
+  }
+}
+
+async function loadMeta() {
+  try { renderMeta(await api("/api/bonus/meta/status")); } catch (err) { /* not fatal */ }
+}
+
+$("meta-connect").addEventListener("click", () => { window.location = "/api/bonus/meta/connect"; });
+
+$("meta-disconnect").addEventListener("click", async () => {
+  await api("/api/bonus/meta/disconnect", {body: {}});
+  await loadMeta();
+  $("meta-status").className = "status";
+  $("meta-status").textContent = "Disconnected. The follower history is kept.";
+});
+
+$("meta-sync").addEventListener("click", async () => {
+  const status = $("meta-status");
+  status.className = "status";
+  status.textContent = "Asking Meta…";
+  try {
+    const view = await api("/api/bonus/meta/sync", {body: {month: state.month}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+    const s = view.sync;
+    let message = "Instagram " + (s.instagram === null ? "—" : s.instagram) +
+                  " · Facebook " + (s.facebook === null ? "—" : s.facebook) + " followers.";
+    if (s.missing && s.missing.length) message += " No snapshot for that month yet.";
+    if (s.skipped && s.skipped.length) message += " Left your typed-in rows alone.";
+    status.className = "status ok";
+    status.textContent = message;
+    await loadMeta();
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
 /* ── website traffic + nightly sync ──────────── */
 async function loadWebsite() {
   try {
@@ -579,19 +661,22 @@ async function start() {
   renderRates();
   await loadMonth(thisMonth());
   await loadYouTube();
+  await loadMeta();
   await loadWebsite();
-  const flag = new URLSearchParams(location.search).get("youtube");
-  if (flag) {
+  const params = new URLSearchParams(location.search);
+  [["youtube", "yt-status", "YouTube"], ["meta", "meta-status", "Instagram & Facebook"]].forEach(([key, target, name]) => {
+    const flag = params.get(key);
+    if (!flag) return;
     const messages = {
-      connected: ["ok", "YouTube connected. Hit “Sync this month”."],
-      denied: ["err", "YouTube sign-in was cancelled."],
-      failed: ["err", "YouTube sign-in failed — check the server log."],
-      state_mismatch: ["err", "YouTube sign-in didn't match this session. Try again."],
+      connected: ["ok", name + " connected. Hit “Sync this month”."],
+      denied: ["err", name + " sign-in was cancelled."],
+      failed: ["err", name + " sign-in failed — check the server log."],
+      state_mismatch: ["err", name + " sign-in didn't match this session. Try again."],
     };
     const [kind, text] = messages[flag] || ["", ""];
-    if (text) { $("yt-status").className = "status " + kind; $("yt-status").textContent = text; }
-    history.replaceState({}, "", location.pathname);
-  }
+    if (text) { $(target).className = "status " + kind; $(target).textContent = text; }
+  });
+  if (params.get("youtube") || params.get("meta")) history.replaceState({}, "", location.pathname);
 }
 
 (async function () {
