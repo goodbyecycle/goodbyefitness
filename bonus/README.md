@@ -4,6 +4,25 @@ A private page at **`/bonus`** on goodbyefitness.com: the same two-part
 spreadsheet — monthly tracker plus payout summary — but shared, so both
 logins see the same numbers.
 
+## Getting it running
+
+On the server (the machine that runs `server.py`):
+
+```
+git pull                                  # or check out the branch
+pip install -r requirements.txt
+python tools/bonus_setup.py init          # create the two logins
+# restart the server — e.g. ./start-server.sh
+```
+
+Then open `/bonus` and sign in. Website visitor counting works immediately;
+the three social connections need credentials (below) and can be added later,
+one at a time, without touching anything else.
+
+`python tools/bonus_setup.py check` prints what's set up and what isn't —
+dependencies, logins, cookie mode, each connection, and the rates in force.
+Run it any time something looks wrong.
+
 ## What it does
 
 | | |

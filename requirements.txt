@@ -1,0 +1,9 @@
+# Goodbye Fitness server
+flask>=3.0            # the web server behind the site and the bonus tracker
+apscheduler>=3.10     # daily SMS and the nightly bonus sync
+requests>=2.31        # Strava, YouTube, Meta and Google API calls
+twilio>=8.0           # daily SMS (optional — the server runs without it)
+
+# Only needed to rebuild the standalone spreadsheet:
+#   python tools/build_bonus_tracker.py
+openpyxl>=3.1

@@ -79,5 +79,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, KeyboardInterrupt) as e:
-        sys.exit("\n%s" % e)
+    except (ValueError, KeyboardInterrupt, EOFError) as e:
+        sys.exit("\n%s" % (e or "Stopped."))
