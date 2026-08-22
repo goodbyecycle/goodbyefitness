@@ -17,6 +17,7 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, sessio
 
 from bonus import auth as bonus_auth
 from bonus import store as bonus_store
+from bonus import traffic as bonus_traffic
 from bonus import youtube as bonus_youtube
 
 app = Flask(__name__, static_folder=".", static_url_path="")
@@ -84,6 +85,17 @@ def load_data():
 
 def save_data(data):
     DATA_FILE.write_text(json.dumps(data, indent=2))
+
+
+@app.before_request
+def count_website_visit():
+    """Count public page views for the website row of the bonus tracker."""
+    try:
+        bonus_traffic.record(request.path,
+                             request.headers.get("X-Forwarded-For", request.remote_addr),
+                             request.headers.get("User-Agent", ""))
+    except Exception as e:
+        print("[TRAFFIC] %s" % e)
 
 
 # ─── Static files ───
@@ -428,7 +440,9 @@ scheduler = BackgroundScheduler()
 
 
 def reschedule_sms(profile):
-    scheduler.remove_all_jobs()
+    # Only this job — other scheduled work (the nightly bonus sync) stays put.
+    if scheduler.get_job("daily_sms"):
+        scheduler.remove_job("daily_sms")
     msg_time = profile.get("msgTime", "none")
     if msg_time == "none" or not profile.get("phone"):
         print("[SMS] Daily messages disabled")
@@ -818,10 +832,90 @@ def bonus_youtube_disconnect():
     return jsonify({"ok": True})
 
 
+# ─── Bonus tracker: website traffic ───
+
+@app.route("/api/bonus/website/status")
+@require_login
+def bonus_website_status():
+    month = request.args.get("month") or datetime.now().strftime("%Y-%m")
+    try:
+        return jsonify(bonus_traffic.status(month))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/bonus/website/sync", methods=["POST"])
+@require_login
+def bonus_website_sync():
+    body = request.json or {}
+    month = body.get("month") or datetime.now().strftime("%Y-%m")
+    try:
+        return jsonify(bonus_traffic.sync_month(month, force=bool(body.get("force"))))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/bonus/autosync")
+@require_login
+def bonus_autosync_status():
+    return jsonify({
+        "enabled": AUTOSYNC_ENABLED,
+        "at": "%02d:%02d" % (AUTOSYNC_HOUR, AUTOSYNC_MINUTE),
+        "last": bonus_store.get_autosync(),
+    })
+
+
+# ─── Bonus tracker: nightly sync ───
+
+AUTOSYNC_ENABLED = os.environ.get("BONUS_AUTOSYNC", "1") != "0"
+AUTOSYNC_HOUR = int(os.environ.get("BONUS_AUTOSYNC_HOUR", 3))
+AUTOSYNC_MINUTE = 15
+
+
+def run_nightly_sync(today=None):
+    """Pull YouTube and website numbers for the current month, unattended.
+
+    For the first few days of a month the previous month is refreshed too —
+    YouTube's analytics lag a day or two, so a month isn't final on the 1st.
+    A failure here is logged and swallowed: the page still works by hand.
+    """
+    today = today or datetime.now()
+    months = [today.strftime("%Y-%m")]
+    if today.day <= 5:
+        months.append(bonus_store.shift_month(today.strftime("%Y-%m"), -1))
+
+    results = []
+    for month in months:
+        try:
+            bonus_traffic.sync_month(month)
+            results.append("website %s ok" % month)
+        except Exception as e:
+            results.append("website %s failed: %s" % (month, e))
+        if bonus_youtube.status()["connected"]:
+            try:
+                bonus_youtube.sync_month(month)
+                results.append("youtube %s ok" % month)
+            except Exception as e:
+                results.append("youtube %s failed: %s" % (month, e))
+    bonus_store.record_autosync(today.isoformat(timespec="seconds"), results)
+    print("[BONUS] Nightly sync: %s" % "; ".join(results))
+    return results
+
+
+def schedule_nightly_sync():
+    if not AUTOSYNC_ENABLED:
+        print("[BONUS] Nightly sync disabled (BONUS_AUTOSYNC=0)")
+        return
+    scheduler.add_job(run_nightly_sync, "cron", hour=AUTOSYNC_HOUR, minute=AUTOSYNC_MINUTE,
+                      id="bonus_nightly_sync", replace_existing=True)
+    print("[BONUS] Nightly sync scheduled for %02d:%02d" % (AUTOSYNC_HOUR, AUTOSYNC_MINUTE))
+
+
 # ─── Boot ───
 
 if __name__ == "__main__":
     scheduler.start()
+    schedule_nightly_sync()
     data = load_data()
     if data.get("profile"):
         reschedule_sms(data["profile"])

@@ -175,6 +175,18 @@ tr.total td:last-child{color:var(--accent)}
       </div>
     </div>
     <div class="status" id="yt-status"></div>
+    <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
+      <div class="left">
+        <span class="dot on"></span>
+        <div>
+          <div><strong>Website</strong> — visitors to goodbyefitness.com</div>
+          <div class="detail" id="web-detail">Checking…</div>
+        </div>
+      </div>
+      <div class="left"><button id="web-sync">Sync this month</button></div>
+    </div>
+    <div class="status" id="web-status"></div>
+    <div class="detail" id="autosync-detail" style="margin-top:1rem"></div>
     <div class="setup hidden" id="yt-setup">
       To switch this on, in Google Cloud: create a project, enable the
       <em>YouTube Analytics API</em> and <em>YouTube Data API v3</em>, make an OAuth
@@ -190,6 +202,7 @@ tr.total td:last-child{color:var(--accent)}
       <div class="stat"><div class="k">Bonus — followers & subs</div><div class="v num" id="s-audience-bonus">$0.00</div></div>
       <div class="stat"><div class="k">Bonus — hours watched</div><div class="v num" id="s-watch">$0.00</div></div>
       <div class="stat"><div class="k">Bonus — Google reviews</div><div class="v num" id="s-reviews">$0.00</div></div>
+      <div class="stat"><div class="k">Bonus — website visitors</div><div class="v num" id="s-website">$0.00</div></div>
       <div class="stat big"><div class="k">Total owed</div><div class="v num" id="s-total">$0.00</div></div>
     </div>
     <div class="actions" id="paid-controls">
@@ -226,6 +239,7 @@ tr.total td:last-child{color:var(--accent)}
       <li>Previous-month figures carry forward automatically once a month is saved.</li>
       <li>Rows tagged <strong>auto</strong> come straight from YouTube. A sync doesn't overwrite anything typed in by hand.</li>
       <li>A row set to pay on <strong>the month's own total</strong> ignores the gain and pays the rate on this month's figure.</li>
+      <li>Website visitors are counted by the site itself — unique per day, bots excluded, no tracking cookie. The row pays nothing until a rate is set.</li>
       <li id="admin-note" class="hidden">Only an admin login can change rates or mark a month paid.</li>
     </ul>
   </section>
@@ -307,7 +321,7 @@ function readInputs() {
 }
 
 function recompute() {
-  let total = 0, audienceGain = 0, audienceBonus = 0, watch = 0, reviews = 0;
+  let total = 0, audienceGain = 0, audienceBonus = 0, watch = 0, reviews = 0, website = 0;
   state.view.rows.forEach((row) => {
     const prev = Number($("prev-" + row.key).value || 0);
     const curr = Number($("curr-" + row.key).value || 0);
@@ -323,12 +337,14 @@ function recompute() {
     if (row.group === "audience") { audienceGain += gain; audienceBonus += bonus; }
     if (row.group === "watch") watch += bonus;
     if (row.group === "reviews") reviews += bonus;
+    if (row.group === "website") website += bonus;
   });
   $("total-bonus").textContent = money(total);
   $("s-audience-gain").textContent = (audienceGain > 0 ? "+" : "") + audienceGain.toLocaleString();
   $("s-audience-bonus").textContent = money(audienceBonus);
   $("s-watch").textContent = money(watch);
   $("s-reviews").textContent = money(reviews);
+  $("s-website").textContent = money(website);
   $("s-total").textContent = money(total);
 }
 
@@ -392,6 +408,7 @@ async function loadMonth(month) {
   renderMonth(view);
   const {months} = await api("/api/bonus/months");
   renderHistory(months);
+  if (state.user) loadWebsite();
 }
 
 $("prev-month").addEventListener("click", () => loadMonth(shiftMonth(state.month, -1)));
@@ -509,6 +526,44 @@ $("yt-sync").addEventListener("click", async () => {
   }
 });
 
+/* ── website traffic + nightly sync ──────────── */
+async function loadWebsite() {
+  try {
+    const info = await api("/api/bonus/website/status?month=" + state.month);
+    const totals = info.thisMonth || {};
+    $("web-detail").textContent = info.countingSince
+      ? totals.visitors + " visitors this month (" + totals.views + " page views) · counting since " + info.countingSince
+      : "No visits counted yet.";
+  } catch (err) { /* not fatal */ }
+  try {
+    const auto = await api("/api/bonus/autosync");
+    $("autosync-detail").textContent = auto.enabled
+      ? "Syncs on its own every night at " + auto.at +
+        (auto.last ? " · last run " + auto.last.at.replace("T", " ") : " · hasn't run yet")
+      : "Automatic nightly sync is switched off on the server.";
+  } catch (err) { /* not fatal */ }
+}
+
+$("web-sync").addEventListener("click", async () => {
+  const status = $("web-status");
+  status.className = "status";
+  status.textContent = "Counting…";
+  try {
+    const view = await api("/api/bonus/website/sync", {body: {month: state.month}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+    const s = view.sync;
+    status.className = "status ok";
+    status.textContent = s.skipped && s.skipped.length
+      ? "Left your typed-in visitor count alone."
+      : s.visitors + " visitors counted across " + s.days + (s.days === 1 ? " day." : " days.");
+    await loadWebsite();
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
 /* ── boot ──────────────────────────────────── */
 async function start() {
   $("login").classList.add("hidden");
@@ -524,6 +579,7 @@ async function start() {
   renderRates();
   await loadMonth(thisMonth());
   await loadYouTube();
+  await loadWebsite();
   const flag = new URLSearchParams(location.search).get("youtube");
   if (flag) {
     const messages = {

@@ -17,7 +17,7 @@ _LOCK = Lock()
 
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
-# group: "audience" = followers/subscribers, "reviews", "watch"
+# group: "audience" = followers/subscribers, "reviews", "watch", "website"
 # basis: "gain" pays on the increase over last month, "total" pays on the
 # month's own figure. Everything defaults to "gain"; hours watched is the one
 # that might reasonably be paid on the month's total instead.
@@ -53,6 +53,16 @@ METRICS = [
         "group": "reviews",
         "decimals": 0,
         "defaultRate": 1.50,
+    },
+    {
+        "key": "website_visitors",
+        "label": "Website — Visitors",
+        "unit": "per new visitor",
+        "group": "website",
+        "decimals": 0,
+        # No rate agreed yet — the row tracks visitors and pays nothing until
+        # someone sets one in the rates panel.
+        "defaultRate": 0.00,
     },
     {
         "key": "youtube_hours",
@@ -257,12 +267,26 @@ def compute_month(month, data=None):
             "audienceBonus": bonus_for("audience"),
             "watchBonus": bonus_for("watch"),
             "reviewsBonus": bonus_for("reviews"),
+            "websiteBonus": bonus_for("website"),
         },
         "paid": bool(record.get("paid")),
         "paidOn": record.get("paidOn"),
         "paidBy": record.get("paidBy"),
         "updatedBy": record.get("updatedBy"),
     }
+
+
+def record_autosync(at, results):
+    """Remember when the unattended sync last ran, and how it went."""
+    with _LOCK:
+        data = load_data()
+        data["autosync"] = {"at": at, "results": results}
+        save_data(data)
+        return data["autosync"]
+
+
+def get_autosync():
+    return load_data().get("autosync")
 
 
 def list_months():

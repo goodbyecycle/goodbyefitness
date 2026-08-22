@@ -12,6 +12,8 @@ logins see the same numbers.
 | Summary | Gain and bonus split by group, total owed, paid / unpaid |
 | History | Every saved month with its total, newest first |
 | YouTube | Subscribers and hours watched pulled straight from the channel |
+| Website | Visitors to goodbyefitness.com, counted by the site itself |
+| Nightly | Everything re-syncs on its own at 03:15, unattended |
 
 Rates as configured: YouTube subscribers $0.50, Instagram $0.25, Facebook
 $0.25, Google positive reviews $1.50, YouTube hours watched $0.50 per hour.
@@ -23,6 +25,33 @@ Any row can instead be set to pay on **the month's own total** — pick it under
 "Paid on" in the rates panel. The difference matters most for hours watched:
 on *gain*, 2,150 hours last month and 2,480 this month pays $165; on *total*,
 it pays $1,240.
+
+## Website visitors
+
+The site counts its own traffic — no Google Analytics, no third-party script,
+no tracking cookie. Every public page request is counted; the tracker's own
+pages, the API, static assets, and anything that looks like a bot are not.
+
+Unique visitors are counted per day: the visitor's IP and user agent are
+hashed with a salt that is regenerated each day and thrown away when the day
+rolls over, so nothing on disk can be tied back to a person. Raw addresses are
+never written down.
+
+The **Website — Visitors** row starts at a rate of **$0.00**, so it tracks
+without paying anything. Set a rate in the rates panel when you agree one.
+
+## Nightly sync
+
+At 03:15 every night the server syncs the current month from YouTube and from
+the site's own visitor counts. For the first five days of a month it refreshes
+the previous month too, because YouTube's analytics lag a day or two and a
+month isn't final on the 1st. Failures are logged and swallowed — a broken
+sync never takes the page down, and everything can still be entered by hand.
+
+- `BONUS_AUTOSYNC=0` turns the nightly sync off.
+- `BONUS_AUTOSYNC_HOUR=3` moves it (server local time, minute is fixed at 15).
+
+The page shows when it last ran, under Connected accounts.
 
 ## Connecting YouTube
 
@@ -100,12 +129,15 @@ Optional environment variables:
 | `bonus/store.py` | Rates, months, and all bonus arithmetic |
 | `bonus/auth.py` | Password hashing, lockout after 5 failed attempts, session key |
 | `bonus/youtube.py` | Google OAuth, the Analytics query, and the month sync |
+| `bonus/traffic.py` | Website visitor counting and its month sync |
+| `bonus_traffic.json` | Daily views and visitors (gitignored) |
 | `bonus_youtube.json` | OAuth tokens (gitignored, mode 600) |
 | `bonus_data.json` | The saved months and rates (gitignored — this is the real data) |
 | `tools/bonus_user.py` | Create and manage the logins |
 | `tools/build_bonus_tracker.py` | Builds the standalone .xlsx version |
 | `tests/test_bonus.py` | Store, auth, and API tests |
 | `tests/test_bonus_youtube.py` | Sync mapping, overwrite rules, OAuth routes |
+| `tests/test_bonus_traffic.py` | Visitor counting, bot filtering, nightly sync |
 
 ## Security notes
 
@@ -117,3 +149,4 @@ Optional environment variables:
 - Serve the site over https — the login is only as private as the connection.
 - YouTube is authorised read-only (`yt-analytics.readonly`, `youtube.readonly`)
   and the OAuth callback checks a `state` value tied to the session.
+- Visitor counting stores no raw IP addresses and sets no cookies.
