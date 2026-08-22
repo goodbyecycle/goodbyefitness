@@ -133,13 +133,6 @@ def test_month_list_is_newest_first():
     assert months[0]["totalBonus"] == 10.00
 
 
-def test_csv_export_contains_the_totals():
-    store.save_month("2026-08", {"youtube_subs": {"prev": 100, "curr": 200}})
-    csv_text = store.month_csv("2026-08")
-    assert "Account / Metric,Previous Month,Current Month,Gain,Rate,Bonus" in csv_text
-    assert "Total bonus owed this period,50.00" in csv_text
-
-
 def test_shift_month_crosses_year_boundaries():
     assert store.shift_month("2026-01", -1) == "2025-12"
     assert store.shift_month("2026-12", 1) == "2027-01"
@@ -241,16 +234,6 @@ def test_only_an_admin_can_change_rates_or_mark_paid(client):
     paid = client.post("/api/bonus/month/2026-08/paid", json={"paid": True},
                        headers={"X-CSRF-Token": csrf})
     assert paid.get_json()["paid"] is True
-
-
-def test_csv_download_is_attached(client):
-    csrf = sign_in(client, "andy", "correct-horse-battery")
-    client.post("/api/bonus/month/2026-08", json={"values": {"youtube_subs": {"prev": 0, "curr": 10}}},
-                headers={"X-CSRF-Token": csrf})
-    res = client.get("/api/bonus/month/2026-08/csv")
-    assert res.status_code == 200
-    assert "attachment" in res.headers["Content-Disposition"]
-    assert b"Total bonus owed this period,5.00" in res.data
 
 
 def test_signing_out_ends_the_session(client):

@@ -239,29 +239,3 @@ def list_months():
             "paidOn": view["paidOn"],
         })
     return out
-
-
-def month_csv(month):
-    """The two-tab spreadsheet, flattened into one CSV."""
-    view = compute_month(month)
-    lines = ["Goodbye Fitness — Social Media Bonus,%s" % month, ""]
-    lines.append("Account / Metric,Previous Month,Current Month,Gain,Rate,Bonus")
-    for row in view["rows"]:
-        lines.append("%s,%s,%s,%s,%.2f,%.2f" % (
-            row["label"].replace(",", " "),
-            "" if row["prev"] is None else row["prev"],
-            "" if row["curr"] is None else row["curr"],
-            row["gain"], row["rate"], row["bonus"],
-        ))
-    summary = view["summary"]
-    lines += [
-        "",
-        "Bonus payout summary",
-        "Total gain across follower/subscriber rows,%s" % summary["audienceGain"],
-        "Bonus from followers & subscribers,%.2f" % summary["audienceBonus"],
-        "Bonus from YouTube hours watched,%.2f" % summary["watchBonus"],
-        "Bonus from Google positive reviews,%.2f" % summary["reviewsBonus"],
-        "Total bonus owed this period,%.2f" % view["totalBonus"],
-        "Paid,%s" % ("yes on %s" % view["paidOn"] if view["paid"] else "no"),
-    ]
-    return "\n".join(lines) + "\n"

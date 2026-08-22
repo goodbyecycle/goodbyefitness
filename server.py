@@ -13,7 +13,7 @@ from pathlib import Path
 
 import requests as http_requests
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, Response, jsonify, redirect, request, send_from_directory, session
+from flask import Flask, jsonify, redirect, request, send_from_directory, session
 
 from bonus import auth as bonus_auth
 from bonus import store as bonus_store
@@ -740,20 +740,6 @@ def bonus_month_paid(month):
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify(view)
-
-
-@app.route("/api/bonus/month/<month>/csv")
-@require_login
-def bonus_month_csv(month):
-    try:
-        csv_text = bonus_store.month_csv(month)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    return Response(
-        csv_text,
-        mimetype="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="bonus-%s.csv"' % month},
-    )
 
 
 # ─── Boot ───

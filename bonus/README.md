@@ -11,7 +11,6 @@ logins see the same numbers.
 | Tracker | One row per account/metric: previous month, current month, gain, bonus |
 | Summary | Gain and bonus split by group, total owed, paid / unpaid |
 | History | Every saved month with its total, newest first |
-| Export | `Download CSV` gives the whole month in one file |
 
 Rates as configured: YouTube subscribers $0.50, Instagram $0.25, Facebook
 $0.25, Google positive reviews $1.50, YouTube hours watched $1.00 per hour.

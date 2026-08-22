@@ -145,7 +145,6 @@ tr.total td:last-child{color:var(--accent)}
     </div>
     <div class="actions">
       <button class="primary" style="width:auto" id="save">Save month</button>
-      <button id="download">Download CSV</button>
       <span class="status" id="save-status"></span>
     </div>
   </section>
@@ -368,10 +367,6 @@ $("save").addEventListener("click", async () => {
     status.className = "status err";
     status.textContent = err.message;
   }
-});
-
-$("download").addEventListener("click", () => {
-  window.location = "/api/bonus/month/" + state.month + "/csv";
 });
 
 $("toggle-paid").addEventListener("click", async () => {
