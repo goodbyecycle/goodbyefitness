@@ -219,6 +219,30 @@ tr.total td:last-child{color:var(--accent)}
 
     <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
       <div class="left">
+        <span class="dot" id="gr-dot"></span>
+        <div>
+          <div><strong>Google</strong> — positive reviews</div>
+          <div class="detail" id="gr-detail">Checking…</div>
+        </div>
+      </div>
+      <div class="left">
+        <button id="gr-sync">Sync this month</button>
+        <button id="gr-connect" class="hidden">Connect</button>
+        <button id="gr-disconnect" class="hidden">Disconnect</button>
+      </div>
+    </div>
+    <div class="status" id="gr-status"></div>
+    <div class="setup hidden" id="gr-setup">
+      Needs the Google Business Profile APIs, which Google grants per project on request.
+      In Google Cloud: enable the <em>My Business Account Management</em>,
+      <em>My Business Business Information</em> and <em>Google My Business</em> APIs, add redirect
+      <code id="gr-redirect"></code> to the OAuth client, then set
+      <code>GOOGLE_BUSINESS_CLIENT_ID</code> and <code>GOOGLE_BUSINESS_CLIENT_SECRET</code>
+      (or reuse the YouTube ones) on the server.
+    </div>
+
+    <div class="conn" style="margin-top:1rem;border-top:1px solid var(--card-border);padding-top:1rem">
+      <div class="left">
         <span class="dot on"></span>
         <div>
           <div><strong>Website</strong> — visitors to goodbyefitness.com</div>
@@ -278,7 +302,7 @@ tr.total td:last-child{color:var(--accent)}
     <ul class="notes">
       <li>Bonus is paid on the <strong>gain over the previous month</strong> — this month's figure minus last month's.</li>
       <li>A month that goes backwards pays $0, never a negative bonus.</li>
-      <li>Google reviews counts <strong>positive reviews only</strong>.</li>
+      <li>Google reviews counts <strong>positive reviews only</strong> — four stars and up — and reads the date on each review, so past months come out exact.</li>
       <li>Previous-month figures carry forward automatically once a month is saved.</li>
       <li>Rows tagged <strong>auto</strong> were filled in by a sync, not by hand. A sync never overwrites anything typed in.</li>
       <li>A row set to pay on <strong>the month's own total</strong> ignores the gain and pays the rate on this month's figure.</li>
@@ -650,6 +674,61 @@ $("meta-disconnect").addEventListener("click", async () => {
   $("meta-status").textContent = "Disconnected. The follower history is kept.";
 });
 
+/* ── Google reviews ──────────────────────────── */
+function renderGoogle(info) {
+  const detail = $("gr-detail");
+  $("gr-dot").classList.toggle("on", !!info.connected);
+  $("gr-connect").classList.toggle("hidden", !(state.user.role === "admin" && info.configured));
+  $("gr-disconnect").classList.toggle("hidden", !(state.user.role === "admin" && info.connected));
+  $("gr-sync").disabled = !info.connected;
+  $("gr-setup").classList.toggle("hidden", info.configured);
+  $("gr-redirect").textContent = info.redirectUri || "";
+  if (!info.configured) {
+    detail.textContent = "Not set up on the server yet.";
+  } else if (!info.connected) {
+    detail.textContent = "Not connected — sign in with the Google account that owns the listing.";
+  } else {
+    detail.textContent = (info.location || "Business listing") + " · " +
+      info.positiveKnown + " positive of " + info.reviewsKnown + " reviews" +
+      (info.averageStars ? " · " + info.averageStars + "★ average" : "");
+    $("gr-connect").textContent = "Reconnect";
+  }
+}
+
+async function loadGoogle() {
+  try { renderGoogle(await api("/api/bonus/google/status")); } catch (err) { /* not fatal */ }
+}
+
+$("gr-connect").addEventListener("click", () => { window.location = "/api/bonus/google/connect"; });
+
+$("gr-disconnect").addEventListener("click", async () => {
+  await api("/api/bonus/google/disconnect", {body: {}});
+  await loadGoogle();
+  $("gr-status").className = "status";
+  $("gr-status").textContent = "Disconnected. The review counts are kept.";
+});
+
+$("gr-sync").addEventListener("click", async () => {
+  const status = $("gr-status");
+  status.className = "status";
+  status.textContent = "Reading reviews…";
+  try {
+    const view = await api("/api/bonus/google/sync", {body: {month: state.month}});
+    renderMonth(view);
+    renderHistory((await api("/api/bonus/months")).months);
+    const s = view.sync;
+    let message = s.positiveThisMonth + " positive of " + s.reviewsThisMonth +
+      " reviews this month · " + s.runningTotal + " positive all time.";
+    if (s.skipped && s.skipped.length) message += " Left your typed-in row alone.";
+    status.className = "status ok";
+    status.textContent = message;
+    await loadGoogle();
+  } catch (err) {
+    status.className = "status err";
+    status.textContent = err.message;
+  }
+});
+
 /* ── website traffic + nightly sync ──────────── */
 async function loadWebsite() {
   try {
@@ -705,9 +784,11 @@ async function start() {
   await loadMonth(thisMonth());
   await loadYouTube();
   await loadMeta();
+  await loadGoogle();
   await loadWebsite();
   const params = new URLSearchParams(location.search);
-  [["youtube", "yt-status", "YouTube"], ["meta", "meta-status", "Instagram & Facebook"]].forEach(([key, target, name]) => {
+  [["youtube", "yt-status", "YouTube"], ["meta", "meta-status", "Instagram & Facebook"],
+   ["google", "gr-status", "Google reviews"]].forEach(([key, target, name]) => {
     const flag = params.get(key);
     if (!flag) return;
     const messages = {
@@ -715,11 +796,14 @@ async function start() {
       denied: ["err", name + " sign-in was cancelled."],
       failed: ["err", name + " sign-in failed — check the server log."],
       state_mismatch: ["err", name + " sign-in didn't match this session. Try again."],
+      not_approved: ["err", name + ": Google hasn't approved Business Profile API access for this project yet."],
     };
     const [kind, text] = messages[flag] || ["", ""];
     if (text) { $(target).className = "status " + kind; $(target).textContent = text; }
   });
-  if (params.get("youtube") || params.get("meta")) history.replaceState({}, "", location.pathname);
+  if (params.get("youtube") || params.get("meta") || params.get("google")) {
+    history.replaceState({}, "", location.pathname);
+  }
 }
 
 (async function () {

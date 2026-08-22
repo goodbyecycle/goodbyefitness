@@ -16,6 +16,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, redirect, request, send_from_directory, session
 
 from bonus import auth as bonus_auth
+from bonus import google_reviews as bonus_google
 from bonus import meta as bonus_meta
 from bonus import store as bonus_store
 from bonus import traffic as bonus_traffic
@@ -835,6 +836,75 @@ def bonus_youtube_disconnect():
     return jsonify({"ok": True})
 
 
+# ─── Bonus tracker: Google reviews ───
+
+@app.route("/api/bonus/google/status")
+@require_login
+def bonus_google_status():
+    return jsonify(bonus_google.status())
+
+
+@app.route("/api/bonus/google/connect")
+@require_login
+@require_admin
+def bonus_google_connect():
+    try:
+        state = secrets.token_urlsafe(16)
+        session["google_oauth_state"] = state
+        return redirect(bonus_google.auth_url(state))
+    except bonus_google.NotConfigured as e:
+        return jsonify({"error": str(e)}), 503
+
+
+@app.route("/callback/google-reviews")
+def bonus_google_callback():
+    user = _current_user()
+    if not user or user.get("role") != "admin":
+        return redirect("/bonus")
+    expected = session.pop("google_oauth_state", None)
+    if not expected or request.args.get("state") != expected:
+        return redirect("/bonus?google=state_mismatch")
+    if request.args.get("error") or not request.args.get("code"):
+        return redirect("/bonus?google=denied")
+    try:
+        bonus_google.exchange_code(request.args["code"])
+    except bonus_google.NotApproved:
+        return redirect("/bonus?google=not_approved")
+    except Exception as e:
+        print("[GOOGLE] %s" % e)
+        return redirect("/bonus?google=failed")
+    return redirect("/bonus?google=connected")
+
+
+@app.route("/api/bonus/google/sync", methods=["POST"])
+@require_login
+def bonus_google_sync():
+    body = request.json or {}
+    month = body.get("month") or datetime.now().strftime("%Y-%m")
+    try:
+        return jsonify(bonus_google.sync_month(month, force=bool(body.get("force"))))
+    except bonus_google.NotApproved as e:
+        return jsonify({"error": str(e)}), 403
+    except bonus_google.NotConnected as e:
+        return jsonify({"error": str(e)}), 409
+    except bonus_google.NotConfigured as e:
+        return jsonify({"error": str(e)}), 503
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except http_requests.RequestException:
+        return jsonify({"error": "Couldn't reach Google — check the server's connection."}), 502
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/bonus/google/disconnect", methods=["POST"])
+@require_login
+@require_admin
+def bonus_google_disconnect():
+    bonus_google.disconnect()
+    return jsonify({"ok": True})
+
+
 # ─── Bonus tracker: Instagram & Facebook ───
 
 @app.route("/api/bonus/meta/status")
@@ -973,6 +1043,12 @@ def run_nightly_sync(today=None):
                 results.append("meta %s ok" % month)
             except Exception as e:
                 results.append("meta %s failed: %s" % (month, e))
+        if bonus_google.status()["connected"]:
+            try:
+                bonus_google.sync_month(month)
+                results.append("google %s ok" % month)
+            except Exception as e:
+                results.append("google %s failed: %s" % (month, e))
     bonus_store.record_autosync(today.isoformat(timespec="seconds"), results)
     print("[BONUS] Nightly sync: %s" % "; ".join(results))
     return results

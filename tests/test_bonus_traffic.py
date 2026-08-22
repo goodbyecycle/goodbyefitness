@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from bonus import auth, meta, store, traffic, youtube
+from bonus import auth, google_reviews as google, meta, store, traffic, youtube
 
 
 @pytest.fixture(autouse=True)
@@ -18,6 +18,7 @@ def temp_files(tmp_path, monkeypatch):
     monkeypatch.setattr(auth, "SECRET_FILE", tmp_path / "bonus_secret.key")
     monkeypatch.setattr(youtube, "TOKENS_FILE", tmp_path / "bonus_youtube.json")
     monkeypatch.setattr(meta, "DATA_FILE", tmp_path / "bonus_meta.json")
+    monkeypatch.setattr(google, "DATA_FILE", tmp_path / "bonus_google.json")
     monkeypatch.setattr(traffic, "DATA_FILE", tmp_path / "bonus_traffic.json")
     auth.clear_failures()
     yield

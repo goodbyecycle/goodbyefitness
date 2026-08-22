@@ -14,6 +14,7 @@ logins see the same numbers.
 | YouTube | Subscribers and hours watched pulled straight from the channel |
 | Instagram | Follower count, snapshotted nightly |
 | Facebook | Follower count, snapshotted nightly |
+| Google | Positive reviews (four stars and up), counted from the review dates |
 | Website | Visitors to goodbyefitness.com, counted by the site itself |
 | Nightly | Everything re-syncs on its own at 03:15, unattended |
 
@@ -76,6 +77,42 @@ listed on the page.
 days or fewer left — hit Reconnect. If it lapses, the sync fails loudly and the
 rows can still be typed in.
 
+## Connecting Google reviews
+
+Reviews carry the date they were written, so this connection can work out any
+month **exactly** — including months from before it was ever connected. Every
+review is fetched, grouped by the month it was left, and a "positive" review is
+one of **four or five stars**.
+
+The row is kept as a running total: the previous-month figure is the count of
+positive reviews up to the end of that month, so the gain is precisely the
+positive reviews received during the month.
+
+**Google gates this API.** Reading reviews needs the Google Business Profile
+APIs, which Google grants per project on request — approval takes days to
+weeks, so start it early. Until it is granted the calls come back 403 and the
+page says exactly that rather than showing zeros.
+
+1. Request access: fill in the Business Profile APIs form linked from
+   [the prerequisites page](https://developers.google.com/my-business/content/prereqs),
+   using the same Google Cloud project as YouTube.
+2. Once granted, enable in that project: **My Business Account Management API**,
+   **My Business Business Information API**, and **Google My Business API**
+   (the last one serves reviews).
+3. Add `https://goodbyefitness.com/callback/google-reviews` as a redirect URI on
+   the OAuth client.
+4. Set the credentials — or skip this if you're reusing the YouTube ones, which
+   the code falls back to automatically:
+
+```
+export GOOGLE_BUSINESS_CLIENT_ID=...
+export GOOGLE_BUSINESS_CLIENT_SECRET=...
+export GOOGLE_BUSINESS_REDIRECT_URI=https://goodbyefitness.com/callback/google-reviews   # optional
+```
+
+Then sign in as admin and hit **Connect**. The first listing on the account is
+used; any others are listed on the page.
+
 ## Website visitors
 
 The site counts its own traffic — no Google Analytics, no third-party script,
@@ -93,7 +130,8 @@ without paying anything. Set a rate in the rates panel when you agree one.
 ## Nightly sync
 
 At 03:15 every night the server syncs the current month from YouTube, from
-Instagram and Facebook, and from the site's own visitor counts. For the first five days of a month it refreshes
+Instagram and Facebook, from Google reviews, and from the site's own visitor
+counts. For the first five days of a month it refreshes
 the previous month too, because YouTube's analytics lag a day or two and a
 month isn't final on the 1st. Failures are logged and swallowed — a broken
 sync never takes the page down, and everything can still be entered by hand.
@@ -181,6 +219,8 @@ Optional environment variables:
 | `bonus/youtube.py` | Google OAuth, the Analytics query, and the month sync |
 | `bonus/meta.py` | Meta OAuth, nightly follower snapshots, and the month sync |
 | `bonus_meta.json` | Meta tokens and daily follower counts (gitignored, mode 600) |
+| `bonus/google_reviews.py` | Google OAuth, review fetching, and the month sync |
+| `bonus_google.json` | Google tokens and per-month review counts (gitignored, mode 600) |
 | `bonus/traffic.py` | Website visitor counting and its month sync |
 | `bonus_traffic.json` | Daily views and visitors (gitignored) |
 | `bonus_youtube.json` | OAuth tokens (gitignored, mode 600) |
@@ -191,6 +231,7 @@ Optional environment variables:
 | `tests/test_bonus_youtube.py` | Sync mapping, overwrite rules, OAuth routes |
 | `tests/test_bonus_traffic.py` | Visitor counting, bot filtering, nightly sync |
 | `tests/test_bonus_meta.py` | Page selection, snapshots, month close, OAuth routes |
+| `tests/test_bonus_google.py` | Review grouping, running totals, paging, OAuth routes |
 
 ## Security notes
 
@@ -205,3 +246,5 @@ Optional environment variables:
 - Visitor counting stores no raw IP addresses and sets no cookies.
 - Meta is authorised read-only (`pages_read_engagement`, `instagram_basic`) and
   its callback checks a `state` value tied to the session.
+- Google reviews use `business.manage` — the only scope Google offers for
+  reading reviews. Nothing in the tracker writes to the listing.
