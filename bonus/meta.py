@@ -154,12 +154,8 @@ def exchange_code(code):
     return load_state()
 
 
-def choose_page(token=None):
-    """Pick the Page to track — the one with an Instagram account attached."""
-    state = load_state()
-    token = token or (state.get("token") or {}).get("value")
-    if not token:
-        raise NotConnected("Instagram & Facebook are not connected yet")
+def _fetch_pages(token):
+    """Every Page this sign-in can see, with its linked Instagram account."""
     payload = _graph("/me/accounts", {
         "fields": "id,name,access_token,followers_count,"
                   "instagram_business_account{id,username,followers_count}",
@@ -167,7 +163,61 @@ def choose_page(token=None):
     pages = payload.get("data") or []
     if not pages:
         raise RuntimeError("That account manages no Facebook Pages")
-    page = next((p for p in pages if p.get("instagram_business_account")), pages[0])
+    return pages
+
+
+def list_pages(token=None):
+    """The Pages available to track, for the picker. Never returns Page tokens."""
+    state = load_state()
+    token = token or (state.get("token") or {}).get("value")
+    if not token:
+        raise NotConnected("Instagram & Facebook are not connected yet")
+    selected = (state.get("page") or {}).get("id")
+    listed = []
+    for page in _fetch_pages(token):
+        instagram = page.get("instagram_business_account") or None
+        listed.append({
+            "id": page["id"],
+            "name": page.get("name"),
+            "followers": page.get("followers_count"),
+            "instagram": {
+                "username": instagram.get("username"),
+                "followers": instagram.get("followers_count"),
+            } if instagram else None,
+            "selected": page["id"] == selected,
+        })
+    return listed
+
+
+def choose_page(page_id=None, token=None):
+    """Select the Page to track.
+
+    With no page_id, pick the first Page that has an Instagram account attached
+    — the sensible default when only one brand is involved. Pass a page_id to
+    choose explicitly; with several Pages on one account the default is only a
+    guess, and a wrong guess is invisible on the page.
+
+    Switching to a different Page clears the recorded follower history, because
+    those counts belong to the Page that was being tracked before. Keeping them
+    would make the next month's gain a subtraction between two unrelated
+    accounts.
+    """
+    state = load_state()
+    token = token or (state.get("token") or {}).get("value")
+    if not token:
+        raise NotConnected("Instagram & Facebook are not connected yet")
+    pages = _fetch_pages(token)
+    if page_id:
+        page = next((p for p in pages if p["id"] == str(page_id)), None)
+        if page is None:
+            raise RuntimeError("That Page is not on this Meta account")
+    else:
+        page = next((p for p in pages if p.get("instagram_business_account")), pages[0])
+
+    previous = (state.get("page") or {}).get("id")
+    if previous and previous != page["id"]:
+        state["days"] = {}
+
     state["page"] = {
         "id": page["id"],
         "name": page.get("name"),

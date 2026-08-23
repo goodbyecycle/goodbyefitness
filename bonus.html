@@ -210,6 +210,12 @@ tr.total td:last-child{color:var(--accent)}
       </div>
     </div>
     <div class="status" id="meta-status"></div>
+    <div class="conn hidden" id="meta-page-row" style="margin-top:.5rem">
+      <div class="detail">
+        <label for="meta-page">Tracking</label>
+        <select id="meta-page" style="margin-left:.4rem;max-width:22rem"></select>
+      </div>
+    </div>
     <div class="setup hidden" id="meta-setup">
       To switch this on: create an app at developers.facebook.com, add
       <em>Facebook Login</em> with redirect <code id="meta-redirect"></code>, make sure the
@@ -637,6 +643,55 @@ function renderMeta(info) {
   $("meta-detail").textContent = info.configured ? shared : "";
 }
 
+async function loadMetaPages() {
+  const row = $("meta-page-row"), select = $("meta-page");
+  if (state.user.role !== "admin") { row.classList.add("hidden"); return; }
+  let pages;
+  try { pages = (await api("/api/bonus/meta/pages")).pages || []; }
+  catch (err) { row.classList.add("hidden"); return; }
+  // One Page means nothing to choose between — don't clutter the card.
+  if (pages.length < 2) { row.classList.add("hidden"); return; }
+  select.innerHTML = "";
+  for (const page of pages) {
+    const option = document.createElement("option");
+    option.value = page.id;
+    option.selected = page.selected;
+    const ig = page.instagram
+      ? "@" + page.instagram.username + " · " + (page.instagram.followers ?? "?") + " IG"
+      : "no Instagram linked";
+    option.textContent = page.name + " — " + (page.followers ?? "?") + " FB · " + ig;
+    select.appendChild(option);
+  }
+  select.dataset.current = (pages.find(p => p.selected) || {}).id || "";
+  row.classList.remove("hidden");
+}
+
+$("meta-page").addEventListener("change", async (event) => {
+  const select = event.target, pageId = select.value, previous = select.dataset.current;
+  if (pageId === previous) return;
+  const name = select.options[select.selectedIndex].textContent;
+  const ok = confirm(
+    "Track \"" + name + "\" instead?\n\n" +
+    "The follower history recorded so far belongs to the Page you're tracking now, " +
+    "so it will be cleared. Numbers already entered by hand are not affected."
+  );
+  if (!ok) { select.value = previous; return; }
+  const status = $("meta-status");
+  status.className = "status";
+  status.textContent = "Switching…";
+  try {
+    renderMeta(await api("/api/bonus/meta/page", {body: {pageId: pageId}}));
+    select.dataset.current = pageId;
+    status.className = "status ok";
+    status.textContent = "Now tracking that Page. Sync to take a fresh snapshot.";
+    await loadMetaPages();
+  } catch (err) {
+    select.value = previous;
+    status.className = "status bad";
+    status.textContent = err.message || "Could not switch Page.";
+  }
+});
+
 async function syncNetwork(network, target) {
   const status = $(target);
   status.className = "status";
@@ -662,7 +717,12 @@ $("ig-sync").addEventListener("click", () => syncNetwork("instagram", "ig-status
 $("fb-sync").addEventListener("click", () => syncNetwork("facebook", "fb-status"));
 
 async function loadMeta() {
-  try { renderMeta(await api("/api/bonus/meta/status")); } catch (err) { /* not fatal */ }
+  try {
+    const metaInfo = await api("/api/bonus/meta/status");
+    renderMeta(metaInfo);
+    if (metaInfo.connected) { await loadMetaPages(); }
+    else { $("meta-page-row").classList.add("hidden"); }
+  } catch (err) { /* not fatal */ }
 }
 
 $("meta-connect").addEventListener("click", () => { window.location = "/api/bonus/meta/connect"; });

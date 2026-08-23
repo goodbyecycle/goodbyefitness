@@ -1,5 +1,6 @@
 """Tests for the Instagram & Facebook connection."""
 
+import json
 import sys
 import time
 from pathlib import Path
@@ -321,3 +322,106 @@ def test_the_summary_reports_each_metric_separately():
     by_metric = view["summary"]["byMetric"]
     assert by_metric["instagram_followers"] == 46.25
     assert by_metric["facebook_followers"] == 8.00
+
+
+# ─── choosing which Page to track ───
+
+def multi_page(monkeypatch):
+    """Three Pages with Instagram attached — the real portfolio shape."""
+    pages = [
+        {"id": "page-fitness", "name": "Goodbye fitness", "access_token": "tok-f",
+         "followers_count": 0,
+         "instagram_business_account": {"id": "ig-f", "username": "goodbyefitness",
+                                        "followers_count": 0}},
+        {"id": "page-rg", "name": "RG Seamless Gutters LLC", "access_token": "tok-r",
+         "followers_count": 940,
+         "instagram_business_account": {"id": "ig-r", "username": "rgseamlessguttersnwa",
+                                        "followers_count": 1210}},
+        {"id": "page-coffee", "name": "Goodbye Coffee Co", "access_token": "tok-c",
+         "followers_count": 310,
+         "instagram_business_account": {"id": "ig-c", "username": "goodbye_coffee_co",
+                                        "followers_count": 480}},
+    ]
+    monkeypatch.setattr(meta, "_graph",
+                        lambda path, params=None, token=None: {"data": pages})
+    state = meta.load_state()
+    state["token"] = {"value": "user-token", "expiresAt": time.time() + 60 * 86400}
+    meta.save_state(state)
+    return pages
+
+
+def test_every_page_is_offered_with_its_follower_counts(monkeypatch):
+    multi_page(monkeypatch)
+    meta.choose_page()
+    listed = meta.list_pages()
+    assert [p["name"] for p in listed] == [
+        "Goodbye fitness", "RG Seamless Gutters LLC", "Goodbye Coffee Co"]
+    rg = next(p for p in listed if p["id"] == "page-rg")
+    assert rg["followers"] == 940
+    assert rg["instagram"]["username"] == "rgseamlessguttersnwa"
+    assert rg["instagram"]["followers"] == 1210
+
+
+def test_the_picker_never_leaks_page_access_tokens(monkeypatch):
+    multi_page(monkeypatch)
+    meta.choose_page()
+    assert "tok-r" not in json.dumps(meta.list_pages())
+
+
+def test_exactly_one_page_reads_as_selected(monkeypatch):
+    multi_page(monkeypatch)
+    meta.choose_page(page_id="page-coffee")
+    assert [p["selected"] for p in meta.list_pages()].count(True) == 1
+    assert next(p for p in meta.list_pages() if p["selected"])["id"] == "page-coffee"
+
+
+def test_an_explicit_page_beats_the_automatic_guess(monkeypatch):
+    multi_page(monkeypatch)
+    meta.choose_page()                       # guesses the first with Instagram
+    assert meta.load_state()["page"]["id"] == "page-fitness"
+    meta.choose_page(page_id="page-rg")      # admin overrules it
+    state = meta.load_state()
+    assert state["page"]["id"] == "page-rg"
+    assert state["instagram"]["username"] == "rgseamlessguttersnwa"
+
+
+def test_a_page_from_another_account_is_refused(monkeypatch):
+    multi_page(monkeypatch)
+    meta.choose_page()
+    with pytest.raises(RuntimeError):
+        meta.choose_page(page_id="page-somebody-elses")
+
+
+def test_switching_page_clears_the_other_pages_history(monkeypatch):
+    """The recorded counts belong to the old Page.
+
+    Keeping them would make next month's gain a subtraction between two
+    unrelated accounts — a plausible-looking number that is simply wrong.
+    """
+    multi_page(monkeypatch)
+    meta.choose_page(page_id="page-coffee")
+    state = meta.load_state()
+    state["days"] = {"2026-08-01": {"instagram": 480, "facebook": 310}}
+    meta.save_state(state)
+
+    meta.choose_page(page_id="page-rg")
+    assert meta.load_state()["days"] == {}
+
+
+def test_reselecting_the_same_page_keeps_its_history(monkeypatch):
+    """Reconnecting must not throw away good data."""
+    multi_page(monkeypatch)
+    meta.choose_page(page_id="page-rg")
+    state = meta.load_state()
+    state["days"] = {"2026-08-01": {"instagram": 1210, "facebook": 940}}
+    meta.save_state(state)
+
+    meta.choose_page(page_id="page-rg")
+    assert meta.load_state()["days"] == {"2026-08-01": {"instagram": 1210, "facebook": 940}}
+
+
+def test_listing_pages_before_connecting_is_refused(monkeypatch):
+    monkeypatch.setattr(meta, "_graph",
+                        lambda path, params=None, token=None: {"data": []})
+    with pytest.raises(meta.NotConnected):
+        meta.list_pages()

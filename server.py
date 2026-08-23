@@ -976,6 +976,37 @@ def bonus_meta_callback():
     return redirect("/bonus?meta=connected")
 
 
+@app.route("/api/bonus/meta/pages")
+@require_login
+@require_admin
+def bonus_meta_pages():
+    """Every Page this Meta sign-in can see, so the admin can pick one."""
+    try:
+        return jsonify({"pages": bonus_meta.list_pages()})
+    except bonus_meta.NotConnected as e:
+        return jsonify({"error": str(e)}), 409
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/bonus/meta/page", methods=["POST"])
+@require_login
+@require_admin
+def bonus_meta_set_page():
+    """Track a different Page. Clears follower history — it was another account's."""
+    body = request.get_json(silent=True) or {}
+    page_id = (body.get("pageId") or "").strip()
+    if not page_id:
+        return jsonify({"error": "pageId required"}), 400
+    try:
+        bonus_meta.choose_page(page_id=page_id)
+        return jsonify(bonus_meta.status())
+    except bonus_meta.NotConnected as e:
+        return jsonify({"error": str(e)}), 409
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
 @app.route("/api/bonus/meta/sync", methods=["POST"])
 @require_login
 def bonus_meta_sync():
