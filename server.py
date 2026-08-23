@@ -1066,12 +1066,28 @@ def schedule_nightly_sync():
 
 # ─── Boot ───
 
-if __name__ == "__main__":
+def start_background_jobs():
+    """Start the scheduler, the nightly bonus sync and the daily SMS.
+
+    Called on boot whether the app is run directly or served by a WSGI
+    server such as gunicorn, which never executes the __main__ block.
+    Run it in exactly one worker so jobs do not fire twice.
+    """
+    if scheduler.running:
+        return
     scheduler.start()
     schedule_nightly_sync()
     data = load_data()
     if data.get("profile"):
         reschedule_sms(data["profile"])
+
+
+if os.environ.get("RUN_BACKGROUND_JOBS") == "1":
+    start_background_jobs()
+
+
+if __name__ == "__main__":
+    start_background_jobs()
     print("\n  Fitness Test Demo")
     print("  http://localhost:8090\n")
     if not all([TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM]):
