@@ -7,10 +7,12 @@ from the stored counts, never stored as a number that could drift.
 
 import json
 import re
+import os
 from pathlib import Path
 from threading import Lock
 
-DATA_DIR = Path(__file__).parent.parent
+DATA_DIR = Path(os.environ.get("BONUS_DATA_DIR")
+                or Path(__file__).parent.parent)
 DATA_FILE = DATA_DIR / "bonus_data.json"
 
 _LOCK = Lock()

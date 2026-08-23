@@ -13,7 +13,8 @@ from threading import Lock
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-DATA_DIR = Path(__file__).parent.parent
+DATA_DIR = Path(os.environ.get("BONUS_DATA_DIR")
+                or Path(__file__).parent.parent)
 USERS_FILE = DATA_DIR / "bonus_users.json"
 SECRET_FILE = DATA_DIR / "bonus_secret.key"
 

@@ -23,7 +23,8 @@ import requests as http_requests
 
 from bonus import store
 
-DATA_DIR = Path(__file__).parent.parent
+DATA_DIR = Path(os.environ.get("BONUS_DATA_DIR")
+                or Path(__file__).parent.parent)
 DATA_FILE = DATA_DIR / "bonus_meta.json"
 
 APP_ID = os.environ.get("META_APP_ID", "")

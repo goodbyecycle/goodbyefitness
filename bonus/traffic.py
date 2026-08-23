@@ -20,7 +20,8 @@ from threading import Lock
 
 from bonus import store
 
-DATA_DIR = Path(__file__).parent.parent
+DATA_DIR = Path(os.environ.get("BONUS_DATA_DIR")
+                or Path(__file__).parent.parent)
 DATA_FILE = DATA_DIR / "bonus_traffic.json"
 
 METRIC = "website_visitors"

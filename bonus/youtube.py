@@ -24,7 +24,8 @@ import requests as http_requests
 
 from bonus import store
 
-DATA_DIR = Path(__file__).parent.parent
+DATA_DIR = Path(os.environ.get("BONUS_DATA_DIR")
+                or Path(__file__).parent.parent)
 TOKENS_FILE = DATA_DIR / "bonus_youtube.json"
 
 CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID", "")

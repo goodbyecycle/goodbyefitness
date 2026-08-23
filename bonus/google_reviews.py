@@ -25,7 +25,8 @@ import requests as http_requests
 
 from bonus import store
 
-DATA_DIR = Path(__file__).parent.parent
+DATA_DIR = Path(os.environ.get("BONUS_DATA_DIR")
+                or Path(__file__).parent.parent)
 DATA_FILE = DATA_DIR / "bonus_google.json"
 
 # Same Google project as YouTube by default — one OAuth client can serve both.
