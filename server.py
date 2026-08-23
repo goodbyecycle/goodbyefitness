@@ -963,10 +963,18 @@ def bonus_meta_callback():
     user = _current_user()
     if not user or user.get("role") != "admin":
         return redirect("/bonus")
+    # Check for an error from Meta FIRST. An error response carries no state,
+    # so checking state first reports a session mismatch and hides the real
+    # reason — which is what Meta actually told us.
     expected = session.pop("meta_oauth_state", None)
+    reason = request.args.get("error_message") or request.args.get("error_description")
+    if reason or request.args.get("error") or request.args.get("error_code"):
+        print("[META] sign-in refused: %s" % (reason or request.args.get("error")))
+        session["meta_last_error"] = reason or request.args.get("error")
+        return redirect("/bonus?meta=refused")
     if not expected or request.args.get("state") != expected:
         return redirect("/bonus?meta=state_mismatch")
-    if request.args.get("error") or not request.args.get("code"):
+    if not request.args.get("code"):
         return redirect("/bonus?meta=denied")
     try:
         bonus_meta.exchange_code(request.args["code"])

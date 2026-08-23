@@ -31,6 +31,11 @@ APP_ID = os.environ.get("META_APP_ID", "")
 APP_SECRET = os.environ.get("META_APP_SECRET", "")
 REDIRECT_URI = os.environ.get("META_REDIRECT_URI", "https://goodbyefitness.com/callback/meta")
 API_VERSION = os.environ.get("META_API_VERSION", "v21.0")
+# Facebook Login for Business refuses a free-form scope list and takes its
+# permissions from a saved configuration instead. Set META_CONFIG_ID to the
+# configuration's ID and the sign-in uses that; leave it unset for a plain
+# Facebook Login app, which still wants the scopes.
+CONFIG_ID = os.environ.get("META_CONFIG_ID", "").strip()
 
 GRAPH = "https://graph.facebook.com/" + API_VERSION
 DIALOG = "https://www.facebook.com/" + API_VERSION + "/dialog/oauth"
@@ -101,13 +106,17 @@ def disconnect():
 def auth_url(state_token):
     if not is_configured():
         raise NotConfigured("META_APP_ID and META_APP_SECRET are not set")
-    return DIALOG + "?" + urlencode({
+    params = {
         "client_id": APP_ID,
         "redirect_uri": REDIRECT_URI,
         "response_type": "code",
-        "scope": ",".join(SCOPES),
         "state": state_token,
-    })
+    }
+    if CONFIG_ID:
+        params["config_id"] = CONFIG_ID
+    else:
+        params["scope"] = ",".join(SCOPES)
+    return DIALOG + "?" + urlencode(params)
 
 
 def _graph(path, params=None, token=None):

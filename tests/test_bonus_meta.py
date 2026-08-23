@@ -425,3 +425,26 @@ def test_listing_pages_before_connecting_is_refused(monkeypatch):
                         lambda path, params=None, token=None: {"data": []})
     with pytest.raises(meta.NotConnected):
         meta.list_pages()
+
+
+# ─── Facebook Login for Business ───
+
+def test_sign_in_asks_for_scopes_when_there_is_no_configuration(monkeypatch):
+    monkeypatch.setattr(meta, "APP_ID", "app")
+    monkeypatch.setattr(meta, "APP_SECRET", "secret")
+    monkeypatch.setattr(meta, "CONFIG_ID", "")
+    url = meta.auth_url("state-1")
+    assert "scope=" in url
+    assert "config_id" not in url
+
+
+def test_a_configuration_replaces_the_scope_list(monkeypatch):
+    """Facebook Login for Business rejects a free-form scope list with
+    'Invalid Scopes' and takes its permissions from the configuration."""
+    monkeypatch.setattr(meta, "APP_ID", "app")
+    monkeypatch.setattr(meta, "APP_SECRET", "secret")
+    monkeypatch.setattr(meta, "CONFIG_ID", "1234567890")
+    url = meta.auth_url("state-1")
+    assert "config_id=1234567890" in url
+    assert "scope=" not in url
+    assert "state=state-1" in url

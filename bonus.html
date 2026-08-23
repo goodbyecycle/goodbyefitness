@@ -855,6 +855,7 @@ async function start() {
       connected: ["ok", name + " connected. Hit “Sync this month”."],
       denied: ["err", name + " sign-in was cancelled."],
       failed: ["err", name + " sign-in failed — check the server log."],
+      refused: ["err", name + " refused the sign-in — see the server log for what Meta said."],
       state_mismatch: ["err", name + " sign-in didn't match this session. Try again."],
       not_approved: ["err", name + ": Google hasn't approved Business Profile API access for this project yet."],
     };
