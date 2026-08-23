@@ -448,3 +448,40 @@ def test_a_configuration_replaces_the_scope_list(monkeypatch):
     assert "config_id=1234567890" in url
     assert "scope=" not in url
     assert "state=state-1" in url
+
+
+def test_connecting_picks_a_page_through_the_real_call_path(monkeypatch):
+    """exchange_code -> choose_page, the path the Connect button actually takes.
+
+    The picker work changed choose_page's signature while exchange_code still
+    called it positionally, so the access token arrived as a page id and every
+    real connection died with 'That Page is not on this Meta account'. Tests
+    that called choose_page directly all passed.
+    """
+    monkeypatch.setattr(meta, "APP_ID", "app")
+    monkeypatch.setattr(meta, "APP_SECRET", "secret")
+
+    def fake_graph(path, params=None, token=None):
+        if path == "/oauth/access_token":
+            return {"access_token": "user-token", "expires_in": 60 * 24 * 3600}
+        assert path == "/me/accounts"
+        return {"data": [{
+            "id": "page-coffee", "name": "Goodbye Coffee Co",
+            "access_token": "page-token", "followers_count": 310,
+            "instagram_business_account": {
+                "id": "ig-c", "username": "goodbye_coffee_co", "followers_count": 480},
+        }]}
+
+    monkeypatch.setattr(meta, "_graph", fake_graph)
+    meta.exchange_code("a-code-from-the-callback")
+
+    state = meta.load_state()
+    assert state["page"]["name"] == "Goodbye Coffee Co"
+    assert state["instagram"]["username"] == "goodbye_coffee_co"
+    assert state["token"]["value"] == "user-token"
+
+
+def test_choose_page_refuses_positional_arguments():
+    """Keyword-only, so a positional token can never be read as a page id again."""
+    with pytest.raises(TypeError):
+        meta.choose_page("some-token")

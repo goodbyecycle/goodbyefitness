@@ -159,7 +159,7 @@ def exchange_code(code):
     state = load_state()
     state["token"] = {"value": token, "expiresAt": expires_at}
     save_state(state)
-    choose_page(token)
+    choose_page(token=token)
     return load_state()
 
 
@@ -198,7 +198,7 @@ def list_pages(token=None):
     return listed
 
 
-def choose_page(page_id=None, token=None):
+def choose_page(*, page_id=None, token=None):
     """Select the Page to track.
 
     With no page_id, pick the first Page that has an Instagram account attached
