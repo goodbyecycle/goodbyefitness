@@ -667,7 +667,8 @@ def require_admin(view):
     return wrapper
 
 
-@app.route("/bonus")
+@app.route("/nicki")
+@app.route("/bonus")  # old link, keeps working
 def bonus_page():
     return send_from_directory(".", "bonus.html")
 

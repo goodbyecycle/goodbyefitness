@@ -27,7 +27,7 @@ METRIC = "website_visitors"
 KEEP_DAYS = 400
 
 # The tracker's own pages, the API, and static assets aren't website traffic.
-IGNORED_PREFIXES = ("/api/", "/bonus", "/callback/", "/static/")
+IGNORED_PREFIXES = ("/api/", "/bonus", "/nicki", "/callback/", "/static/")
 IGNORED_SUFFIXES = (".css", ".js", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp",
                     ".woff", ".woff2", ".map", ".json", ".txt", ".xml")
 BOT_RE = re.compile(
