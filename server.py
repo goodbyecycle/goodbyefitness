@@ -667,6 +667,38 @@ def require_admin(view):
     return wrapper
 
 
+# ─── Private routes ───
+#
+# Everything below is Andrew's own data: the personal dashboard, the coach
+# engine, Strava and the SMS settings. None of it had a login, so it was
+# readable by anyone who knew the path. It now needs the admin login that
+# already guards the bonus tracker's rates.
+#
+# Deliberately still public: the landing page, /app, the signup form, the
+# OAuth callbacks (the providers must reach them), and /nicki itself.
+
+PRIVATE_PREFIXES = (
+    "/andrew",
+    "/api/profile",
+    "/api/coach/",
+    "/api/strava/",
+    "/api/sms/",
+)
+
+
+@app.before_request
+def guard_private_routes():
+    path = (request.path or "/").split("?")[0]
+    if not path.startswith(PRIVATE_PREFIXES):
+        return None
+    user = _current_user()
+    if user and user.get("role") == "admin":
+        return None
+    if path.startswith("/api/"):
+        return jsonify({"error": "login required"}), 401
+    return redirect("/nicki")
+
+
 @app.route("/nicki")
 @app.route("/bonus")  # old link, keeps working
 def bonus_page():

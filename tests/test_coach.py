@@ -242,9 +242,19 @@ def _get_app():
     return app
 
 
+def _admin_client(app):
+    """These endpoints are Andrew's own data and need the admin login."""
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["bonus_user"] = {"username": "test-admin",
+                              "displayName": "Test Admin",
+                              "role": "admin"}
+    return client
+
+
 def test_p2_recommend_endpoint_returns_modal_data():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/api/coach/recommend?date=2026-07-21")
         assert resp.status_code == 200
         data = resp.get_json()
@@ -307,7 +317,7 @@ def test_ci_valid_checkin_saves():
     _cleanup_checkins()
     try:
         app = _get_app()
-        with app.test_client() as c:
+        with _admin_client(app) as c:
             resp = c.post("/api/coach/checkin", json={
                 "date": "2026-07-21",
                 "sleepQuality": 4,
@@ -334,7 +344,7 @@ def test_ci_invalid_values_rejected():
     _cleanup_checkins()
     try:
         app = _get_app()
-        with app.test_client() as c:
+        with _admin_client(app) as c:
             resp = c.post("/api/coach/checkin", json={
                 "date": "2026-07-21",
                 "sleepQuality": 9,
@@ -353,7 +363,7 @@ def test_ci_pain_location_required():
     _cleanup_checkins()
     try:
         app = _get_app()
-        with app.test_client() as c:
+        with _admin_client(app) as c:
             resp = c.post("/api/coach/checkin", json={
                 "date": "2026-07-21",
                 "sleepQuality": 3,
@@ -373,7 +383,7 @@ def test_ci_readiness_summary_after_save():
     _cleanup_checkins()
     try:
         app = _get_app()
-        with app.test_client() as c:
+        with _admin_client(app) as c:
             resp = c.post("/api/coach/checkin", json={
                 "date": "2026-07-21",
                 "sleepQuality": 4,
@@ -616,7 +626,7 @@ def test_strava_coaching_uses_strava_history():
 
 def test_card_html_has_data_attributes():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         assert 'data-eidx=' in html or 'workoutCardHTML' in html, \
@@ -630,7 +640,7 @@ def test_card_html_has_data_attributes():
 
 def test_card_details_modal_fields():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         for field in ['detailClose', 'detailEdit', 'detailDelete']:
@@ -642,7 +652,7 @@ def test_card_details_modal_fields():
 
 def test_card_strava_readonly():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         assert "isStrava" in html or "source === 'strava'" in html, \
@@ -654,7 +664,7 @@ def test_card_strava_readonly():
 
 def test_card_click_stops_propagation():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         assert "stopPropagation" in html, \
@@ -667,7 +677,7 @@ def test_card_click_stops_propagation():
 
 def test_card_escape_closes_modal():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         assert "Escape" in html, "Must handle Escape key to close modal"
@@ -677,7 +687,7 @@ def test_card_escape_closes_modal():
 
 def test_card_edit_and_delete_buttons():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         assert "editWorkout" in html, "Dashboard must define editWorkout function"
@@ -689,7 +699,7 @@ def test_card_edit_and_delete_buttons():
 
 def test_card_all_views_attach_handlers():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.get("/andrew")
         html = resp.data.decode()
         render_fns = ['renderMonth', 'renderWeek', 'renderThreeDay', 'renderDay']
@@ -716,7 +726,7 @@ def test_hs_save_and_get():
     _cleanup_health()
     try:
         app = _get_app()
-        with app.test_client() as c:
+        with _admin_client(app) as c:
             resp = c.post("/api/coach/health", json={
                 "date": "2026-07-22",
                 "recovery": 63,
@@ -747,7 +757,7 @@ def test_hs_invalid_values_rejected():
     _cleanup_health()
     try:
         app = _get_app()
-        with app.test_client() as c:
+        with _admin_client(app) as c:
             resp = c.post("/api/coach/health", json={
                 "date": "2026-07-22", "recovery": 150, "sleep": 73, "exertion": 0,
             })
@@ -808,7 +818,7 @@ def test_hs_blended_readiness():
 
 def test_hs_upload_endpoint():
     app = _get_app()
-    with app.test_client() as c:
+    with _admin_client(app) as c:
         resp = c.post("/api/coach/health/upload", data={})
         assert resp.status_code == 400
 
