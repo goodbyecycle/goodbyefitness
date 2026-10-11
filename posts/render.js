@@ -1,9 +1,9 @@
-const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const { chromium } = require(process.env.PW || 'playwright');
 const fs = require('fs');
 const path = require('path');
 
 const DIR = __dirname;
-const OUT = '/home/user/goodbyefitness/posts';
+const OUT = process.env.OUT || '/home/user/goodbyefitness/posts';
 fs.mkdirSync(OUT, { recursive: true });
 
 // *word* = underlined emphasis
@@ -94,7 +94,7 @@ const layoutFn = (text, seed) => {
 };
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(() => chromium.launch());
+  const browser = await (process.env.PW ? chromium.launch() : chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }));
   const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
   await page.setContent(html);
   await page.evaluate(() => document.fonts.load('100px B'));
