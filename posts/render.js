@@ -26,8 +26,8 @@ const fontB64 = fs.readFileSync(process.env.FONT || path.join(DIR, 'fonts/Caveat
 
 const html = `<!doctype html><html><head><style>
 @font-face{font-family:B;src:url(data:font/ttf;base64,${fontB64});}
-html,body{margin:0;background:#fff;}
-#c{width:1080px;height:1920px;position:relative;overflow:hidden;background:#fff;}
+html,body{margin:0;background:transparent;}
+#c{width:1080px;height:1920px;position:relative;overflow:hidden;background:transparent;}
 .l{position:absolute;left:0;white-space:nowrap;font-family:B;color:#FF1493;line-height:1;transform-origin:left center;}
 .u{position:relative;display:inline-block;}
 .u svg{position:absolute;left:-4%;width:108%;bottom:-0.06em;height:0.16em;overflow:visible;}
@@ -102,7 +102,7 @@ const layoutFn = (text, seed) => {
   for (let i = 0; i < poems.length; i++) {
     await page.evaluate(`(${layoutFn.toString()})(${JSON.stringify(poems[i])}, ${i + 3})`);
     const f = path.join(OUT, `post-${String(i + 1).padStart(2, '0')}.png`);
-    await page.locator('#c').screenshot({ path: f });
+    await page.locator('#c').screenshot({ path: f, omitBackground: true });
     console.log(f);
   }
   await browser.close();
