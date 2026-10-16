@@ -30,3 +30,11 @@ one key word underlined.
    ./build.sh scene.mp4 quotes/<name>.txt out.mp4 voiceover.mp3   # or quotes/<name>.png
    ```
 Requires ffmpeg and Python 3 with Pillow.
+
+### Timing a different clip
+If Sterling is still moving when the fade starts, skip the start of the clip and/or hold
+the scene longer (everything after — fade, quote, voice — shifts with it; end card stays at 19.25s):
+```
+START=0.5 DELAY=1.5 ./build.sh scene.mp4 quotes/<name>.png out.mp4 voiceover.mp3
+```
+The Oct 15 "sits back and crosses his legs" clip uses `START=0.5 DELAY=1.5`.
