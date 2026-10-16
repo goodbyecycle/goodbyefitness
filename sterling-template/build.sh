@@ -1,6 +1,7 @@
 #!/bin/bash
 # Build a Sterling's Life Lessons reel from a new scene clip + quote.
-# usage: ./build.sh <scene.mp4> <quotes/name.txt> <out.mp4>
+# usage: ./build.sh <scene.mp4> <quotes/name.txt | quotes/name.png> <out.mp4>
+#   .txt -> rendered in Caveat Brush; .png -> used as-is (720x1280, transparent)
 #
 # Timeline (matches assets/sterlings-life-lessons-01.mp4):
 #   0-4.5s    scene
@@ -12,7 +13,10 @@ set -e
 D=$(cd "$(dirname "$0")" && pwd)
 TPL="$D/assets/sterlings-life-lessons-01.mp4"
 CARD=$(mktemp --suffix=.png)
-python3 "$D/textcard.py" "$2" "$CARD"
+case "$2" in
+  *.png) cp "$2" "$CARD" ;;
+  *) python3 "$D/textcard.py" "$2" "$CARD" ;;
+esac
 ffmpeg -v error -y -i "$1" -loop 1 -t 19.25 -i "$CARD" -ss 19.26 -i "$TPL" -i "$TPL" -filter_complex "
 [0:v]trim=0:8,setpts=PTS-STARTPTS,scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,fps=24,format=yuv420p,
  eq=eval=frame:saturation='if(lt(t,4.5),1,max(0,1-(t-4.5)/2.5))',

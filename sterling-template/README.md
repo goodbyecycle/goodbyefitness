@@ -20,8 +20,10 @@ one key word underlined.
 1. Generate the scene clip in Higgsfield (9:16, ~10s; only the first 8s is used).
 2. Write the quote in `quotes/<name>.txt`, one on-screen line per line,
    and wrap the key word in underscores: `_weaponizing_`.
+   Or use a handwritten quote image (pink on white):
+   `python3 quote_from_image.py hand.webp quotes/<name>.png` and pass the `.png` instead.
 3. Run:
    ```
-   ./build.sh scene.mp4 quotes/<name>.txt out.mp4
+   ./build.sh scene.mp4 quotes/<name>.txt out.mp4   # or quotes/<name>.png
    ```
 Requires ffmpeg and Python 3 with Pillow.
