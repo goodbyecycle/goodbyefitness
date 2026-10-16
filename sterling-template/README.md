@@ -1,0 +1,27 @@
+# Sterling's Life Lessons — reel template
+
+Master reference: `assets/sterlings-life-lessons-01.mp4` (720x1280, 24fps, ~21.5s).
+Every new reel reuses its music and end card.
+
+## Format
+| Time | What happens |
+|---|---|
+| 0–4.5s | Sterling scene (mustard velvet couch, bike shop, blue Goodbye Coffee mug with pink G) |
+| 4.5–8s | Scene desaturates and fades to black; pink quote fades in |
+| 8–18s | Quote holds on black |
+| 18–19s | Quote fades out |
+| 19.25s–end | "Sterling's Life Lessons / Good Bye Coffee / @goodbye_coffee_co" end card |
+| Music | Same track as #01, starting ~4.5s |
+
+Text: Caveat Brush, pink `#FC006C`, centered, each line sized to fill the width,
+one key word underlined.
+
+## Making a new one
+1. Generate the scene clip in Higgsfield (9:16, ~10s; only the first 8s is used).
+2. Write the quote in `quotes/<name>.txt`, one on-screen line per line,
+   and wrap the key word in underscores: `_weaponizing_`.
+3. Run:
+   ```
+   ./build.sh scene.mp4 quotes/<name>.txt out.mp4
+   ```
+Requires ffmpeg and Python 3 with Pillow.
