@@ -15,6 +15,13 @@ set -e
 D=$(cd "$(dirname "$0")" && pwd)
 TPL="$D/assets/sterlings-life-lessons-01.mp4"
 CARD=$(mktemp --suffix=.png)
+if [ -n "$4" ]; then
+  VO='[4:a]aformat=sample_rates=44100:channel_layouts=stereo,loudnorm=I=-16:TP=-2:LRA=7,adelay=4500|4500[vo];
+[3:a]aformat=sample_rates=44100:channel_layouts=stereo[mu];
+[mu][vo]amix=inputs=2:duration=first:normalize=0,afade=t=out:st=20.6:d=0.9[a]'
+else
+  VO='[3:a]aformat=sample_rates=44100:channel_layouts=stereo,dynaudnorm=f=500:g=31,loudnorm=I=-18:TP=-2,afade=t=out:st=20.6:d=0.9[a]'
+fi
 case "$2" in
   *.png) cp "$2" "$CARD" ;;
   *) python3 "$D/textcard.py" "$2" "$CARD" ;;
@@ -27,8 +34,6 @@ ffmpeg -v error -y -i "$1" -loop 1 -t 19.25 -i "$CARD" -ss 19.26 -i "$TPL" -i "$
 [sc][tx]overlay=0:0:format=auto,format=yuv420p,trim=0:19.25,setpts=PTS-STARTPTS[main];
 [2:v]fps=24,format=yuv420p,setpts=PTS-STARTPTS[end];
 [main][end]concat=n=2:v=1:a=0[v];
-[4:a]aformat=sample_rates=44100:channel_layouts=stereo,loudnorm=I=-16:TP=-2:LRA=7,adelay=4500|4500[vo];
-[3:a]aformat=sample_rates=44100:channel_layouts=stereo[mu];
-[mu][vo]amix=inputs=2:duration=first:normalize=0,afade=t=out:st=20.6:d=0.9[a]" \
+$VO" \
  -map "[v]" -map "[a]" -c:v libx264 -crf 18 -preset medium -pix_fmt yuv420p -c:a aac -b:a 192k -shortest -movflags +faststart "$3"
 rm -f "$CARD"
