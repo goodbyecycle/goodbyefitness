@@ -11,7 +11,7 @@ Every new reel reuses its music and end card.
 | 8–18s | Quote holds on black |
 | 18–19s | Quote fades out |
 | 19.25s–end | "Sterling's Life Lessons / Good Bye Coffee / @goodbye_coffee_co" end card |
-| Music | Same track as #01, starting ~4.5s |
+| Audio | `assets/music-bed.m4a` (#01's music with the old voice removed) + new voiceover from 4.5s |
 
 Text: Caveat Brush, pink `#FC006C`, centered, each line sized to fill the width,
 one key word underlined.
@@ -22,8 +22,11 @@ one key word underlined.
    and wrap the key word in underscores: `_weaponizing_`.
    Or use a handwritten quote image (pink on white):
    `python3 quote_from_image.py hand.webp quotes/<name>.png` and pass the `.png` instead.
-3. Run:
+3. Voiceover: in Higgsfield, text-to-speech → ElevenLabs → preset voice **"Sterling"**
+   (voice id `dc382508-c8bd-443c-8cb2-46e57b8d2e6f`). Write the quote with `...` between
+   phrases for Sterling's slow pacing. Aim for ~11–13s.
+4. Run:
    ```
-   ./build.sh scene.mp4 quotes/<name>.txt out.mp4   # or quotes/<name>.png
+   ./build.sh scene.mp4 quotes/<name>.txt out.mp4 voiceover.mp3   # or quotes/<name>.png
    ```
 Requires ffmpeg and Python 3 with Pillow.
