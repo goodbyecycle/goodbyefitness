@@ -33,3 +33,26 @@ Format 9:16 · 15 shots · ~2:20 · Picture has no audio (VO and score added in 
 | 24 | ~12s + hold | Final push on mug + journal | "Huh. I thought that was pretty interesting." / "Especially coming from a man who'd just been told he didn't have much life left to share." → add **CHOOSE WISELY** on the page in post |
 
 **Alternates available:** 06 (walking toward camera), 10 (hands on journals), 13 (café arrival), 17 (writing, side angle), 19 (mug in the foreground), 23 (journal set beside the mug).
+
+## Rev 4: voiceover laid in (v3 cut, 2:30)
+
+- **Narrator:** Higgsfield preset voice "Sterling" on the ElevenLabs engine (`text2speech_v2`, variant `elevenlabs`). The script is split into 12 lines, one per shot, and each line was checked against the script by speech-to-text.
+- **Edit changes to fit the narration:**
+  - Spare shot 06 (walking toward camera) goes back in between 05 and 07.
+  - Shot 08 is slowed to about 14.6s so "Whatever the hell that means" lands as he enters the bookstore (shot 09).
+- **Audio:** normalized to -16 LUFS. There is no music yet; a score can go under the narration.
+
+| Line | Lands on | Starts at |
+|---|---|---|
+| "Sterling started coming in…" | 05 | 0:13.5 |
+| "Sorry, you've got terminal cancer…" | 07 | 0:30.1 |
+| "In reality, the doctor was…" | 08 | 0:40.8 |
+| "Whatever the hell that means." | 09 | 0:51.8 |
+| "Anyway… Same couch." | 14 | 1:14.4 |
+| "Same coffee." | 15 | 1:21.5 |
+| "Same leather journal…" | 16 | 1:27.4 |
+| "I guess when somebody tells you…" | 18 | 1:36.3 |
+| "But I do remember the very first thing he wrote…" | 20 | 1:48.8 |
+| "The most important decision…" | 21 | 1:58.2 |
+| "He stopped writing… Choose wisely." | 22 | 2:06.4 |
+| "Huh. I thought that was pretty interesting…" | 24 | 2:15.9 |
