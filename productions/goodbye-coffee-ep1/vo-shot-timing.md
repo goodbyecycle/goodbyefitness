@@ -56,3 +56,11 @@ Format 9:16 · 15 shots · ~2:20 · Picture has no audio (VO and score added in 
 | "The most important decision…" | 21 | 1:58.2 |
 | "He stopped writing… Choose wisely." | 22 | 2:06.4 |
 | "Huh. I thought that was pretty interesting…" | 24 | 2:15.9 |
+
+## Final (2:39): ending, quote card and end card
+
+- **No lettering on the journal page.** The page stays clean, per direction.
+- **Final shot (24):** the push on the mug and journal carries the last narration line. The scene then darkens to black while the quote fades in over it, matching the established reel style.
+- **Quote card (6s):** hot pink (#FF1393) brush handwriting (Caveat Brush) on black: "The most important decision you'll ever make in life is choosing who you share it with. Choose wisely.", with "wisely" underlined.
+- **End card (5.5s):** the Sterling card, "Advice from a dying man" with Like / Subscribe / Follow (`brand/sterling-endcard.webp`).
+- **Music:** the piano score runs to the end. The final C-major chord lands on the quote card and rings into the end card. The piano dips about 13 dB under the narration.
