@@ -1,7 +1,7 @@
 """Build the 120x40 Goodbye Coffee back-wall banner layout.
 
 Usage:
-    python3 banner/build_back_wall.py <designer-proof.png> <rider-photo-clean.jpg> <rider-mask.png> <fonts-dir>
+    python3 banner/build_back_wall.py <designer-proof.png> <rider-photo-clean.jpg> <rider-mask.png> <fonts-dir> [ink|photo] [out-name]
 
 Starts from the designer's proof (art, logo, URL, handle), then:
   - removes the drawn-on grommets (the printer adds real ones)
@@ -9,6 +9,7 @@ Starts from the designer's proof (art, logo, URL, handle), then:
   - puts the real /ride QR code in the white box
   - adds the "COFFEE FOR RIDERS" line and the On the Bag call to action
 """
+import os
 import sys
 import cv2
 import numpy as np
@@ -41,7 +42,7 @@ def load_proof(path):
     return cv2.resize(back, (back.shape[1] * 2, back.shape[0] * 2), interpolation=cv2.INTER_CUBIC)
 
 
-def ink_rider(photo_path, mask_path):
+def ink_rider(photo_path, mask_path, style="ink"):
     p = cv2.imread(photo_path)
     mask = cv2.imread(mask_path, 0)
     ys, xs = np.where(mask > 0)
@@ -49,12 +50,18 @@ def ink_rider(photo_path, mask_path):
     mask = mask[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
 
     g = cv2.cvtColor(p, cv2.COLOR_BGR2GRAY)
-    g = cv2.createCLAHE(3.0, (8, 8)).apply(g)
-    g = cv2.addWeighted(g, 1.6, cv2.GaussianBlur(g, (0, 0), 3), -0.6, 0)
-    g = cv2.LUT(g, np.clip((np.arange(256) - 60) * 1.6, 0, 255).astype(np.uint8))
-    g = (np.round(g / 255 * 4) / 4 * 255).astype(np.uint8)
-    edges = cv2.Canny(cv2.GaussianBlur(cv2.cvtColor(p, cv2.COLOR_BGR2GRAY), (5, 5), 0), 50, 130)
-    g[cv2.dilate(edges, np.ones((2, 2), np.uint8)) > 0] = 0
+    if style == "photo":
+        # Plain high-contrast black and white: no posterizing, no drawn outlines.
+        g = cv2.createCLAHE(2.0, (8, 8)).apply(g)
+        g = cv2.LUT(g, np.clip((np.arange(256) - 25) * 1.25, 0, 255).astype(np.uint8))
+        edges = np.zeros_like(g)
+    else:
+        g = cv2.createCLAHE(3.0, (8, 8)).apply(g)
+        g = cv2.addWeighted(g, 1.6, cv2.GaussianBlur(g, (0, 0), 3), -0.6, 0)
+        g = cv2.LUT(g, np.clip((np.arange(256) - 60) * 1.6, 0, 255).astype(np.uint8))
+        g = (np.round(g / 255 * 4) / 4 * 255).astype(np.uint8)
+        edges = cv2.Canny(cv2.GaussianBlur(cv2.cvtColor(p, cv2.COLOR_BGR2GRAY), (5, 5), 0), 50, 130)
+        g[cv2.dilate(edges, np.ones((2, 2), np.uint8)) > 0] = 0
     ink = cv2.cvtColor(g, cv2.COLOR_GRAY2BGR)
 
     hsv = cv2.cvtColor(p, cv2.COLOR_BGR2HSV)
@@ -94,7 +101,7 @@ def splash_panel(h, lw, cx, cy, seed=11):
     return panel, xx
 
 
-def main(proof_path, photo_path, mask_path, fonts):
+def main(proof_path, photo_path, mask_path, fonts, style="ink", out_name="goodbye-coffee-back-wall-FINAL-layout.png"):
     base = load_proof(proof_path)
     H, W = base.shape[:2]
 
@@ -117,7 +124,7 @@ def main(proof_path, photo_path, mask_path, fonts):
     # Left art: real rider on an ink splash, cross-faded into the original art.
     LW, cx = 800, 360
     panel, xx = splash_panel(H, LW, cx, H * 0.45)
-    ink, alpha = ink_rider(photo_path, mask_path)
+    ink, alpha = ink_rider(photo_path, mask_path, style)
     rh = int(H * 0.97)
     rw = int(ink.shape[1] * rh / ink.shape[0])
     ink = cv2.resize(ink, (rw, rh), interpolation=cv2.INTER_AREA)
@@ -158,9 +165,9 @@ def main(proof_path, photo_path, mask_path, fonts):
     line("COFFEE FOR RIDERS", 92, 1420, 55)
 
     out = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
-    cv2.imwrite(f"{HERE}/goodbye-coffee-back-wall-FINAL-layout.png", out)
+    cv2.imwrite(os.path.join(HERE, out_name), out)
     print("qr:", [r.text for r in zxingcpp.read_barcodes(out)])
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:5])
+    main(*sys.argv[1:7])
