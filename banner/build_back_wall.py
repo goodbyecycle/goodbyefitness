@@ -20,6 +20,31 @@ HERE = sys.path[0]
 BONE = (0xF2, 0xED, 0xE4)
 BLACK_BGR = (10, 10, 10)
 ROYAL_BGR = np.array([158, 42, 11], np.float32)
+BG = (6, 6, 6)  # flat background behind the center block
+
+SOCIAL_ROW = (645, 768)
+SOCIAL_CENTER_X = 1420
+SOCIAL_TEXT = "GOODBYE COFFEE CO"
+SOCIAL_CAP = 60  # px cap height in the 3230-wide layout (about 2.3" at 40" tall)
+ICON_SCALE = 0.72
+ICON_SRC_WIDTHS = (106, 102, 124)  # Instagram, Facebook, YouTube in the upscaled proof
+ICON_GAP, TEXT_GAP = 33, 45
+
+
+def social_layout(fonts, icon_widths):
+    """Icon x positions and the text box (x0, y0, x1, y1) for the social row."""
+    f = ImageFont.truetype(f"{fonts}/ChangaOne-Regular.ttf", 100)
+    b = f.getbbox(SOCIAL_TEXT)
+    text_w = int((b[2] - b[0]) * SOCIAL_CAP / (b[3] - b[1]))
+    total = sum(icon_widths) + ICON_GAP * (len(icon_widths) - 1) + TEXT_GAP + text_w
+    x = SOCIAL_CENTER_X - total // 2
+    xs = []
+    for w in icon_widths:
+        xs.append(x)
+        x += w + ICON_GAP
+    x += TEXT_GAP - ICON_GAP
+    mid = sum(SOCIAL_ROW) // 2
+    return xs, (x, mid - SOCIAL_CAP // 2, x + text_w, mid + SOCIAL_CAP // 2)
 
 
 def load_proof(path):
@@ -105,19 +130,19 @@ def main(proof_path, photo_path, mask_path, fonts, style="ink", out_name="goodby
     base = load_proof(proof_path)
     H, W = base.shape[:2]
 
-    # Social row: drop the Facebook icon (its username differs), keep IG + YouTube + handle.
-    y0, y1 = 645, 768
-    pieces = [base[y0:y1, 889:995].copy(), base[y0:y1, 1194:1318].copy(), base[y0:y1, 1366:2056].copy()]
-    gap = 48
-    x = (889 + 2056) // 2 - (sum(p.shape[1] for p in pieces) + gap * 2) // 2
-    band = base[y0:y1, 880:2066]
-    marks = (cv2.cvtColor(band, cv2.COLOR_BGR2GRAY) > 45).astype(np.uint8) * 255
-    base[y0:y1, 880:2066] = cv2.inpaint(band, cv2.dilate(marks, np.ones((7, 7), np.uint8)), 7, cv2.INPAINT_TELEA)
-    for p in pieces:
-        a = np.clip((cv2.cvtColor(p, cv2.COLOR_BGR2GRAY).astype(np.float32) - 30) / 60, 0, 1)[..., None]
-        roi = base[y0:y1, x:x + p.shape[1]].astype(np.float32)
-        base[y0:y1, x:x + p.shape[1]] = (p * a + roi * (1 - a)).astype(np.uint8)
-        x += p.shape[1] + gap
+    # Social row: Instagram, Facebook and YouTube icons + one search name, since the
+    # Facebook username (goodbyecoffeeco) differs from the other two (@goodbye_coffee_co).
+    y0, y1 = SOCIAL_ROW
+    icons = [base[y0:y1, 889:995].copy(), base[y0:y1, 1044:1146].copy(), base[y0:y1, 1194:1318].copy()]
+    icons = [cv2.resize(i, (int(i.shape[1] * ICON_SCALE), int(i.shape[0] * ICON_SCALE)), interpolation=cv2.INTER_AREA)
+             for i in icons]
+    base[y0 - 10:y1 + 10, 780:2085] = BG
+    icon_xs, text_box = social_layout(fonts, [i.shape[1] for i in icons])
+    for icon, x in zip(icons, icon_xs):
+        y = (y0 + y1) // 2 - icon.shape[0] // 2
+        a = np.clip((icon.max(axis=2).astype(np.float32) - 25) / 40, 0, 1)[..., None]
+        roi = base[y:y + icon.shape[0], x:x + icon.shape[1]].astype(np.float32)
+        base[y:y + icon.shape[0], x:x + icon.shape[1]] = (icon * a + roi * (1 - a)).astype(np.uint8)
 
     out = base.copy()
 
@@ -163,6 +188,13 @@ def main(proof_path, photo_path, mask_path, fonts, style="ink", out_name="goodby
     line("ON OUR BAG", 66, qcx, bottom + 22)
 
     line("COFFEE FOR RIDERS", 92, 1420, 55)
+
+    tx0, ty0, tx1, ty1 = text_box
+    f = ImageFont.truetype(font_path, 100)
+    b = d.textbbox((0, 0), SOCIAL_TEXT, font=f)
+    f = ImageFont.truetype(font_path, int(100 * (ty1 - ty0) / (b[3] - b[1])))
+    b = d.textbbox((0, 0), SOCIAL_TEXT, font=f)
+    d.text((tx0 - b[0], ty0 - b[1]), SOCIAL_TEXT, font=f, fill=BONE)
 
     out = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
     cv2.imwrite(os.path.join(HERE, out_name), out)

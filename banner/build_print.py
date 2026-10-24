@@ -25,10 +25,15 @@ LOGO = (805, 185, 2060, 622)
 LOGO_CLEAR = (790, 165, 2075, 640)
 CENTER = (760, 0, 2095, 1062)  # flat-black area between the left and right art
 URL = (750, 830, 2500, 960)
-HANDLE = (1290, 645, 1985, 768)
 TAGLINE = (1000, 40, 1840, 130)
 QR_LABEL = (2120, 45, 2565, 200)
 QR_BOX = (2100, 220, 2582, 710)
+
+
+def social_text_box():
+    from build_back_wall import ICON_SCALE, ICON_SRC_WIDTHS, social_layout
+    _, box = social_layout(f"{HERE}/fonts", [int(w * ICON_SCALE) for w in ICON_SRC_WIDTHS])
+    return box
 
 
 def clear(img, box, s):
@@ -63,7 +68,8 @@ def main(logo_path):
     s = OUT_W / layout.shape[1]
     img = cv2.resize(layout, (OUT_W, round(layout.shape[0] * s)), interpolation=cv2.INTER_LANCZOS4)
 
-    for box in (LOGO_CLEAR, URL, HANDLE, TAGLINE, QR_LABEL):
+    handle = social_text_box()
+    for box in (LOGO_CLEAR, URL, handle, TAGLINE, QR_LABEL):
         clear(img, box, s)
 
     # Logo from the original file, fitted to the logo box.
@@ -96,7 +102,7 @@ def main(logo_path):
     d = ImageDraw.Draw(im)
     draw_centered(d, "GOODBYECOFFEE.COM", URL, s)
     draw_centered(d, "COFFEE FOR RIDERS", TAGLINE, s)
-    draw_centered(d, "@goodbye_coffee_co", HANDLE, s)
+    draw_centered(d, "GOODBYE COFFEE CO", handle, s)
     lx0, ly0, lx1, ly1 = QR_LABEL
     mid = (ly0 + ly1) / 2
     top, bottom = (lx0, ly0, lx1, mid - 6), (lx0, mid + 6, lx1, ly1)
