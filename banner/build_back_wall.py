@@ -97,6 +97,21 @@ def splash_panel(h, lw, cx, cy, seed=11):
 def main(proof_path, photo_path, mask_path, fonts):
     base = load_proof(proof_path)
     H, W = base.shape[:2]
+
+    # Social row: drop the Facebook icon (its username differs), keep IG + YouTube + handle.
+    y0, y1 = 645, 768
+    pieces = [base[y0:y1, 889:995].copy(), base[y0:y1, 1194:1318].copy(), base[y0:y1, 1366:2056].copy()]
+    gap = 48
+    x = (889 + 2056) // 2 - (sum(p.shape[1] for p in pieces) + gap * 2) // 2
+    band = base[y0:y1, 880:2066]
+    marks = (cv2.cvtColor(band, cv2.COLOR_BGR2GRAY) > 45).astype(np.uint8) * 255
+    base[y0:y1, 880:2066] = cv2.inpaint(band, cv2.dilate(marks, np.ones((7, 7), np.uint8)), 7, cv2.INPAINT_TELEA)
+    for p in pieces:
+        a = np.clip((cv2.cvtColor(p, cv2.COLOR_BGR2GRAY).astype(np.float32) - 30) / 60, 0, 1)[..., None]
+        roi = base[y0:y1, x:x + p.shape[1]].astype(np.float32)
+        base[y0:y1, x:x + p.shape[1]] = (p * a + roi * (1 - a)).astype(np.uint8)
+        x += p.shape[1] + gap
+
     out = base.copy()
 
     # Left art: real rider on an ink splash, cross-faded into the original art.
