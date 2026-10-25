@@ -76,18 +76,20 @@ def main(logo_path):
         if max(b[2] - b[0] for b in boxes) <= avail:
             break
         size -= 2
-    url_font = ImageFont.truetype(FONT, 64)
-    ub = d.textbbox((0, 0), "GOODBYECOFFEE.COM", font=url_font)
-    gap, url_gap = 36, 44
+    gap = 36
     heights = [b[3] - b[1] for b in boxes]
-    block = sum(heights) + gap + url_gap + (ub[3] - ub[1])
-    y = zone_mid - block // 2
+    y = zone_mid - (sum(heights) + gap) // 2
     cx = (left + 8 + 70 + right) // 2
     for t, b, h in zip(lines, boxes, heights):
         d.text((cx - (b[2] - b[0]) // 2 - b[0], y - b[1]), t, font=f, fill=BONE)
         y += h + gap
-    y += url_gap - gap
-    d.text((cx - (ub[2] - ub[0]) // 2 - ub[0], y - ub[1]), "GOODBYECOFFEE.COM", font=url_font, fill=BONE)
+
+    # Small website line along the bottom, centered on the banner.
+    url_font = ImageFont.truetype(FONT, 72)
+    ub = d.textbbox((0, 0), "GOODBYECOFFEE.COM", font=url_font)
+    url_mid = zone_bottom + (H - zone_bottom) // 2 - 20
+    d.text((W // 2 - (ub[2] - ub[0]) // 2 - ub[0], url_mid - (ub[3] - ub[1]) // 2 - ub[1]),
+           "GOODBYECOFFEE.COM", font=url_font, fill=BONE)
 
     path = f"{HERE}/goodbye-coffee-table-front-PRINT-60x18.png"
     im.save(path, dpi=(50, 50))
