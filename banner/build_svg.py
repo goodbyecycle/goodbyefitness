@@ -277,7 +277,12 @@ def back_wall(logo, logo_path):
     for t, box in (("PUT YOUR RIDE", top_box), ("ON OUR BAG", bottom_box)):
         body.append(text_svg(t, size=size, cx=(box[0] + box[2]) / 2, cy=(box[1] + box[3]) / 2)[0])
 
-    return document(120, round(120 * H / W, 2), W, H, "".join(body))
+    # The art is 3.04:1; scale it to fill exactly 120" x 40" and trim the overflow evenly
+    # off the left and right edges (into the art, never the text or QR code).
+    vh = W / 3
+    k = vh / H
+    ox = (W * k - W) / 2
+    return document(120, 40, W, round(vh), f'<g transform="translate({-ox:.2f},0) scale({k:.6f})">{"".join(body)}</g>')
 
 
 def main(logo_path):
