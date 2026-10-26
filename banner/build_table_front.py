@@ -13,7 +13,9 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = sys.path[0]
 W, H = 3000, 900  # 60 x 18 in at 50 ppi
 MARGIN = 150
-TOP_ZONE = (60, 620)  # px; the bottom ~5.5" stays empty black
+TOP_ZONE = (60, 620)  # px; logo, tagline and QR stay above leg height
+URL_CAP = 100  # px cap height of the website line (2")
+URL_BOTTOM = 75  # px from the bottom edge to the website line (1.5")
 BG = (10, 10, 10)
 BONE = (0xF2, 0xED, 0xE4)
 FONT = f"{HERE}/fonts/ChangaOne-Regular.ttf"
@@ -84,11 +86,12 @@ def main(logo_path):
         d.text((cx - (b[2] - b[0]) // 2 - b[0], y - b[1]), t, font=f, fill=BONE)
         y += h + gap
 
-    # Small website line along the bottom, centered on the banner.
-    url_font = ImageFont.truetype(FONT, 72)
+    # Website line along the bottom, centered on the banner.
+    url_font = ImageFont.truetype(FONT, 100)
     ub = d.textbbox((0, 0), "GOODBYECOFFEE.COM", font=url_font)
-    url_mid = zone_bottom + (H - zone_bottom) // 2 - 20
-    d.text((W // 2 - (ub[2] - ub[0]) // 2 - ub[0], url_mid - (ub[3] - ub[1]) // 2 - ub[1]),
+    url_font = ImageFont.truetype(FONT, round(100 * URL_CAP / (ub[3] - ub[1])))
+    ub = d.textbbox((0, 0), "GOODBYECOFFEE.COM", font=url_font)
+    d.text((W // 2 - (ub[2] - ub[0]) // 2 - ub[0], H - URL_BOTTOM - (ub[3] - ub[1]) - ub[1]),
            "GOODBYECOFFEE.COM", font=url_font, fill=BONE)
 
     path = f"{HERE}/goodbye-coffee-table-front-PRINT-60x18.png"

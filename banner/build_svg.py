@@ -180,7 +180,7 @@ def valance(logo):
 
 
 def table_front(logo):
-    from build_table_front import MARGIN, TOP_ZONE, FACEBOOK_URL
+    from build_table_front import MARGIN, TOP_ZONE, FACEBOOK_URL, URL_CAP, URL_BOTTOM
     W, H = 3000, 900
     zone_top, zone_bottom = TOP_ZONE
     zone_mid = (zone_top + zone_bottom) / 2
@@ -217,8 +217,8 @@ def table_front(logo):
         y += h + gap
 
     _, a, b, c, e = text_path("GOODBYECOFFEE.COM", 1000)
-    url_size = 1000 * 45 / (e - b)
-    url_mid = zone_bottom + (H - zone_bottom) / 2 - 20
+    url_size = 1000 * URL_CAP / (e - b)
+    url_mid = H - URL_BOTTOM - URL_CAP / 2
     p, _, _ = text_svg("GOODBYECOFFEE.COM", size=url_size, cx=W / 2, cy=url_mid)
     body.append(p)
     return document(60, 18, W, H, "".join(body))
