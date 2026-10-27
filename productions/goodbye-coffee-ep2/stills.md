@@ -1,0 +1,22 @@
+# Ep. 2 storyboard stills (graphic-novel style)
+
+Anchor for the aged Sterling: shot 02 (`20f002de`). The illness now shows: he is thinner and stooped, with sunken cheeks, an overcoat, a blue newsboy cap and a wooden cane.
+Selective color: the blue cap, the royal-blue mug with the hot-pink G, the brown journal with a hot-pink ribbon. Everything else is black-and-white ink.
+
+| Shot | Description | Job ID | Link |
+|---|---|---|---|
+| 01 | Door opens, snow, Sterling in the doorway | c7c9bd4b-e34d-44fa-8c93-bc972c9f1d0d | [01](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_c7c9bd4b-e34d-44fa-8c93-bc972c9f1d0d.png) |
+| 02 | Standing in line on his cane | 20f002de-e1b4-492f-bad0-7f401d493453 | [02](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_232610_20f002de-e1b4-492f-bad0-7f401d493453.png) |
+| 03 | Barista pours | 24768a7e-6d64-49c4-9f8a-163a55a6c4ae | [03](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_24768a7e-6d64-49c4-9f8a-163a55a6c4ae.png) |
+| 04 | Mug slid across the counter | 24a370aa-4745-423b-b850-bb4f8080697d | [04](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_24a370aa-4745-423b-b850-bb4f8080697d.png) |
+| 05 | His hands around the mug | 5f54c9f3-8b1d-490f-8f4e-d4596e6a3b58 | [05](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_5f54c9f3-8b1d-490f-8f4e-d4596e6a3b58.png) |
+| 06 | Slow walk to the couch | cd53614a-201a-4ddf-a094-236afa403714 | [06](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_cd53614a-201a-4ddf-a094-236afa403714.png) |
+| 07 | Sits, sets the mug down | 341c6c24-06d6-4aa1-bc3c-cc326b528aa4 | [07](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_341c6c24-06d6-4aa1-bc3c-cc326b528aa4.png) |
+| 08 | Journal: "Devin" | b308e242-1bd5-44a8-8304-d2632241b21c | [08](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_b308e242-1bd5-44a8-8304-d2632241b21c.png) |
+| 09 | Motionless at the snowy window | aa1e3624-0dcc-442d-af02-94aa9c7825d1 | [09](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233346_aa1e3624-0dcc-442d-af02-94aa9c7825d1.png) |
+| 10 | Flashback: brothers part in the rain | 3fa50ec2-54f6-480e-b132-085a14987228 | [10](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233346_3fa50ec2-54f6-480e-b132-085a14987228.png) |
+| 11 | Montage: chair, phone, invitation | c6a7254b-f87a-4225-a5d7-3847ee78d795 | [11](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233029_c6a7254b-f87a-4225-a5d7-3847ee78d795.png) |
+| 12 | Close-up, wet eyes, by the window | b224e6dd-7b6d-409d-b88b-3dcba16dc743 | [12](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233228_b224e6dd-7b6d-409d-b88b-3dcba16dc743.png) |
+| 13 | Cold mug | 56596f78-dab7-4d6b-b170-e47fb808a51c | [13](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233036_56596f78-dab7-4d6b-b170-e47fb808a51c.png) |
+| 14 | Journal page: the lesson | 21b2894d-0900-4055-a0eb-6f2ad15d7804 | [14](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233036_21b2894d-0900-4055-a0eb-6f2ad15d7804.png) |
+| 15 | Empty couch, mug, journal, ribbon | 4202db16-3f20-4dde-b7d8-1df2c5c36ed0 | [15](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233036_4202db16-3f20-4dde-b7d8-1df2c5c36ed0.png) |
