@@ -24,9 +24,9 @@ Format 9:16 · graphic-novel look (same as Ep. 1) · narrator: the mug, in first
 | 09 | Sterling still, pen resting, not writing; the mug in the foreground | "Then he didn't write anything for a long time." |
 | 10 | FLASHBACK: father's funeral, rain, two brothers far apart under umbrellas | "I found out later Devin was his brother. / Something happened between them at their father's funeral…" |
 | 11 | FLASHBACK: parking lot in the rain; one brother turns and walks to his car | "He could've cleared it up right there, in the parking lot, in the rain. / He didn't. / So it sat. And then it grew." |
-| 12 | Montage: empty chair at Christmas · a phone ringing on a table · a wedding photo seen from afar | "A missed Christmas. A phone call he let ring. A wedding he heard about secondhand. / Thirty years." |
+| 12 | Montage: empty chair at Christmas · a phone ringing on a table · a wedding photo seen from afar | "A missed Christmas. A phone call he let ring. A wedding he heard about secondhand. / Twelve years." |
 | 13 | Sterling looks out the frosted window; lips move: "I don't even remember what it was." | "And here's the part that got me… 'I don't even remember what it was.'" |
-| 14 | The mug: no steam, coffee gone still | "He'd lost thirty years with his brother over something he couldn't name anymore. / His coffee went cold that morning. He never noticed." |
+| 14 | The mug: no steam, coffee gone still | "He'd lost twelve years with his brother over something he couldn't name anymore. / His coffee went cold that morning. He never noticed." |
 | 15 | Empty couch, the journal left open, the cane gone; the mug alone | "When he finally left, the page said this:" |
 | 16 | QUOTE CARD (pink brush on black): **"Say it while it's small. Resentment collects interest."** | — |
 | 17 | Slow push on the cold mug, or hold the quote | "So let me ask you… Do you even remember what it was about? / Probably not." |
