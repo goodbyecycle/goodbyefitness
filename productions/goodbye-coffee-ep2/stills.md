@@ -40,3 +40,4 @@ Rejected: C first try 018ad86c (her look didn't match).
 |---|---|---|---|
 | 14 | Pen pressing hard, page in illegible scribbles | 6602cf08-b157-4c2a-96ac-91e0a62b7b60 | ✅ use this — replaces 21b2894d |
 | C | Close over the shoulder, she listens | a847a102-aa1c-4f07-94ad-36d2013c88af | ❌ second Sterling in the background; keep 7bd06518 or redo |
+| C | Two-shot from the mug's height, black background | 5783748f-492a-4ac6-a0b0-28838bd45137 | ⚠️ good framing, but her hair and face don't match A |
