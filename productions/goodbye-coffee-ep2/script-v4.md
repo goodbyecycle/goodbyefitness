@@ -79,7 +79,7 @@ STERLING: "Let me tell you something, young lady."
 
 (pause)
 
-[QUOTE CARD — fades in; Sterling reads it over the card]
+[QUOTE CARD — fades in; the words reveal line by line, in sync with Sterling reading them]
 STERLING (V.O.): "Resolve the incident when it happens.
 Anger and resentment only collect interest.
 Eventually the loan will come due and you'll forget what the loan was for."
