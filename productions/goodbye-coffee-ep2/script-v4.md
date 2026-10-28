@@ -24,7 +24,7 @@ New stills are marked **NEW**.
 | 12 | Close-up, wet eyes, at the window | STERLING / MUG | STERLING: "…I don't even remember." / MUG: Twelve years without his brother, and he couldn't even remember why. |
 | 13 | Cold mug | MUG | His coffee went cold. He never noticed. |
 | 14 | Journal page | MUG | He wrote beneath his brother's name, pressing so hard the pen nearly tore the paper. |
-| E **NEW** | Two-shot: Sterling turns to her, looking her in the eye | STERLING | "Let me tell you something, young lady. Resolve the incident when it happens. Anger and resentment only collect interest. Eventually, the loan comes due… and you'll forget what the loan was for." … "That's my advice. Advice from a dying man." |
+| E **NEW** | Two-shot: Sterling turns to her, looking her in the eye | STERLING | "Let me tell you something, young lady. Resolve the incident when it happens. Anger and resentment only collect interest. Eventually the loan will come due and you'll forget what the loan was for." (word for word as on the quote card) … "That's my advice. Advice from a dying man." |
 | F **NEW** | She's alone on the couch with her phone; through the window, Sterling walks away into the snow | MUG | Then he picked up his cane and walked back into the cold. She sat there a long time. Then she took out her phone. |
 | 15 | Push in on the cold mug | MUG | So let me ask you something. That person you haven't spoken to. Do you even remember why? … Probably not. |
 | — | QUOTE CARD (`brand/quote-card.png`) | — | — |
