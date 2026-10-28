@@ -78,8 +78,7 @@ pressing so hard the pen nearly tore the paper.
 STERLING: "Let me tell you something, young lady.
 Resolve the incident when it happens.
 Anger and resentment only collect interest.
-Eventually the loan will come due and you'll forget what the loan was for.
-That's my advice. Advice from a dying man."
+Eventually the loan will come due and you'll forget what the loan was for."
 
 [QUOTE CARD — fade in, hold]
 
