@@ -90,5 +90,5 @@ MUG: ...Probably not.
 ```
 
 **Cut from v4:** shot 10 (the flashback), the walk-out narration, and the closing questions over the cold mug (15).
-**New stills (5):** A, B, C, D, E, plus F, which no longer needs Sterling in the window: it's her alone, lit by the phone.
+**New stills (6):** A, B, C, D, E and F. F which no longer needs Sterling in the window: it's her alone, lit by the phone.
 **Assembly:** Remotion, rendered in this repo.
