@@ -67,7 +67,7 @@ She asked him what the fight was about.
 
 [12 — Close-up, wet eyes, at the window]
 He looked out the window a long time.
-His eyes looked… [TO COME FROM YOU]
+His eyes looked older than the rest of him.
 "I don't even remember," he said.
 Twelve years without his brother, and he couldn't even remember why.
 
