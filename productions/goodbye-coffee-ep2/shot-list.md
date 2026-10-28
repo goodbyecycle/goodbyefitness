@@ -28,7 +28,7 @@ Format 9:16 · graphic-novel look (same as Ep. 1) · narrator: the mug, in first
 | 13 | Sterling looks out the frosted window; lips move: "I don't even remember what it was." | "And here's the part that got me… 'I don't even remember what it was.'" |
 | 14 | The mug: no steam, coffee gone still | "He'd lost twelve years with his brother over something he couldn't name anymore. / His coffee went cold that morning. He never noticed." |
 | 15 | Empty couch, the journal left open, the cane gone; the mug alone | "When he finally left, the page said this:" |
-| 16 | QUOTE CARD (pink brush on black): **"Say it while it's small. Resentment collects interest."** | — |
+| 16 | QUOTE CARD (supplied: `brand/quote-card.png`, pink brush on white): **"Resolve the incident when it happens. Anger and resentment only collect interest. Eventually the loan will come due and you'll forget what the loan was for."** | — |
 | 17 | Slow push on the cold mug, or hold the quote | "So let me ask you… Do you even remember what it was about? / Probably not." |
 | 18 | END CARD (Sterling, "Advice from a dying man") | — |
 
