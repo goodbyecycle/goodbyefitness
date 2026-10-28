@@ -80,7 +80,7 @@ Then he closed his journal, turned to her, and said,
 
 (pause)
 
-[QUOTE CARD — fades in; the words reveal line by line as they're read]
+[QUOTE CARD (brand/quote-card-feed-safe.png) — fades in; the words reveal line by line as they are read]
 "Resolve the incident when it happens.
 Anger and resentment only collect interest.
 Eventually the loan will come due and you'll forget what the loan was for."
