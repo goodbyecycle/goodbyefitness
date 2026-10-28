@@ -75,12 +75,14 @@ MUG: He wrote beneath his brother's name,
 pressing so hard the pen nearly tore the paper.
 
 [NEW E — Two-shot, Sterling turns to her, eye to eye]
-STERLING: "Let me tell you something, young lady.
-Resolve the incident when it happens.
+STERLING: "Let me tell you something, young lady."
+
+(pause)
+
+[QUOTE CARD — fades in; Sterling reads it over the card]
+STERLING (V.O.): "Resolve the incident when it happens.
 Anger and resentment only collect interest.
 Eventually the loan will come due and you'll forget what the loan was for."
-
-[QUOTE CARD — fade in, hold]
 
 [NEW F — Fade back in: the young woman alone on the couch, looking at her phone]
 MUG: ...Probably not.
