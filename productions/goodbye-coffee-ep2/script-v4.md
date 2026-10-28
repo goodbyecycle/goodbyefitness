@@ -13,7 +13,7 @@ It is when you're running out of them.
 
 [02 — In line, on his cane]
 Overcoat buttoned to the collar. Newsboy cap. A cane now.
-He didn't have the cane last month.
+He didn't have the cane last week, though he did have a limp.
 His coat hung loose. His face had grown thin.
 
 [03 — Barista pours]
@@ -49,7 +49,7 @@ He didn't stop writing.
 "My little brother," he said. "Haven't spoken to him in twelve years."
 
 [14 — Journal page, pen pressing hard]
-He pressed so hard the pen nearly tore the paper.
+He was pressing so hard on the journal, I thought he was going to rip the paper.
 
 [09 — Sterling at the snowy window]
 He told her about their father's funeral.
@@ -67,6 +67,7 @@ She asked him what the fight was about.
 
 [12 — Close-up, wet eyes, at the window]
 He looked out the window a long time.
+His eyes looked… [TO COME FROM YOU]
 "I don't even remember," he said.
 Twelve years without his brother, and he couldn't even remember why.
 
