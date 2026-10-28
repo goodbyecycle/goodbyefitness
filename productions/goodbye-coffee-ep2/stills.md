@@ -20,3 +20,17 @@ Selective color: the blue cap, the royal-blue mug with the hot-pink G, the brown
 | 13 | Cold mug | 56596f78-dab7-4d6b-b170-e47fb808a51c | [13](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233036_56596f78-dab7-4d6b-b170-e47fb808a51c.png) |
 | 14 | Journal page: the lesson | 21b2894d-0900-4055-a0eb-6f2ad15d7804 | [14](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233036_21b2894d-0900-4055-a0eb-6f2ad15d7804.png) |
 | 15 | Empty couch, mug, journal, ribbon | 4202db16-3f20-4dde-b7d8-1df2c5c36ed0 | [15](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261027_233036_4202db16-3f20-4dde-b7d8-1df2c5c36ed0.png) |
+
+## v4 new stills (the young woman)
+Reference for her look: A. Storyboard sheet: https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/600cb584-4265-4916-9aa1-a82ff234eef1.jpg
+
+| Shot | Description | Job ID | Link |
+|---|---|---|---|
+| A | She sits at the other end of the couch | a5e1cde0-ab1a-4c13-bedc-be15df60e700 | [A](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_171858_a5e1cde0-ab1a-4c13-bedc-be15df60e700.png) |
+| B | Close on her, glancing at the page | 877f2308-5445-4d13-83eb-22b50fe74e57 | [B](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_172042_877f2308-5445-4d13-83eb-22b50fe74e57.png) |
+| C | Two-shot, he keeps writing (redo) | 7bd06518-db00-4bab-9da4-7a7ddc4bc630 | [C](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_173919_7bd06518-db00-4bab-9da4-7a7ddc4bc630.png) |
+| D | Close on her, moved | 484b36cc-749a-408a-ae4e-abfbc70b67ab | [D](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_172042_484b36cc-749a-408a-ae4e-abfbc70b67ab.png) |
+| E | He closes the journal, turns to her | bbf0b7f4-8c4f-4ffe-9480-313c7f2c67b6 | [E](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_172042_bbf0b7f4-8c4f-4ffe-9480-313c7f2c67b6.png) |
+| F | Alone, looking at her phone | 01de553c-ca04-401e-902b-23d7c068f35a | [F](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_172042_01de553c-ca04-401e-902b-23d7c068f35a.png) |
+
+Rejected: C first try 018ad86c (her look didn't match).
