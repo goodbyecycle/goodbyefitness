@@ -34,3 +34,9 @@ Reference for her look: A. Storyboard sheet: https://d2ol7oe51mr4n9.cloudfront.n
 | F | Alone, looking at her phone | 01de553c-ca04-401e-902b-23d7c068f35a | [F](https://d8j0ntlcm91z4.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/hf_20261028_172042_01de553c-ca04-401e-902b-23d7c068f35a.png) |
 
 Rejected: C first try 018ad86c (her look didn't match).
+
+## v4 redos
+| Shot | Description | Job ID | Status |
+|---|---|---|---|
+| 14 | Pen pressing hard, page in illegible scribbles | 6602cf08-b157-4c2a-96ac-91e0a62b7b60 | ✅ use this — replaces 21b2894d |
+| C | Close over the shoulder, she listens | a847a102-aa1c-4f07-94ad-36d2013c88af | ❌ second Sterling in the background; keep 7bd06518 or redo |
