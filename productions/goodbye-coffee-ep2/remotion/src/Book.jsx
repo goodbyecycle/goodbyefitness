@@ -1,5 +1,6 @@
 import {AbsoluteFill, Img, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig, interpolate, Easing} from 'remotion';
 import {TURN, VO_FILE} from './timeline';
+import {CAPTIONS} from './captions';
 
 // One still: slow push in with a little drift so the page never feels frozen.
 const Panel = ({p, t}) => {
@@ -49,6 +50,20 @@ const Turn = ({from, to, t, p}) => {
   );
 };
 
+// Subtitles: royal blue words with a thick white outline, lower third.
+const Captions = ({t}) => {
+  const c = CAPTIONS.find((x) => t >= x.s && t < x.e);
+  if (!c) return null;
+  const pop = interpolate(t, [c.s, c.s + 0.12], [0.9, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  return (
+    <AbsoluteFill style={{justifyContent: 'flex-start', alignItems: 'center', paddingTop: 1300}}>
+      <div style={{maxWidth: 920, textAlign: 'center', fontFamily: 'Montserrat', fontWeight: 800, fontSize: 82,
+        lineHeight: 1.12, color: '#1f45ff', WebkitTextStroke: '14px #fff', paintOrder: 'stroke fill',
+        filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))', transform: `scale(${pop})`}}>{c.text}</div>
+    </AbsoluteFill>
+  );
+};
+
 export const Book = ({panels}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -74,6 +89,7 @@ export const Book = ({panels}) => {
     <AbsoluteFill style={{background: '#000'}}>
       {body}
       {/* grain added in ffmpeg after render */}
+      <Captions t={t} />
       <Audio src={staticFile(VO_FILE)} />
       {panels.slice(1).map((p) => (p.enter ?? 'turn') === 'turn' ? (
         <Sequence key={p.src + p.start} from={Math.round((p.start - TURN / 2) * fps)} durationInFrames={fps * 2}>
