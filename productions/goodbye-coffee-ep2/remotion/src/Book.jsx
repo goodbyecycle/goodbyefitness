@@ -10,6 +10,10 @@ const Panel = ({p, t}) => {
     <AbsoluteFill style={{background: p.bg ?? '#000', overflow: 'hidden'}}>
       <Img src={staticFile(p.src)} style={{width: '100%', height: '100%', objectFit: p.fit ?? 'cover',
         transform: p.still ? 'none' : `scale(${s}) translateX(${dx}px)`}} />
+      {p.reveal?.map((r) => (
+        <div key={r.t} style={{position: 'absolute', left: 0, right: 0, top: r.y0, height: r.y1 - r.y0,
+          background: p.bg, opacity: interpolate(t, [r.t, r.t + 0.6], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}} />
+      ))}
     </AbsoluteFill>
   );
 };
