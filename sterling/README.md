@@ -61,7 +61,7 @@ Sterling voice: Higgsfield text-to-speech → ElevenLabs → preset **"Sterling"
 | 20 | `b717584e-0c2e-4404-be88-6ef5b04e9860` |
 
 ## Batch 02 finished reels (scene A, built with `build_bw.sh`, START=0.8 DELAY=2.5; #20 DELAY=0.5)
-Stored in Higgsfield media (uploads).
+Stored in the Higgsfield project **"Sterling"** (project id `5703df31-4d29-4fc4-98b6-83ffc4259600`) along with the scenes, still v4, start frame and voiceovers.
 | Reel | Link |
 |---|---|
 | 13 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/b48c3a85-48f9-4a8f-92f0-fe45bfd9885a.mp4 |
