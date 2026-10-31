@@ -47,3 +47,15 @@ Pass these IDs as `medias[].value` in Higgsfield generations.
 
 Sterling voice: Higgsfield text-to-speech → ElevenLabs → preset **"Sterling"**
 (voice id `dc382508-c8bd-443c-8cb2-46e57b8d2e6f`).
+
+## Batch 02 voiceovers (Sterling voice, ElevenLabs via Higgsfield text2speech_v2)
+| Quote | Job ID |
+|---|---|
+| 13 | `61fcd163-298b-4b22-af44-9d0569bd30f6` |
+| 14 | `1a01caa3-70a3-4081-90b0-bb7ca66b94aa` |
+| 15 | `d1cf0e25-cba1-43f6-9f30-c9135e4cf787` |
+| 16 | `f0fdd55c-8826-40e9-b73b-18ace6e06b13` |
+| 17 | `bbb42e3f-0def-458c-aeac-d60c7350e0bd` |
+| 18 | `204b771e-14a6-4278-bd47-62d3c23d3be2` |
+| 19 | `f01c3eb2-0b7c-49bb-8f37-1ed626932ae4` |
+| 20 | `b717584e-0c2e-4404-be88-6ef5b04e9860` |
