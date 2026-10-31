@@ -59,3 +59,16 @@ Sterling voice: Higgsfield text-to-speech → ElevenLabs → preset **"Sterling"
 | 18 | `204b771e-14a6-4278-bd47-62d3c23d3be2` |
 | 19 | `f01c3eb2-0b7c-49bb-8f37-1ed626932ae4` |
 | 20 | `b717584e-0c2e-4404-be88-6ef5b04e9860` |
+
+## Batch 02 finished reels (scene A, built with `build_bw.sh`, START=0.8 DELAY=2.5; #20 DELAY=0.5)
+Stored in Higgsfield media (uploads).
+| Reel | Link |
+|---|---|
+| 13 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/b48c3a85-48f9-4a8f-92f0-fe45bfd9885a.mp4 |
+| 14 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/5654992a-9f38-4c2d-ad70-a441a50a7799.mp4 |
+| 15 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/9c21eccc-ab0d-4048-ad62-08c8862890d3.mp4 |
+| 16 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/1ed3bd0e-1e23-4e6d-8875-ad7f11858edf.mp4 |
+| 17 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/df3b3d63-3d1d-4162-8d7e-37b9029f4126.mp4 |
+| 18 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/60d29c3d-d566-4e3f-aac8-29764edfd768.mp4 |
+| 19 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/b637d5b1-ff05-4217-b594-273c32074e59.mp4 |
+| 20 | https://d2ol7oe51mr4n9.cloudfront.net/user_3CDJYxo6oMtAhh5w2jvaKvUEU5w/3f12d02a-bdcd-4685-88d8-9d0e85f31bed.mp4 |
