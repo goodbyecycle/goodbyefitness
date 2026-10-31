@@ -24,7 +24,9 @@ Published reels 01–12: Google Drive, `sterlings-life-lessons-01.mp4` … `-12.
 ## Batch 02 look
 - Scene in **black and white; the only color is the blue Goodbye Coffee mug (pink G) and Sterling's royal-blue newsie cap**.
 - Quote card: **white background, pink handwriting**, using the batch images as-is (not the template's pink-on-black).
-- Music: deep, slow piano.
+- Music: deep, slow piano (`template/piano_bed.py`, 8 variants).
+- Build: `PIANO=<0-7> ./template/build_bw.sh scene.mp4 quotes/batch-02-handwritten/quote-13.png out.mp4 [voiceover.mp3]`
+  (scene, fade to white, pink-on-white card from the image as-is, template end card).
 
 ## Higgsfield assets
 Pass these IDs as `medias[].value` in Higgsfield generations.
@@ -37,6 +39,8 @@ Pass these IDs as `medias[].value` in Higgsfield generations.
 | `d2ab78d1-d571-4f14-ad77-3b730cdd8e69` | image job | **Blue newsie cap still v2**, B&W except mug + cap |
 | `a9344526-2960-43fd-88bc-b6444ee947de` | image job | **Blue newsie cap still v3 (high quality)**, only mug + cap in color |
 | `df12b8ca-af97-49e6-b5a5-6a93dde52e23` | image job | **Blue newsie cap still v4 (high quality)**, only mug + cap in color |
+| `abb7a5a7-9070-4ba2-bb16-91a19c199fa6` | video (seedance 2.5) | **Batch 02 scene A**, cap still v4 animated |
+| `7f6228c3-4f13-4d6b-922b-fa3697195f0a` | video (seedance 2.5) | **Batch 02 scene B**, cap still v4 animated |
 | `52af8a23-23d6-4cfc-8ad8-c0a4c7dcd44f` | video (seedance 2.5) | Sets journal down, sits back, crosses legs (Oct 15; used with `START=0.5 DELAY=1.5`) |
 | `092f577c-40b9-4fbd-a894-4bfc9d6bda4c` | video (seedance 2.5) | Closes journal, hand on it, push-in to mug (Oct 16) |
 | `f7d18f2e-04a1-4b95-b4bb-bd82632e2b6d` | video (kling 3.0) | Closes journal, picks up mug, 9:16 (Oct 9) |
