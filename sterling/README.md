@@ -22,7 +22,8 @@ Published reels 01–12: Google Drive, `sterlings-life-lessons-01.mp4` … `-12.
 20. Resolve the incident when it happens. Anger and resentment only collect interest. Eventually the loan will come due and you'll forget what the loan was for.
 
 ## Batch 02 look
-- Scene in **black and white except the blue Goodbye Coffee mug (pink G) and a royal-blue newsie cap** on Sterling.
+- Scene in **black and white; the only color is the blue Goodbye Coffee mug (pink G) and Sterling's royal-blue newsie cap**.
+- Quote card: **white background, pink handwriting**, using the batch images as-is (not the template's pink-on-black).
 - Music: deep, slow piano.
 
 ## Higgsfield assets
@@ -34,6 +35,8 @@ Pass these IDs as `medias[].value` in Higgsfield generations.
 | `49a10554-6067-465c-b911-dcfddee553fd` | image job | Earlier Sterling start frame (Oct 9) |
 | `b50580a6-7938-4f5a-9ba9-ca1042f7e7f3` | image job | **Blue newsie cap still v1**, B&W except mug + cap |
 | `d2ab78d1-d571-4f14-ad77-3b730cdd8e69` | image job | **Blue newsie cap still v2**, B&W except mug + cap |
+| `a9344526-2960-43fd-88bc-b6444ee947de` | image job | **Blue newsie cap still v3 (high quality)**, only mug + cap in color |
+| `df12b8ca-af97-49e6-b5a5-6a93dde52e23` | image job | **Blue newsie cap still v4 (high quality)**, only mug + cap in color |
 | `52af8a23-23d6-4cfc-8ad8-c0a4c7dcd44f` | video (seedance 2.5) | Sets journal down, sits back, crosses legs (Oct 15; used with `START=0.5 DELAY=1.5`) |
 | `092f577c-40b9-4fbd-a894-4bfc9d6bda4c` | video (seedance 2.5) | Closes journal, hand on it, push-in to mug (Oct 16) |
 | `f7d18f2e-04a1-4b95-b4bb-bd82632e2b6d` | video (kling 3.0) | Closes journal, picks up mug, 9:16 (Oct 9) |
