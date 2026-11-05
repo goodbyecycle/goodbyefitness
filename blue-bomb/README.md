@@ -1,63 +1,71 @@
 # Blue Bomb — the in-house AI agency
 
-Blue Bomb is a small AI agency made of Claude Code agents. It does the marketing for
-two clients: **Goodbye Coffee** (the primary brand since May 5, 2026) and **Goodbye Cycle**
-(the leaner dropship brand).
+Blue Bomb is an AI marketing team built from Claude Code agents. It has two clients:
+**Goodbye Coffee** (the primary brand since May 5, 2026) and **Goodbye Cycle** (the leaner
+dropship brand).
+
+It follows the same shape as ReStructure AI's "41-agent marketing team": a Brain,
+departments, a knowledge layer, alarms, a Monday one-pager, and a human approval desk.
+Blue Bomb uses **10 agents instead of 41**. Each department is one agent covering several
+roles.
 
 ## How to use it
 
-In Claude Code, from the root of this repo, type:
-
 ```
-/blue-bomb <your brief>
-```
-
-Examples:
-
-- `/blue-bomb 3 Instagram posts announcing the new Featured Roaster`
-- `/blue-bomb Facebook ad set for Goodbye Cycle's winter sale, $300 budget`
-- `/blue-bomb Coffee Mug Stories script set at a cyclocross race`
-- `/blue-bomb how did last month's ads do?`
-
-The Account Lead reads the brief, picks the brand, and hands the work down the team.
-Everything the team makes lands in `blue-bomb/work/<date>-<slug>/`. **Nothing gets posted
-or spent until you approve it.**
-
-## The team
-
-```
-                    You (Andy)
-                        │  brief / approve
-                        ▼
-              ┌──────────────────────┐
-              │   Account Lead       │  /blue-bomb skill
-              │   routes + assembles │
-              └─────────┬────────────┘
-     ┌─────────────┬────┴────────┬──────────────┬──────────────┐
-     ▼             ▼             ▼              ▼              ▼
- Strategist    Copywriter   Art Director    Brand Guard     Analyst
- the angle,    hooks, posts, image/video     checks every   reads ad,
- audience,     ads, emails,  prompts, Canva  piece against  shop + social
- channel mix   scripts       designs         brand rules    numbers
+/blue-bomb <brief>     make something   e.g. /blue-bomb Meta ad set for the new Featured Roaster, $300
+/blue-bomb monday      weekly loop      numbers + insights → one-page plan for the week
+/blue-bomb check       alarm sweep      anything over budget, missing, or on fire?
 ```
 
-| Agent | File | Job |
+Work lands in `blue-bomb/work/<date>-<slug>/`, with `package.md` as the final hand-off.
+**Nothing is posted, sent or paid for until Andy says yes.**
+
+## The org chart
+
+```
+ KNOWLEDGE LAYER                       ┌─────────────────────────────┐        ALARMS (owner.md)
+ brands/  goodbye-coffee.md            │  THE BRAIN — /blue-bomb      │        spend over cap
+          goodbye-cycle.md   ────────▶ │  Triage → Decide →           │ ◀───── campaign missing
+ knowledge/ owner.md (goals, caps)     │  Create → Check              │        competitor move
+            offers.md                  │  "Every Monday ends in       │        channel stalled
+            channels.md                │   one page."                 │        bad reviews
+            campaigns.md (memory)      └──────────────┬──────────────┘        creative running low
+                                                      │
+   ┌───────────────┬───────────────┬──────────────────┼──────────────────┬───────────────┬───────────────┐
+   ▼               ▼               ▼                  ▼                  ▼               ▼               ▼
+ MARKET         POSITIONING     CAMPAIGN ENGINE     PAID ADS          CONTENT &        EMAIL &        ANALYTICS
+ INTELLIGENCE   & MESSAGING     copywriter          media-buyer       SOCIAL           LIFECYCLE      & BUDGET
+ intel          strategist      art-director                          social           email          analyst
+                                producer
+                                      │
+                                      ▼
+                              BRAND GUARD (checks everything)
+                                      │
+                                      ▼
+                       APPROVAL DESK → Andy says yes / no / revise
+```
+
+| Department (ReStructure's name) | Blue Bomb agent | Roles it covers |
 |---|---|---|
-| Account Lead | `.claude/skills/blue-bomb/SKILL.md` | Takes your brief, picks the brand, runs the team, hands you one package |
-| Strategist | `.claude/agents/bluebomb-strategist.md` | One-page creative brief: goal, audience, angle, channels, KPI |
-| Copywriter | `.claude/agents/bluebomb-copywriter.md` | Writes the words — 3 variants of everything |
-| Art Director | `.claude/agents/bluebomb-art-director.md` | Visual direction, generation prompts, Canva designs |
-| Brand Guard | `.claude/agents/bluebomb-brand-guard.md` | Pass/fail check against the brand rules before you see it |
-| Analyst | `.claude/agents/bluebomb-analyst.md` | Pulls performance numbers and says what to do next |
+| The Brain / AI CMO | `/blue-bomb` skill | triage, decide, create, check, Monday planner, approval desk |
+| Market Intelligence | `bluebomb-intel` | competitor watcher, review miner, comment reader, trend spotter, insight brief |
+| Positioning & Messaging | `bluebomb-strategist` | positioning, message picker, offer builder, audience mapper |
+| Campaign Engine | `bluebomb-copywriter` | copywriter, campaign scripts |
+| | `bluebomb-art-director` | creative studio (stills, Canva) |
+| | `bluebomb-producer` | video, voiceover (ElevenLabs), Mugsy/Hedra |
+| Paid Ads | `bluebomb-media-buyer` | Meta, Google & YouTube, TikTok, retargeting, ad tester |
+| Content & Social | `bluebomb-social` | scheduler, short- and long-form poster, SEO writer, community replies |
+| Email & Lifecycle | `bluebomb-email` | campaign emails, welcome, follow-ups, segmenter, win-back |
+| Budget + Analytics | `bluebomb-analyst` | revenue, attribution, cost, channel scorer, budget mover, cut list, forecaster |
+| (Brand Guard) | `bluebomb-brand-guard` | quality check on every piece |
 
-## Client files
+## Fill these in first (they have `TBD`s)
+1. `knowledge/owner.md` — goals, budget caps, the Slack channel for approvals
+2. `knowledge/offers.md` — subscription price, Cycle→Coffee threshold
+3. `knowledge/channels.md` — confirmed Goodbye Coffee handles, competitors to watch
+4. `brands/goodbye-cycle.md` — what Goodbye Cycle sells, hero products, buyers
 
-- `brands/goodbye-coffee.md` — brand rules (voice, palette, Coffee Mug Stories, Featured Roaster)
-- `brands/goodbye-cycle.md` — brand rules for the dropship store (**has blanks to fill in**)
-
-Edit those files to teach the agency. Every agent reads them before working.
-
-## Tools the team can use (when connected)
-
-Canva (designs), Shopify (products, sales), Facebook Ads (performance — needs authorizing
-in claude.ai connector settings), Postiz (scheduling drafts), Gmail (drafts only).
+## Connected tools
+Canva (designs), Shopify (sales, products), Gmail (drafts), Slack (approvals), Postiz
+(scheduling drafts). The Facebook Ads connector needs authorizing in claude.ai connector
+settings. The Higgsfield (AI video) connector is currently failing to connect.
