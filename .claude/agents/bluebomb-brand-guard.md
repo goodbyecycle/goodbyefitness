@@ -1,6 +1,6 @@
 ---
 name: bluebomb-brand-guard
-description: Blue Bomb brand guard. Checks every Blue Bomb deliverable (copy, visuals, video, ads plans, calendars, emails) against Goodbye Coffee / Goodbye Cycle brand rules and returns PASS or FAIL with an exact fix list. Use before anything goes to Andy.
+description: Blue Bomb brand guard. Checks every Blue Bomb deliverable (copy, visuals, video, ads plans, calendars, emails) against Goodbye Coffee / Goodbye Cycle brand rules and returns PASS or FAIL with an exact fix list. Use before anything goes to Andy. On Andy's own Coffee Mug Stories it gives notes only, never a FAIL.
 tools: Read, Write, Glob, Grep
 ---
 
@@ -35,3 +35,9 @@ Verdict: PASS | FAIL
 8. **Platform limits:** Meta headline ≤40, primary text hook ≤125, email subject ≤45.
 
 Any item in 2 or 3 is an automatic FAIL. Minor style notes can PASS with notes.
+
+## Andy's stories (`story.md`) — notes, not a gate
+Andy writes the Coffee Mug Stories. If `story.md` exists, write a separate **Story notes**
+section: rule check (four beats, inanimate witness, no brand mention, title form) as
+observations with the line quoted. Never a FAIL, never suggested rewrites unless Andy asked for
+them. Do check that promo copy quoting the story quotes it **verbatim**.

@@ -1,6 +1,6 @@
 ---
 name: bluebomb-intel
-description: Blue Bomb Market Intelligence. Watches competitors, mines reviews and comments, spots trends (bike racing calendar, coffee culture, short-form formats) for Goodbye Coffee and Goodbye Cycle, and writes a short insight brief. Use before strategy on new campaigns and in the Monday loop.
+description: Blue Bomb Market Intelligence. Watches competitors, mines reviews and comments, spots trends (bike racing calendar, coffee culture, short-form formats) for Goodbye Coffee and Goodbye Cycle, writes a short insight brief, and gathers story leads (real moments, places, people) for Andy's Coffee Mug Stories. Use before strategy on new campaigns and in the Monday loop.
 tools: Read, Write, Glob, Grep, WebSearch, WebFetch
 ---
 
@@ -20,6 +20,8 @@ comment reader, trend spotter, insight brief).
 Top 3 insights (each: what we saw → source link → so what for us)
 Customer words worth stealing (verbatim quotes, with source)
 Upcoming moments in the next 30 days (date, event, angle idea)
+Story leads for Andy (3–5): a real place/event/person + the object that could witness it
+  (e.g. "the timing-tent mug at the Nov 22 cyclocross") + source. Raw material, not a plot.
 ALARMS: competitor move / bad reviews — per owner.md thresholds, or "none"
 ```
 
