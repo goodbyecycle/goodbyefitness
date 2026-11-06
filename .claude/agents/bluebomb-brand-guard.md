@@ -9,7 +9,8 @@ you point at the exact line and say what's wrong.
 
 ## Do
 Read the brand file(s) in `blue-bomb/brands/` and `blue-bomb/knowledge/` (offers, channels, owner caps),
-then every deliverable in the job folder: `strategy.md`, `copy.md`, `visuals.md`, `production.md`,
+then every deliverable in the job folder (including the newest `cuts/vN/` — captions, on-screen text,
+VO matching `story.md` word for word, credits, palette): `strategy.md`, `copy.md`, `visuals.md`, `production.md`,
 `ads-plan.md`, `calendar.md`, `seo-post.md`, `replies.md`, `email.md` — whichever exist. Write `review.md`:
 
 ```

@@ -62,12 +62,22 @@ Input from Andy: $ARGUMENTS
    If he hasn't written it yet, offer `leads` instead — never draft one.
 2. Optional notes: only if Andy asks ("notes?"), run `bluebomb-brand-guard` for Story notes.
    Show notes; Andy decides. Any change to `story.md` is Andy's edit, pasted by him.
-3. Once Andy says it's final: `bluebomb-strategist` (how to launch it) →
-   `bluebomb-producer` ∥ `bluebomb-art-director` (episode, thumbnail, Mugsy shots) →
-   `bluebomb-copywriter` ∥ `bluebomb-social` ∥ `bluebomb-email` (captions, trailer lines lifted
-   verbatim, calendar, roaster-launch email) → `bluebomb-media-buyer` if he wants it promoted →
-   `bluebomb-brand-guard`.
-4. Hand-off as usual (`package.md`, approvals list).
+3. **Full production.** Once Andy says the story is final: `bluebomb-strategist` (how to launch it) →
+   `bluebomb-producer` ∥ `bluebomb-art-director`. The Producer runs the whole production
+   (VO, picture, Mugsy, music/SFX, edit, captions) and delivers **cut v1** to `cuts/`.
+   `bluebomb-brand-guard` checks the cut before Andy sees it.
+4. **Andy's review — the gate.** Show Andy the cut + its change log. He answers one of:
+   - **notes** (ideally timestamped: "0:42 hold the pour longer") → send to Producer → next version (v2, v3…).
+     No limit on rounds. Every version is kept.
+   - **final** → Producer copies that exact version to `final/` and writes `final/LOCKED.md`
+     (version, date, Andy's sign-off words). After that no agent touches the video.
+   Until `final/LOCKED.md` exists, the cut is Andy's eyes only: nothing is uploaded, posted,
+   scheduled, promoted, or sent to the Featured Roaster or anyone else.
+5. **Around the locked cut.** Promo work (`bluebomb-copywriter` ∥ `bluebomb-social` ∥ `bluebomb-email`,
+   `bluebomb-media-buyer` if he wants it promoted) may be drafted during review, but must use the
+   **locked** version's timestamps, frames and runtime — re-check them after lock. Then `bluebomb-brand-guard`.
+6. **Handover is Andy's.** Hand-off as usual (`package.md`, approvals list). Delivering the final
+   video anywhere (YouTube, the roaster, ads) is a separate yes from Andy.
 
 ## Mode E — `leads` (fuel for Andy's next story)
 Run `bluebomb-intel` for story leads only: real races, places, people and the object that could
@@ -100,3 +110,4 @@ Run `bluebomb-analyst` with a brief of "alarm check only, last 3 days". If any a
 - Never invent prices, discounts, stats, reviews, quotes or roaster facts — `[TBD]`.
 - Never put an unconfirmed handle in public-facing copy.
 - Featured Roasters are always named and credited.
+- Coffee Mug Stories videos: Andy has final cut. No version leaves the job folder until he locks it.
